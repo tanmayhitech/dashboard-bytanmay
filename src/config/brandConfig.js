@@ -19,11 +19,11 @@ export const BRAND_CONFIG = {
   
   // Registered Business Address (Printed on Invoices & Bills)
   registeredAddress: {
-    line1: 'Registered Fulfillment Atelier',
-    city: 'Mumbai / Kanpur',
-    state: 'Maharashtra / Uttar Pradesh',
+    line1: 'Loozars Archive Apparel Atelier',
+    city: 'Kanpur',
+    state: 'Uttar Pradesh',
     country: 'India',
-    pincode: '400050'
+    pincode: '208001'
   },
   
   // Financial & Commerce Defaults

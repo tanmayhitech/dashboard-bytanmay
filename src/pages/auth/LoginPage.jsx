@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useShop } from '../../context/ShopContext';
 import { supabase, isSupabaseConfigured } from '../../supabase/client';
@@ -8,41 +8,54 @@ import {
   Sparkles, 
   ShieldCheck, 
   ArrowRight, 
-  ArrowLeft, 
   AlertCircle, 
   RefreshCw, 
   Mail, 
   KeyRound,
-  UserCheck,
-  Store
+  Store,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
-  const { signIn, user: adminUser } = useAuth();
+  const { signIn } = useAuth();
   const { navigateTo } = useShop();
 
-  // Determine initial tab from props or URL query params
+  // Tab state: 'creator' | 'admin'
   const [activeTab, setActiveTab] = useState(() => {
-    if (defaultTab) return defaultTab;
+    if (defaultTab === 'admin' || defaultTab === 'atelier') return 'admin';
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role') || params.get('tab');
       if (role === 'admin' || role === 'atelier') return 'admin';
     }
-    return 'creator'; // 'creator' | 'admin'
+    return 'creator';
   });
 
   // Creator form state
   const [creatorEmail, setCreatorEmail] = useState('');
   const [creatorPassword, setCreatorPassword] = useState('');
+  const [showCreatorPassword, setShowCreatorPassword] = useState(false);
   const [creatorLoading, setCreatorLoading] = useState(false);
   const [creatorError, setCreatorError] = useState(null);
 
   // Admin form state
-  const [adminEmail, setAdminEmail] = useState('tanmayyadavbca@gmail.com');
+  const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminLoading, setAdminLoading] = useState(false);
   const [adminError, setAdminError] = useState(null);
+
+  const adminEmailRef = useRef(null);
+
+  // Focus input when tab changes
+  useEffect(() => {
+    if (activeTab === 'admin') {
+      setTimeout(() => {
+        adminEmailRef.current?.focus();
+      }, 50);
+    }
+  }, [activeTab]);
 
   // Handle Creator Login
   const handleCreatorSubmit = async (e) => {
@@ -54,9 +67,19 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
     const cleanPassword = creatorPassword.trim();
 
     if (!cleanEmail || !cleanPassword) {
-      setCreatorError('Please enter both your creator email and password.');
+      setCreatorError('Please enter both your email and password.');
       setCreatorLoading(false);
       return;
+    }
+
+    // Auto-redirect admin credentials entered in creator tab
+    if (cleanEmail === 'tanmayyadavbca@gmail.com' || cleanEmail.startsWith('admin@')) {
+      const { error } = await signIn({ email: cleanEmail, password: cleanPassword });
+      setCreatorLoading(false);
+      if (!error) {
+        navigateTo('admin');
+        return;
+      }
     }
 
     // 1. Verify against assigned creator credentials in store
@@ -66,7 +89,7 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
       setTimeout(() => {
         setCreatorLoading(false);
         navigateTo('influencer');
-      }, 300);
+      }, 250);
       return;
     }
 
@@ -107,14 +130,6 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
     }
   };
 
-  // Quick 1-click Demo Creator Access
-  const handleQuickCreatorLogin = (email, handle) => {
-    localStorage.setItem('loozars_active_influencer_email', email.toLowerCase());
-    setCreatorEmail(email);
-    setCreatorPassword('••••••••••••');
-    navigateTo('influencer');
-  };
-
   // Handle Admin Login
   const handleAdminSubmit = async (e) => {
     e?.preventDefault();
@@ -133,7 +148,7 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
     try {
       const { error } = await signIn({ email: cleanEmail, password: cleanPassword });
       if (error) {
-        setAdminError(error.message || 'Invalid admin credentials.');
+        setAdminError(error.message || 'Invalid administrator credentials.');
       } else {
         navigateTo('admin');
       }
@@ -164,19 +179,19 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
 
           <button
             onClick={() => navigateTo('home')}
-            className="text-xs text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors flex items-center gap-1.5 font-medium"
+            className="text-xs text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors flex items-center gap-1.5 font-medium cursor-pointer"
           >
             <Store size={13} />
             <span>Storefront</span>
           </button>
         </div>
 
-        {/* Unified Tab Switcher */}
+        {/* 2-Option Tab Switcher: Creator & Admin */}
         <div className="grid grid-cols-2 p-1 bg-[#141414] border border-[#222222] rounded-xl text-xs font-medium">
           <button
             type="button"
             onClick={() => setActiveTab('creator')}
-            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === 'creator'
                 ? 'bg-[#EDE7DC] text-[#090909] font-semibold shadow-md'
                 : 'text-[#8E8D8A] hover:text-[#EDE7DC]'
@@ -189,7 +204,7 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
           <button
             type="button"
             onClick={() => setActiveTab('admin')}
-            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-all ${
+            className={`py-2.5 px-3 rounded-lg flex items-center justify-center gap-2 transition-all cursor-pointer ${
               activeTab === 'admin'
                 ? 'bg-[#EDE7DC] text-[#090909] font-semibold shadow-md'
                 : 'text-[#8E8D8A] hover:text-[#EDE7DC]'
@@ -230,9 +245,9 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                     type="text"
                     value={creatorEmail}
                     onChange={(e) => setCreatorEmail(e.target.value)}
-                    placeholder="aaryan@creator.loozars.com or @aaryan_street"
                     required
-                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#A3E635] rounded-xl transition-all placeholder-[#555555]"
+                    autoComplete="username"
+                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#A3E635] rounded-xl transition-all"
                   />
                 </div>
               </div>
@@ -244,20 +259,27 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                 <div className="relative">
                   <KeyRound size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666]" />
                   <input
-                    type="password"
+                    type={showCreatorPassword ? "text" : "password"}
                     value={creatorPassword}
                     onChange={(e) => setCreatorPassword(e.target.value)}
-                    placeholder="••••••••••••"
                     required
-                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#A3E635] rounded-xl transition-all placeholder-[#555555]"
+                    autoComplete="current-password"
+                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-10 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#A3E635] rounded-xl transition-all"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowCreatorPassword(!showCreatorPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#EDE7DC] transition-colors"
+                  >
+                    {showCreatorPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={creatorLoading}
-                className="w-full py-3 bg-[#EDE7DC] hover:bg-white text-[#090909] text-xs sm:text-sm font-semibold tracking-wide transition-all disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.99] mt-2"
+                className="w-full py-3 bg-[#EDE7DC] hover:bg-white text-[#090909] text-xs sm:text-sm font-semibold tracking-wide transition-all disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.99] mt-2 cursor-pointer"
               >
                 {creatorLoading ? (
                   <>
@@ -272,48 +294,6 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                 )}
               </button>
             </form>
-
-            {/* Quick Demo Creators Section */}
-            <div className="pt-4 border-t border-[#1a1a1a] space-y-2.5">
-              <span className="text-[11px] font-mono text-[#8E8D8A] block uppercase tracking-wider">
-                Instant Creator Demo Access:
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleQuickCreatorLogin('aaryan@creator.loozars.com', 'aaryan_street')}
-                  className="p-2.5 bg-[#141414] border border-[#242424] hover:border-[#A3E635] rounded-xl text-left transition-colors flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="text-xs font-semibold text-white group-hover:text-[#A3E635]">Aaryan Sharma</div>
-                    <div className="text-[10px] text-[#8E8D8A] font-mono">@aaryan_street • Paid Collab</div>
-                  </div>
-                  <UserCheck size={14} className="text-[#8E8D8A] group-hover:text-[#A3E635]" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleQuickCreatorLogin('zara@creator.loozars.com', 'zaramehra_')}
-                  className="p-2.5 bg-[#141414] border border-[#242424] hover:border-[#A3E635] rounded-xl text-left transition-colors flex items-center justify-between group"
-                >
-                  <div>
-                    <div className="text-xs font-semibold text-white group-hover:text-[#A3E635]">Zara Mehra</div>
-                    <div className="text-[10px] text-[#8E8D8A] font-mono">@zaramehra_ • Barter Collab</div>
-                  </div>
-                  <UserCheck size={14} className="text-[#8E8D8A] group-hover:text-[#A3E635]" />
-                </button>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <button
-                type="button"
-                onClick={() => navigateTo('influencer')}
-                className="text-xs text-[#A3E635] hover:text-white underline font-mono tracking-wide"
-              >
-                Open Creator Dashboard directly →
-              </button>
-            </div>
           </div>
         )}
 
@@ -344,12 +324,13 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                 <div className="relative">
                   <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666]" />
                   <input
+                    ref={adminEmailRef}
                     type="email"
                     value={adminEmail}
                     onChange={(e) => setAdminEmail(e.target.value)}
-                    placeholder="admin@theloozars.com"
                     required
-                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#8E1717] rounded-xl transition-all placeholder-[#555555]"
+                    autoComplete="username"
+                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#8E1717] rounded-xl transition-all font-sans"
                   />
                 </div>
               </div>
@@ -361,20 +342,27 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                 <div className="relative">
                   <KeyRound size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#666666]" />
                   <input
-                    type="password"
+                    type={showAdminPassword ? "text" : "password"}
                     value={adminPassword}
                     onChange={(e) => setAdminPassword(e.target.value)}
-                    placeholder="••••••••••••"
                     required
-                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#8E1717] rounded-xl transition-all placeholder-[#555555]"
+                    autoComplete="current-password"
+                    className="w-full bg-[#141414] border border-[#242424] text-[#EDE7DC] pl-10 pr-10 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-[#8E1717] rounded-xl transition-all font-sans"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminPassword(!showAdminPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#666666] hover:text-[#EDE7DC] transition-colors"
+                  >
+                    {showAdminPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
                 </div>
               </div>
 
               <button
                 type="submit"
                 disabled={adminLoading}
-                className="w-full py-3 bg-[#EDE7DC] hover:bg-white text-[#090909] text-xs sm:text-sm font-semibold tracking-wide transition-all disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.99] mt-2"
+                className="w-full py-3 bg-[#EDE7DC] hover:bg-white text-[#090909] text-xs sm:text-sm font-semibold tracking-wide transition-all disabled:opacity-50 rounded-xl flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-[0.99] mt-2 cursor-pointer"
               >
                 {adminLoading ? (
                   <>
@@ -389,38 +377,6 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                 )}
               </button>
             </form>
-
-            {/* Quick Fill Helper */}
-            <div className="pt-3 border-t border-[#1a1a1a] space-y-2 bg-[#121212] p-3 rounded-xl border border-[#202020] text-xs">
-              <div className="flex items-center justify-between text-[#8E8D8A]">
-                <span>Admin Account:</span>
-                <span className="font-mono text-[#EDE7DC] font-semibold">tanmayyadavbca@gmail.com</span>
-              </div>
-              <div className="flex items-center justify-between text-[#8E8D8A]">
-                <span>Password:</span>
-                <button
-                  type="button"
-                  onClick={() => setAdminPassword('admin1234')}
-                  className="font-mono text-[#A3E635] underline hover:text-white font-medium"
-                >
-                  Autofill "admin1234"
-                </button>
-              </div>
-            </div>
-
-            <div className="pt-2 flex items-center justify-between text-xs">
-              <span className="text-[#8E8D8A]">Quick Developer Access:</span>
-              <button
-                type="button"
-                onClick={async () => {
-                  await signIn({ email: 'tanmayyadavbca@gmail.com', password: 'admin1234' });
-                  navigateTo('admin');
-                }}
-                className="text-[#EDE7DC] hover:text-[#A3E635] underline font-mono font-medium"
-              >
-                Open Admin Panel →
-              </button>
-            </div>
           </div>
         )}
 

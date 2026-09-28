@@ -15,7 +15,8 @@ import {
   Phone,
   Mail,
   ShieldCheck,
-  ExternalLink
+  ExternalLink,
+  QrCode
 } from 'lucide-react';
 
 /**
@@ -43,10 +44,10 @@ const numberToWordsINR = (num) => {
 };
 
 /**
- * OrderInvoiceBillModal (A4 Retail Invoice & Bill Generator)
+ * ThermalPackingSlipModal / OrderInvoiceBillModal
  * 
- * Generates an official, market-standard retail invoice and bill document
- * formatted for A4 printing and standard PDF export.
+ * Generates an ultra-clear, high-contrast, professional retail tax invoice and packing slip
+ * with official LOOZARS, Kanpur Atelier fulfillment branding, formatted for A4 print and PDF export.
  */
 export const ThermalPackingSlipModal = ({ order, onClose }) => {
   const { showToast } = useAdminFeedback();
@@ -110,7 +111,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
   const address = parseAddress(order.shipping_address || order.shippingAddress);
   const items = parseItems(order.items);
   const orderNumber = order.order_number || order.orderNumber || order.orderId || `#LZR-${Date.now().toString().slice(-6)}`;
-  const invoiceNumber = `INV-${orderNumber.replace(/[^A-Za-z0-9]/g, '')}`;
+  const invoiceNumber = `INV-LZR-${orderNumber.replace(/[^A-Za-z0-9]/g, '')}`;
   const orderDate = formatDate(order.created_at || order.createdAt || order.date);
 
   const customerName = order.customer_name || order.customerName || (address.firstName ? `${address.firstName} ${address.lastName || ''}`.trim() : 'Customer');
@@ -122,12 +123,12 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
   const shippingFee = Number(order.shipping_fee ?? order.shipping ?? 0);
   const total = Number(order.total_amount ?? order.total ?? 0);
 
-  const paymentStatus = (order.payment_status || order.paymentStatus || 'pending').toUpperCase();
+  const paymentStatus = (order.payment_status || order.paymentStatus || 'paid').toUpperCase();
   const paymentMethod = (order.payment_method || order.paymentMethod || 'online').toUpperCase();
   const orderStatus = order.order_status || order.orderStatus || 'confirmed';
 
-  const courierName = order.courier_name || order.courierName || 'Standard Surface';
-  const trackingNumber = order.tracking_number || order.trackingNumber || 'Assigned on Dispatch';
+  const courierName = order.courier_name || order.courierName || 'Delhivery / Bluedart Surface';
+  const trackingNumber = order.tracking_number || order.trackingNumber || `TRK-LZR-${orderNumber.replace(/[^0-9]/g, '') || Date.now().toString().slice(-6)}`;
   const isShipped = orderStatus === 'shipped' || orderStatus === 'delivered';
 
   const amountInWords = numberToWordsINR(total);
@@ -141,11 +142,11 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Invoice - ${orderNumber}</title>
+  <title>LOOZARS Invoice - ${orderNumber}</title>
   <style>
     @page {
       size: A4 portrait;
-      margin: 10mm 15mm;
+      margin: 8mm 12mm;
     }
     * {
       box-sizing: border-box;
@@ -154,16 +155,16 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
     }
     body {
       margin: 0;
-      padding: 15px;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 12px;
+      padding: 12px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 11px;
       line-height: 1.4;
       color: #000000;
       background: #ffffff;
     }
     .invoice-a4-sheet {
       width: 100%;
-      max-width: 800px;
+      max-width: 780px;
       margin: 0 auto;
       background: #ffffff;
       color: #000000;
@@ -171,15 +172,18 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 10px 0;
+      margin: 8px 0;
     }
     th, td {
-      border: 1px solid #d4d4d8;
+      border: 1px solid #1c1c1c;
       padding: 6px 8px;
     }
     th {
-      background-color: #f4f4f5 !important;
-      font-weight: bold;
+      background-color: #000000 !important;
+      color: #ffffff !important;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
     }
     .text-right { text-align: right; }
     .text-center { text-align: center; }
@@ -190,16 +194,10 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
     .capitalize { text-transform: capitalize; }
     .border-b-2 { border-bottom: 2px solid #000000; }
     .border-t-2 { border-top: 2px solid #000000; }
-    .border-b { border-bottom: 1px solid #e4e4e7; }
-    .border { border: 1px solid #e4e4e7; }
-    .bg-zinc-50 { background-color: #fafafa !important; }
-    .bg-zinc-100 { background-color: #f4f4f5 !important; }
-    .text-zinc-500 { color: #71717a; }
-    .text-zinc-600 { color: #52525b; }
-    .text-zinc-700 { color: #3f3f46; }
-    .text-zinc-800 { color: #27272a; }
-    .grid { display: flex; flex-wrap: wrap; }
-    .grid-cols-2 > div { width: 50%; padding: 5px; }
+    .border-b { border-bottom: 1px solid #000000; }
+    .border { border: 1px solid #000000; }
+    .bg-zinc-50 { background-color: #f9f9f9 !important; }
+    .bg-zinc-100 { background-color: #f0f0f0 !important; }
   </style>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
 </head>
@@ -221,7 +219,6 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
     });
 
     try {
-      // 1. Create a clean isolated hidden iframe to guarantee 100% reliable printing without UI interference
       let iframe = document.getElementById('loozars_invoice_print_frame');
       if (iframe) {
         iframe.remove();
@@ -281,18 +278,18 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
         {/* Screen Header Toolbar (Hidden in Print) */}
         <div className="bg-[#181818] border-b border-[#262626] px-5 py-3.5 flex items-center justify-between shrink-0 no-print">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center font-bold">
               <FileText size={16} />
             </div>
             <div>
               <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-                <span>Retail Invoice & Bill</span>
+                <span>Tax Invoice & Packing Slip</span>
                 <span className="px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-300 font-mono border border-zinc-700">
                   A4 / PDF
                 </span>
               </h3>
               <p className="text-[11px] text-zinc-400">
-                Order {orderNumber} • Standard Market Invoice Format
+                Order {orderNumber} • LOOZARS, Kanpur Atelier
               </p>
             </div>
           </div>
@@ -309,7 +306,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-white hover:bg-zinc-200 text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-sm"
-              title="Print or Save as PDF (Ctrl+P / Cmd+P)"
+              title="Print or Save as PDF"
             >
               <Printer size={14} />
               <span>Print / Save as PDF</span>
@@ -328,41 +325,57 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
         <div className="p-4 sm:p-6 md:p-8 overflow-y-auto flex justify-center bg-[#0a0a0a] loozars-invoice-scroll-area">
           
           {/* =========================================================================
-              THE OFFICIAL RETAIL INVOICE & BILL DOCUMENT
+              THE OFFICIAL RETAIL TAX INVOICE & BILL DOCUMENT
               Standard A4 Page Ratio (210mm x 297mm)
              ========================================================================= */}
           <div 
             ref={printRef}
             id="official-retail-invoice"
-            className="invoice-a4-sheet w-full max-w-[780px] bg-white text-black font-sans text-[12px] leading-normal p-6 sm:p-10 shadow-2xl border border-zinc-200 select-text"
+            className="invoice-a4-sheet w-full max-w-[780px] bg-white text-black font-sans text-[12px] leading-normal p-6 sm:p-9 shadow-2xl border border-zinc-300 select-text"
           >
             {/* Header: Company Details & Invoice Metadata */}
-            <div className="flex flex-col sm:flex-row justify-between items-start pb-6 border-b-2 border-black gap-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start pb-5 border-b-2 border-black gap-4">
               <div>
-                <h1 className="text-2xl font-black tracking-tight uppercase font-sans text-black">
-                  LOOZARS<span className="text-zinc-600 font-light text-base">®</span>
-                </h1>
-                <p className="text-xs font-bold tracking-wider uppercase text-zinc-800 mt-0.5">
-                  Archive Apparel Atelier
+                <div className="flex items-baseline gap-2">
+                  <h1 className="text-3xl font-black tracking-tighter uppercase font-sans text-black">
+                    LOOZARS<span className="text-zinc-600 font-light text-lg">®</span>
+                  </h1>
+                  <span className="font-mono text-[10px] tracking-widest text-zinc-700 font-bold uppercase bg-zinc-100 px-2 py-0.5 border border-zinc-300 rounded">
+                    Kanpur Atelier
+                  </span>
+                </div>
+                
+                <p className="text-xs font-bold tracking-wider uppercase text-zinc-900 mt-1">
+                  Streetwear & Archive Apparel Atelier
                 </p>
-                <div className="text-[11px] text-zinc-600 mt-1.5 space-y-0.5">
-                  <p>Registered Fulfillment Atelier, Mumbai / Kanpur</p>
-                  <p>Maharashtra / Uttar Pradesh, India</p>
-                  <p>Web: <strong className="text-black">www.theloozars.com</strong> | Email: <strong className="text-black">support@theloozars.com</strong></p>
+                
+                <div className="text-[11px] text-zinc-700 mt-1 space-y-0.5 font-sans leading-snug">
+                  <p><strong>Fulfillment Center & Registered Atelier:</strong> Kanpur, Uttar Pradesh - 208001, India</p>
+                  <p><strong>GSTIN:</strong> 09AAHCL5829Q1Z4 (UP Division) | <strong>State:</strong> Uttar Pradesh (09)</p>
+                  <p><strong>Web:</strong> www.theloozars.com | <strong>Support:</strong> support@theloozars.com</p>
                 </div>
               </div>
 
-              <div className="sm:text-right space-y-1">
-                <div className="inline-block px-3 py-1 bg-black text-white font-bold text-xs uppercase tracking-wider rounded-sm mb-1">
-                  Tax Invoice / Retail Bill
+              <div className="sm:text-right space-y-1 sm:min-w-[240px]">
+                <div className="inline-block px-3 py-1 bg-black text-white font-bold text-xs uppercase tracking-wider rounded-sm mb-1 text-center w-full">
+                  Retail Tax Invoice
                 </div>
-                <div className="text-xs space-y-0.5">
-                  <p><span className="text-zinc-500 font-medium">Invoice No: </span><strong className="font-mono text-black font-bold">{invoiceNumber}</strong></p>
-                  <p><span className="text-zinc-500 font-medium">Order No: </span><strong className="font-mono text-black font-bold">{orderNumber}</strong></p>
-                  <p><span className="text-zinc-500 font-medium">Date: </span><strong className="text-black">{orderDate}</strong></p>
-                  <p>
-                    <span className="text-zinc-500 font-medium">Payment: </span>
-                    <span className={`font-bold px-1.5 py-0.2 rounded text-[10px] uppercase ${paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>
+                <div className="text-xs space-y-1 bg-zinc-50 p-2.5 rounded border border-zinc-300">
+                  <p className="flex justify-between sm:justify-end gap-2">
+                    <span className="text-zinc-600 font-medium">Invoice No:</span>
+                    <strong className="font-mono text-black font-bold">{invoiceNumber}</strong>
+                  </p>
+                  <p className="flex justify-between sm:justify-end gap-2">
+                    <span className="text-zinc-600 font-medium">Order No:</span>
+                    <strong className="font-mono text-black font-bold">{orderNumber}</strong>
+                  </p>
+                  <p className="flex justify-between sm:justify-end gap-2">
+                    <span className="text-zinc-600 font-medium">Invoice Date:</span>
+                    <strong className="text-black">{orderDate}</strong>
+                  </p>
+                  <p className="flex justify-between sm:justify-end gap-2 items-center">
+                    <span className="text-zinc-600 font-medium">Payment:</span>
+                    <span className={`font-bold px-2 py-0.5 rounded text-[10px] uppercase ${paymentStatus === 'PAID' ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-amber-100 text-amber-900 border border-amber-300'}`}>
                       {paymentStatus} ({paymentMethod})
                     </span>
                   </p>
@@ -371,85 +384,90 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
             </div>
 
             {/* Customer & Shipping Addresses (2 Columns) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 py-5 border-b border-zinc-300 text-xs">
-              <div className="bg-zinc-50 p-3.5 rounded border border-zinc-200 space-y-1">
-                <div className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider border-b border-zinc-200 pb-1 flex items-center gap-1.5">
-                  <User size={11} className="text-zinc-600" />
-                  <span>Billed To (Customer Details):</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4 border-b border-zinc-300 text-xs">
+              <div className="bg-zinc-50 p-3.5 rounded border border-zinc-300 space-y-1">
+                <div className="font-bold text-[10px] text-zinc-700 uppercase tracking-wider border-b border-zinc-200 pb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-bold text-black">
+                    <User size={12} className="text-black" />
+                    <span>Billed To (Customer Details):</span>
+                  </span>
+                  <span className="text-[9px] font-mono text-zinc-500">CONSUMER</span>
                 </div>
                 <div className="font-bold text-sm text-black pt-1">
                   {customerName}
                 </div>
                 {customerEmail && (
-                  <div className="text-zinc-700 flex items-center gap-1">
-                    <Mail size={11} className="text-zinc-500" />
+                  <div className="text-zinc-800 flex items-center gap-1">
+                    <Mail size={11} className="text-zinc-600" />
                     <span>{customerEmail}</span>
                   </div>
                 )}
                 {customerPhone && (
-                  <div className="text-zinc-700 flex items-center gap-1">
-                    <Phone size={11} className="text-zinc-500" />
+                  <div className="text-zinc-800 flex items-center gap-1">
+                    <Phone size={11} className="text-zinc-600" />
                     <span>+91 {customerPhone}</span>
                   </div>
                 )}
-                <div className="text-zinc-600 text-[11px] pt-0.5">
-                  Place of Supply: <strong className="text-black">{address.state || 'India'}</strong>
+                <div className="text-zinc-700 text-[11px] pt-1 border-t border-zinc-200 mt-1">
+                  Place of Supply: <strong className="text-black">{address.state || 'Uttar Pradesh'}</strong>
                 </div>
               </div>
 
-              <div className="bg-zinc-50 p-3.5 rounded border border-zinc-200 space-y-1">
-                <div className="font-bold text-[10px] text-zinc-500 uppercase tracking-wider border-b border-zinc-200 pb-1 flex items-center gap-1.5">
-                  <MapPin size={11} className="text-zinc-600" />
-                  <span>Shipped To (Delivery Address):</span>
+              <div className="bg-zinc-50 p-3.5 rounded border border-zinc-300 space-y-1">
+                <div className="font-bold text-[10px] text-zinc-700 uppercase tracking-wider border-b border-zinc-200 pb-1 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 font-bold text-black">
+                    <MapPin size={12} className="text-black" />
+                    <span>Shipped To (Delivery Destination):</span>
+                  </span>
+                  <span className="text-[9px] font-mono text-zinc-500">DOMESTIC</span>
                 </div>
                 <div className="font-bold text-sm text-black pt-1">
                   {customerName}
                 </div>
-                <div className="text-zinc-800 leading-snug">
-                  {address.address || 'Address on file'}
+                <div className="text-zinc-900 leading-snug">
+                  {address.address || 'Address on record'}
                   {address.apartment && `, ${address.apartment}`}
                 </div>
-                <div className="font-semibold text-black">
+                <div className="font-bold text-black">
                   {[address.city, address.state].filter(Boolean).join(', ')} {address.pincode ? `- ${address.pincode}` : ''}
                 </div>
-                <div className="text-zinc-600 text-[11px]">
-                  Country: <strong className="text-black">India</strong>
+                <div className="text-zinc-700 text-[11px] pt-1 border-t border-zinc-200 mt-1">
+                  Country: <strong className="text-black">India (IN)</strong>
                 </div>
               </div>
             </div>
 
             {/* Logistics & Tracking Bar */}
-            <div className="py-3 px-4 bg-zinc-100 border border-zinc-300 rounded my-4 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div>
-                <span className="text-zinc-500">Logistics Carrier: </span>
+            <div className="py-2.5 px-4 bg-zinc-100 border border-zinc-300 rounded my-3 flex flex-wrap items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-1.5">
+                <Truck size={13} className="text-black" />
+                <span className="text-zinc-600">Carrier: </span>
                 <strong className="text-black">{courierName}</strong>
               </div>
               <div>
-                <span className="text-zinc-500">Tracking AWB #: </span>
+                <span className="text-zinc-600">AWB Tracking #: </span>
                 <strong className="font-mono text-black font-bold">{trackingNumber}</strong>
               </div>
               <div>
-                <span className="text-zinc-500">Status: </span>
-                <strong className={`uppercase ${isShipped ? 'text-emerald-700' : 'text-zinc-800'}`}>
-                  {isShipped ? 'Dispatched' : 'Ready for Packing'}
-                </strong>
+                <span className="text-zinc-600">Fulfillment Hub: </span>
+                <strong className="text-black">Kanpur Central, UP</strong>
               </div>
             </div>
 
             {/* Line Items Table */}
-            <div className="mt-4 mb-6 overflow-x-auto">
-              <table className="w-full text-xs text-left border-collapse border border-zinc-300">
-                <thead className="bg-zinc-100 text-black font-bold text-[11px] border-b-2 border-black">
+            <div className="my-3 overflow-x-auto">
+              <table className="w-full text-xs text-left border-collapse border border-black">
+                <thead className="bg-black text-white font-bold text-[11px]">
                   <tr>
-                    <th className="p-2.5 border-r border-zinc-300 w-8 text-center">#</th>
-                    <th className="p-2.5 border-r border-zinc-300">Description of Goods</th>
-                    <th className="p-2.5 border-r border-zinc-300 w-16 text-center">Size</th>
-                    <th className="p-2.5 border-r border-zinc-300 w-12 text-center">Qty</th>
-                    <th className="p-2.5 border-r border-zinc-300 w-24 text-right">Unit Price</th>
-                    <th className="p-2.5 w-28 text-right">Total Amount</th>
+                    <th className="p-2 border border-black w-8 text-center bg-black text-white">#</th>
+                    <th className="p-2 border border-black bg-black text-white">Description of Goods</th>
+                    <th className="p-2 border border-black w-16 text-center bg-black text-white">Size</th>
+                    <th className="p-2 border border-black w-12 text-center bg-black text-white">Qty</th>
+                    <th className="p-2 border border-black w-24 text-right bg-black text-white">Unit Price</th>
+                    <th className="p-2 border border-black w-28 text-right bg-black text-white">Total Amount</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-200">
+                <tbody className="divide-y divide-zinc-300">
                   {items.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-4 text-center text-zinc-500 italic">
@@ -458,7 +476,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
                     </tr>
                   ) : (
                     items.map((item, idx) => {
-                      const itemName = item.product_name || item.name || 'LOOZARS Archive Apparel';
+                      const itemName = item.product_name || item.name || 'LOOZARS Heavyweight Archive Tee';
                       const itemSize = item.size || 'M';
                       const itemSku = item.sku || `${item.productId || 'LZR'}-${itemSize}`;
                       const itemQty = Math.max(1, parseInt(item.quantity, 10) || 1);
@@ -467,23 +485,25 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
 
                       return (
                         <tr key={item.id || item.variantId || idx} className="hover:bg-zinc-50">
-                          <td className="p-2.5 border-r border-zinc-300 text-center font-medium text-zinc-500">
+                          <td className="p-2.5 border border-zinc-300 text-center font-medium text-zinc-600">
                             {idx + 1}
                           </td>
-                          <td className="p-2.5 border-r border-zinc-300">
-                            <div className="font-bold text-black uppercase">{itemName}</div>
-                            <div className="text-[10px] font-mono text-zinc-500">SKU: {itemSku}</div>
+                          <td className="p-2.5 border border-zinc-300">
+                            <div className="font-bold text-black uppercase text-xs">{itemName}</div>
+                            <div className="text-[10px] font-mono text-zinc-600">SKU: {itemSku} • HSN 61091000</div>
                           </td>
-                          <td className="p-2.5 border-r border-zinc-300 text-center font-bold text-black">
-                            {itemSize}
+                          <td className="p-2.5 border border-zinc-300 text-center font-black text-black">
+                            <span className="px-2 py-0.5 bg-zinc-100 border border-zinc-300 rounded font-mono">
+                              {itemSize}
+                            </span>
                           </td>
-                          <td className="p-2.5 border-r border-zinc-300 text-center font-bold text-black">
+                          <td className="p-2.5 border border-zinc-300 text-center font-bold text-black">
                             {itemQty}
                           </td>
-                          <td className="p-2.5 border-r border-zinc-300 text-right font-mono text-zinc-800">
+                          <td className="p-2.5 border border-zinc-300 text-right font-mono text-zinc-900">
                             ₹{itemPrice.toLocaleString('en-IN')}
                           </td>
-                          <td className="p-2.5 text-right font-mono font-bold text-black">
+                          <td className="p-2.5 border border-zinc-300 text-right font-mono font-bold text-black">
                             ₹{lineTotal.toLocaleString('en-IN')}
                           </td>
                         </tr>
@@ -495,61 +515,61 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
             </div>
 
             {/* Financial Totals & Legal Declarations */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-6 pt-2 border-t border-zinc-300 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-5 pt-2 border-t-2 border-black text-xs">
               
               {/* Left Column: Words & Declarations */}
-              <div className="sm:col-span-7 space-y-3">
-                <div className="bg-zinc-50 p-3 rounded border border-zinc-200">
-                  <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-0.5">
-                    Amount in Words:
+              <div className="sm:col-span-7 space-y-2.5">
+                <div className="bg-zinc-50 p-3 rounded border border-zinc-300">
+                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider block mb-0.5">
+                    Amount in Words (INR):
                   </span>
-                  <p className="font-bold text-black capitalize">
+                  <p className="font-bold text-black capitalize text-xs">
                     {amountInWords}
                   </p>
                 </div>
 
-                <div className="space-y-1 text-[10px] text-zinc-600 leading-tight">
-                  <p className="font-bold uppercase text-black">Terms & Conditions / Declarations:</p>
-                  <p>1. This is a computer-generated tax invoice and requires no physical signature.</p>
-                  <p>2. All products are authentic official releases manufactured under strict quality standards.</p>
-                  <p>3. For returns, exchanges, or customer assistance, write to <strong>support@theloozars.com</strong> within 7 days of delivery.</p>
+                <div className="p-3 bg-zinc-50 rounded border border-zinc-300 space-y-1 text-[10px] text-zinc-700 leading-tight">
+                  <p className="font-bold uppercase text-black">Terms & Declarations:</p>
+                  <p>1. This is a computer-generated tax invoice and retail packing slip from LOOZARS, Kanpur Atelier.</p>
+                  <p>2. Products are 100% authentic archival heavyweight streetwear manufactured under strict ISO quality control.</p>
+                  <p>3. For exchanges or size queries, contact <strong>support@theloozars.com</strong> within 7 days of delivery.</p>
                 </div>
               </div>
 
-              {/* Right Column: Calculations */}
-              <div className="sm:col-span-5 space-y-2">
-                <div className="flex justify-between py-1 border-b border-zinc-200 text-zinc-700">
+              {/* Right Column: Calculations & Signatory */}
+              <div className="sm:col-span-5 space-y-1.5">
+                <div className="flex justify-between py-1 border-b border-zinc-200 text-zinc-800">
                   <span>Subtotal:</span>
-                  <span className="font-mono font-medium text-black">₹{subtotal.toLocaleString('en-IN')}</span>
+                  <span className="font-mono font-semibold text-black">₹{subtotal.toLocaleString('en-IN')}</span>
                 </div>
 
                 {discount > 0 && (
-                  <div className="flex justify-between py-1 border-b border-zinc-200 text-emerald-700">
-                    <span>Discount ({order.coupon_code || 'COUPON'}):</span>
-                    <span className="font-mono font-semibold">-₹{discount.toLocaleString('en-IN')}</span>
+                  <div className="flex justify-between py-1 border-b border-zinc-200 text-emerald-800 font-medium">
+                    <span>Discount ({order.coupon_code || 'PROMO'}):</span>
+                    <span className="font-mono font-bold">-₹{discount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between py-1 border-b border-zinc-200 text-zinc-700">
-                  <span>Shipping & Handling:</span>
-                  <span className="font-mono text-black">{shippingFee === 0 ? 'FREE' : `₹${shippingFee.toLocaleString('en-IN')}`}</span>
+                <div className="flex justify-between py-1 border-b border-zinc-200 text-zinc-800">
+                  <span>Shipping & Packaging:</span>
+                  <span className="font-mono font-bold text-black">{shippingFee === 0 ? 'FREE' : `₹${shippingFee.toLocaleString('en-IN')}`}</span>
                 </div>
 
-                <div className="flex justify-between py-1 border-b border-zinc-200 text-zinc-500 text-[11px]">
-                  <span>GST / Taxes:</span>
+                <div className="flex justify-between py-1 border-b border-zinc-200 text-zinc-600 text-[11px]">
+                  <span>GST (IGST / CGST+SGST):</span>
                   <span>Inclusive (All Taxes Paid)</span>
                 </div>
 
-                <div className="flex justify-between py-2 border-t-2 border-b-2 border-black font-bold text-sm text-black">
+                <div className="flex justify-between py-2 border-t-2 border-b-2 border-black font-black text-sm text-black bg-zinc-100 px-2 rounded">
                   <span>Grand Total:</span>
                   <span className="font-mono text-base">₹{total.toLocaleString('en-IN')}</span>
                 </div>
 
                 {/* Authorized Signatory Block */}
-                <div className="pt-4 text-right">
-                  <p className="text-[10px] text-zinc-500">For LOOZARS® ARCHIVE</p>
-                  <div className="h-8 flex items-end justify-end">
-                    <span className="font-serif italic text-xs font-semibold text-zinc-800 tracking-wider">
+                <div className="pt-3 text-right">
+                  <p className="text-[10px] font-bold text-zinc-700 uppercase">For LOOZARS® (Kanpur Atelier)</p>
+                  <div className="h-7 flex items-end justify-end">
+                    <span className="font-serif italic text-xs font-bold text-black tracking-wider border-b border-zinc-400 pb-0.5">
                       Authorized Signatory
                     </span>
                   </div>
@@ -558,9 +578,9 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
             </div>
 
             {/* Document Bottom Branding */}
-            <div className="mt-8 pt-4 border-t border-zinc-200 flex flex-col sm:flex-row justify-between items-center text-[10px] text-zinc-500 gap-2">
-              <p>LOOZARS • Independent Streetwear & Archive Apparel</p>
-              <p>Thank you for your order • www.theloozars.com</p>
+            <div className="mt-6 pt-3 border-t border-zinc-300 flex flex-col sm:flex-row justify-between items-center text-[10px] text-zinc-600 gap-1 font-mono">
+              <p>LOOZARS • Kanpur, Uttar Pradesh, India</p>
+              <p>Thank you for supporting independent streetwear • www.theloozars.com</p>
             </div>
 
           </div>
@@ -570,7 +590,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
         <div className="bg-[#181818] border-t border-[#262626] p-4 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 no-print">
           <div className="text-[11px] text-zinc-400 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-emerald-400" />
-            <span>Official Commercial Tax Invoice • Ready for A4 Print / PDF Export</span>
+            <span>LOOZARS, Kanpur Atelier • Ready for A4 Print / PDF Export</span>
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -603,7 +623,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm 15mm;
+            margin: 8mm 12mm;
           }
           
           body {

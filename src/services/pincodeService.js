@@ -199,12 +199,17 @@ export const lookupPincode = async (pincode) => {
   const prefix3 = cleanPin.substring(0, 3);
   const prefix2 = cleanPin.substring(0, 2);
 
-  let fallbackState = 'Maharashtra';
-  let fallbackCity = 'Mumbai';
+  let fallbackState = 'Uttar Pradesh';
+  let fallbackCity = 'Kanpur';
   let fallbackEst = '2–3 Business Days';
   let fallbackMetro = false;
 
-  if (prefix3 === '403') {
+  if (prefix3 === '208') {
+    fallbackState = 'Uttar Pradesh';
+    fallbackCity = 'Kanpur';
+    fallbackEst = '1–2 Business Days';
+    fallbackMetro = true;
+  } else if (prefix3 === '403') {
     fallbackState = 'Goa';
     fallbackCity = 'Panaji';
     fallbackEst = '3–4 Business Days';

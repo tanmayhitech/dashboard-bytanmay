@@ -38,7 +38,7 @@ export const PolicyModals = () => {
             </h3>
             
             <p className="leading-relaxed">
-              We operate an independent design studio in Mumbai and dispatch nationwide across India. For customer support, sizing consultation, or editorial collaborations:
+              We operate an independent design atelier in Kanpur, Uttar Pradesh and dispatch nationwide across India. For customer support, sizing consultation, or editorial collaborations:
             </p>
 
             <div className="space-y-3 border-t border-[#1a1a1a] pt-4">
@@ -48,7 +48,7 @@ export const PolicyModals = () => {
               </div>
               <div className="flex items-center gap-3 text-[#F5F4F0]">
                 <MapPin size={15} className="text-[#A62626]" />
-                <span>LOOZARS Atelier, Bandra West, Mumbai, MH 400050, India</span>
+                <span>LOOZARS Atelier, Civil Lines, Kanpur, Uttar Pradesh 208001, India</span>
               </div>
               <div className="flex items-center gap-3 text-[#F5F4F0]">
                 <Phone size={15} className="text-[#A62626]" />
@@ -67,10 +67,10 @@ export const PolicyModals = () => {
             
             <div className="space-y-3 leading-relaxed">
               <p className="text-[#F5F4F0] font-bold">• DISPATCH TIMELINE</p>
-              <p>All orders from DROP 01 are processed and dispatched within 24 to 48 business hours from our Mumbai facility.</p>
+              <p>All orders from DROP 01 are processed and dispatched within 24 to 48 business hours directly from our Kanpur, Uttar Pradesh atelier facility.</p>
               
               <p className="text-[#F5F4F0] font-bold pt-2">• DELIVERY TIMELINE</p>
-              <p>Metro Cities (Mumbai, Delhi NCR, Bengaluru, Hyderabad, Chennai, Kolkata): 2–3 business days.</p>
+              <p>Metro Cities (Delhi NCR, Lucknow, Kanpur, Mumbai, Bengaluru, Hyderabad, Kolkata): 2–3 business days.</p>
               <p>Rest of India: 3–5 business days via Delhivery, BlueDart, and DTDC Express.</p>
               
               <p className="text-[#F5F4F0] font-bold pt-2">• SHIPPING CHARGES</p>

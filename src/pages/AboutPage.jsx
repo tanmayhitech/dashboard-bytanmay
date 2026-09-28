@@ -303,7 +303,7 @@ export const AboutPage = () => {
                 className="w-full h-full object-cover filter contrast-[1.12] brightness-85 group-hover:scale-[1.02] transition-transform duration-700 ease-out"
               />
               <div className="absolute bottom-3 left-3 font-mono text-[9px] text-[#EDE7DC] bg-black/80 px-2 py-0.5 tracking-widest uppercase border border-white/10">
-                MUMBAI SPEEDWAY ARCHIVE
+                KANPUR SPEEDWAY ARCHIVE
               </div>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useShop } from '../context/ShopContext';
 import officialLogoImg from '../assets/images/loozars-official-logo.png';
 import campaignHeroImg from '../assets/photoshoot/05-campaign-editorial/campaign-shoot-01.png';
@@ -10,6 +10,60 @@ import { Search } from 'lucide-react';
 export const Hero = () => {
   const { navigateTo, setIsSearchOpen, setIsCartOpen, cartCount } = useShop();
   const [isHoveredCta, setIsHoveredCta] = useState(false);
+  
+  // Background exposure flicker state
+  const [atmosphereFilter, setAtmosphereFilter] = useState({
+    brightness: 0.98,
+    contrast: 1.08,
+    opacity: 1.0
+  });
+
+  // Organic irregular background flicker
+  useEffect(() => {
+    let flickerTimer;
+    let resetTimer;
+    let isSubscribed = true;
+
+    const runOrganicFlicker = () => {
+      if (!isSubscribed) return;
+      const baseDelays = [2200, 3100, 1800, 4400, 2700, 5600, 3900];
+      const delay = baseDelays[Math.floor(Math.random() * baseDelays.length)] + (Math.random() * 600 - 300);
+
+      flickerTimer = setTimeout(() => {
+        if (!isSubscribed) return;
+        const type = Math.floor(Math.random() * 3);
+        if (type === 0) {
+          setAtmosphereFilter({ brightness: 0.94, contrast: 1.06, opacity: 0.985 });
+          resetTimer = setTimeout(() => {
+            if (isSubscribed) setAtmosphereFilter({ brightness: 0.98, contrast: 1.08, opacity: 1.0 });
+          }, 160);
+        } else if (type === 1) {
+          setAtmosphereFilter({ brightness: 1.025, contrast: 1.11, opacity: 1.0 });
+          resetTimer = setTimeout(() => {
+            if (isSubscribed) setAtmosphereFilter({ brightness: 0.98, contrast: 1.08, opacity: 1.0 });
+          }, 120);
+        } else {
+          setAtmosphereFilter({ brightness: 1.015, contrast: 1.10, opacity: 1.0 });
+          setTimeout(() => {
+            if (isSubscribed) {
+              setAtmosphereFilter({ brightness: 0.95, contrast: 1.07, opacity: 0.99 });
+              resetTimer = setTimeout(() => {
+                if (isSubscribed) setAtmosphereFilter({ brightness: 0.98, contrast: 1.08, opacity: 1.0 });
+              }, 130);
+            }
+          }, 85);
+        }
+        runOrganicFlicker();
+      }, delay);
+    };
+
+    runOrganicFlicker();
+    return () => {
+      isSubscribed = false;
+      clearTimeout(flickerTimer);
+      clearTimeout(resetTimer);
+    };
+  }, []);
 
   return (
     <section className="relative w-full bg-[#080808] text-[#EDE7DC] min-h-[92vh] flex flex-col justify-between select-none overflow-hidden border-b border-[#141414] px-4 sm:px-8 lg:px-14 pt-5 sm:pt-7 pb-6 sm:pb-8">
@@ -187,7 +241,12 @@ export const Hero = () => {
               <img 
                 src={campaignHeroImg} 
                 alt="LOOZARS Drop 01 Official Campaign Shoot" 
-                className="w-full h-full object-cover object-top filter contrast-[1.08] brightness-[0.98] group-hover:scale-[1.02] transition-transform duration-1000 ease-out"
+                className="w-full h-full object-cover object-top will-change-transform group-hover:scale-[1.02] transition-transform duration-1000 ease-out"
+                style={{
+                  filter: `contrast(${atmosphereFilter.contrast}) brightness(${atmosphereFilter.brightness})`,
+                  opacity: atmosphereFilter.opacity,
+                  transition: 'filter 160ms cubic-bezier(0.4, 0, 0.2, 1), opacity 160ms ease-out'
+                }}
                 loading="eager"
               />
 
@@ -257,7 +316,7 @@ export const Hero = () => {
           "AN UNNECESSARY CLOTHING BRAND."
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden sm:inline">MUMBAI // DELHI // BENGALURU</span>
+          <span className="hidden sm:inline">KANPUR, UTTAR PRADESH // INDIA</span>
           <span className="text-[#8E1717] font-bold">01 / 04</span>
         </div>
       </div>

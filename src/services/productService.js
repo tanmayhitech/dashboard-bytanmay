@@ -136,31 +136,92 @@ export const transformDatabaseProduct = (row) => {
   };
 };
 
+const withTimeout = (promise, ms = 2500) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), ms))
+  ]);
+};
+
 /**
  * Formats static fallback products with canonical variants
  */
 const getFormattedFallbackProducts = () => {
-  return STATIC_PRODUCTS.map(p => {
-    const variants = buildFallbackVariants(p);
-    const stock = variants.reduce((acc, v) => {
-      acc[v.size] = v.availableStock;
-      return acc;
-    }, {});
-    const totalStock = variants.reduce((sum, v) => sum + v.availableStock, 0);
-    return {
-      ...p,
-      basePrice: p.price,
-      salePrice: null,
-      isSale: false,
-      formattedBasePrice: p.formattedPrice,
-      stock,
-      totalStock,
-      isOutOfStock: totalStock === 0,
-      variants,
-      isFeatured: false,
-      isActive: true
-    };
-  });
+  let localCreated = [];
+  let deletedIds = [];
+  if (typeof window !== 'undefined') {
+    try {
+      const stored = localStorage.getItem('loozars_local_products');
+      if (stored) localCreated = JSON.parse(stored);
+      const delStored = localStorage.getItem('loozars_deleted_product_ids');
+      if (delStored) deletedIds = JSON.parse(delStored);
+    } catch (e) {}
+  }
+
+  const staticTransformed = STATIC_PRODUCTS
+    .filter(p => !deletedIds.includes(p.id) && !deletedIds.includes(p.sku))
+    .map(p => {
+      const variants = buildFallbackVariants(p);
+      const stock = variants.reduce((acc, v) => {
+        acc[v.size] = v.availableStock;
+        return acc;
+      }, {});
+      const totalStock = variants.reduce((sum, v) => sum + v.availableStock, 0);
+      return {
+        ...p,
+        basePrice: p.price,
+        salePrice: null,
+        isSale: false,
+        formattedBasePrice: p.formattedPrice,
+        stock,
+        totalStock,
+        isOutOfStock: totalStock === 0,
+        variants,
+        isFeatured: false,
+        isActive: true
+      };
+    });
+
+  const localTransformed = (Array.isArray(localCreated) ? localCreated : [])
+    .filter(p => !deletedIds.includes(p.id) && !deletedIds.includes(p.sku))
+    .map(p => {
+      const variants = p.product_variants || buildFallbackVariants(p);
+      const stock = variants.reduce((acc, v) => {
+        acc[v.size] = v.stock_quantity ?? v.availableStock ?? 10;
+        return acc;
+      }, {});
+      const totalStock = variants.reduce((sum, v) => sum + (v.stock_quantity ?? v.availableStock ?? 10), 0);
+      const basePrice = p.base_price || p.price || 899;
+      const salePrice = p.sale_price || p.salePrice || null;
+      return {
+        ...p,
+        id: p.slug || p.id,
+        db_id: p.id,
+        price: salePrice || basePrice,
+        basePrice,
+        salePrice,
+        isSale: Boolean(salePrice),
+        formattedPrice: `₹${(salePrice || basePrice).toLocaleString('en-IN')}`,
+        formattedBasePrice: `₹${basePrice.toLocaleString('en-IN')}`,
+        formattedSalePrice: salePrice ? `₹${salePrice.toLocaleString('en-IN')}` : null,
+        stock,
+        totalStock,
+        isOutOfStock: totalStock === 0,
+        variants,
+        isActive: p.is_active !== false
+      };
+    });
+
+  const merged = [...localTransformed];
+  const seenIds = new Set(merged.map(m => m.id));
+  for (const s of staticTransformed) {
+    if (!seenIds.has(s.id)) {
+      merged.push(s);
+      seenIds.add(s.id);
+    }
+  }
+
+  return merged;
 };
 
 /**
@@ -176,26 +237,20 @@ export const fetchActiveProducts = async () => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, product_variants(*)')
-      .eq('is_active', true)
-      .order('sort_order', { ascending: true });
+    const { data, error } = await withTimeout(
+      supabase
+        .from('products')
+        .select('*, product_variants(*)')
+        .eq('is_active', true)
+        .order('sort_order', { ascending: true }),
+      2500
+    );
 
-    if (error) {
-      console.warn('[productService] Supabase catalog query failed, using development catalog:', error.message);
+    if (error || !data || data.length === 0) {
       return {
         data: getFormattedFallbackProducts(),
         source: 'local_dev_fallback_on_error',
-        error: error.message
-      };
-    }
-
-    if (!data || data.length === 0) {
-      return {
-        data: getFormattedFallbackProducts(),
-        source: 'local_dev_fallback_empty_db',
-        error: null
+        error: error?.message || null
       };
     }
 
@@ -206,7 +261,6 @@ export const fetchActiveProducts = async () => {
       error: null
     };
   } catch (err) {
-    console.warn('[productService] Unexpected error querying catalog:', err);
     return {
       data: getFormattedFallbackProducts(),
       source: 'local_dev_fallback_on_exception',
@@ -226,12 +280,15 @@ export const fetchProductBySlug = async (slug) => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('products')
-      .select('*, product_variants(*)')
-      .eq('slug', slug)
-      .eq('is_active', true)
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('products')
+        .select('*, product_variants(*)')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single(),
+      2500
+    );
 
     if (error || !data) {
       const fallbackList = getFormattedFallbackProducts();

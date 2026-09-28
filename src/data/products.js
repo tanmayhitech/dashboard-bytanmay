@@ -216,7 +216,7 @@ export const CAMPAIGN_EDITORIALS = [
   { id: 'camp-2', image: campaignShoot01, title: 'LZR VELO 07', subtitle: 'RAW SPEED // 35MM ARCHIVE' },
   { id: 'camp-3', image: campaignShoot05, title: 'LZR RACING DIVISION', subtitle: 'BURGUNDY & MOTORSPORT GRAIN' },
   { id: 'camp-4', image: campaignShoot04, title: 'APEX 88 & VELO 07', subtitle: 'UNDERGROUND GARAGE SESSIONS' },
-  { id: 'camp-5', image: campaignShoot02, title: 'NIGHT RUN', subtitle: 'MUMBAI // DELHI // SPEEDWAY' }
+  { id: 'camp-5', image: campaignShoot02, title: 'NIGHT RUN', subtitle: 'KANPUR // UTTAR PRADESH // SPEEDWAY' }
 ];
 
 export const DROP_INFO = {
@@ -229,5 +229,5 @@ export const DROP_INFO = {
   statement: 'WEAR WHAT SHOULDN’T EXIST.',
   curation: 'A streetwear collection built around speed, movement, and the raw energy of motorsport. Drop 01 translates racing-inspired graphics, technical typography, driver numbers, track details, and bold jersey construction into everyday streetwear.',
   piecesCount: 4,
-  location: 'MUMBAI // DELHI // SPEEDWAY ARCHIVE'
+  location: 'KANPUR, UTTAR PRADESH // ATELIER ARCHIVE'
 };

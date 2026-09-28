@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useShop } from '../context/ShopContext';
 import { 
   X, 
@@ -8,9 +8,7 @@ import {
   ArrowRight, 
   ShoppingBag, 
   CheckCircle2, 
-  ShieldCheck,
-  Tag,
-  RefreshCw
+  ShieldCheck
 } from 'lucide-react';
 
 export const CartDrawer = () => {
@@ -22,8 +20,6 @@ export const CartDrawer = () => {
     updateQuantity, 
     cartSubtotal, 
     appliedCoupon,
-    applyCoupon,
-    removeCoupon,
     couponDiscount,
     netSubtotal,
     shippingCost, 
@@ -32,33 +28,11 @@ export const CartDrawer = () => {
     navigateTo
   } = useShop();
 
-  const [promoCodeInput, setPromoCodeInput] = useState('');
-  const [promoError, setPromoError] = useState('');
-  const [isValidatingPromo, setIsValidatingPromo] = useState(false);
-
   if (!isCartOpen) return null;
 
   const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const amountToFreeShipping = Math.max(0, freeShippingThreshold - netSubtotal);
   const shippingProgress = Math.min(100, Math.round((netSubtotal / freeShippingThreshold) * 100));
-
-  const handleApplyPromo = async (e) => {
-    e?.preventDefault();
-    const code = promoCodeInput.trim();
-    if (!code) return;
-
-    setIsValidatingPromo(true);
-    setPromoError('');
-
-    const res = await applyCoupon(code);
-    if (!res.success) {
-      setPromoError(res.error || 'Invalid promo code');
-    } else {
-      setPromoCodeInput('');
-      setPromoError('');
-    }
-    setIsValidatingPromo(false);
-  };
 
   return (
     <div className="fixed inset-0 z-[99] overflow-hidden select-none">
@@ -267,49 +241,8 @@ export const CartDrawer = () => {
           {cart.length > 0 && (
             <div className="px-5 sm:px-6 py-4 border-t border-[#222222] bg-[#0E0E0E] space-y-3 font-mono shadow-2xl">
               
-              {/* Promo Code Input */}
-              {appliedCoupon ? (
-                <div className="p-2.5 bg-[#141414] border border-[#262626] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-2">
-                    <Tag size={12} className="text-[#A3E635]" />
-                    <span className="text-[#F1EEE6] font-bold uppercase">{appliedCoupon.code}</span>
-                    <span className="text-[#A3E635] text-[10px]">-₹{couponDiscount.toLocaleString('en-IN')}</span>
-                  </div>
-                  <button
-                    onClick={removeCoupon}
-                    className="text-[#8E8D8A] hover:text-[#EF4444] text-[10px] underline uppercase"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleApplyPromo} className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="PROMO CODE"
-                    value={promoCodeInput}
-                    onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                    className="flex-1 bg-[#141414] border border-[#282828] px-3 py-1.5 text-[10px] font-mono text-[#F1EEE6] placeholder-[#666] focus:outline-none focus:border-[#888] rounded-none uppercase"
-                  />
-                  <button
-                    type="submit"
-                    disabled={isValidatingPromo || !promoCodeInput.trim()}
-                    className="bg-[#222] hover:bg-[#333] border border-[#333] text-[#F1EEE6] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors disabled:opacity-40 rounded-none flex items-center gap-1"
-                  >
-                    {isValidatingPromo ? <RefreshCw size={10} className="animate-spin" /> : null}
-                    <span>APPLY</span>
-                  </button>
-                </form>
-              )}
-
-              {promoError && (
-                <p className="text-[10px] text-[#EF4444] font-mono">
-                  {promoError}
-                </p>
-              )}
-
               {/* Pricing Breakdown */}
-              <div className="space-y-1.5 text-[11px] pt-1 border-t border-[#1c1c1c]">
+              <div className="space-y-1.5 text-[11px] pt-1">
                 <div className="flex justify-between text-[#8E8D8A]">
                   <span>SUBTOTAL</span>
                   <span className="text-[#F1EEE6] font-bold">₹{cartSubtotal.toLocaleString('en-IN')}</span>

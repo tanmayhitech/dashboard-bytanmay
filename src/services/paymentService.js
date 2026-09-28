@@ -67,7 +67,7 @@ export const createPaymentOrder = async ({ orderId, amount: explicitAmount }) =>
 
   // 2. Fallback Flow (Direct Gateway Session with Configured Key)
   console.info('[paymentService] Generating client-ready Razorpay payment session with configured test keys.');
-  const razorpayKeyId = import.meta.env.VITE_RAZORPAY_KEY_ID || '';
+  const razorpayKeyId = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RAZORPAY_KEY_ID) || 'rzp_test_Th5g1Ry8LxJurD';
   const orderAmount = explicitAmount || 89900;
 
   return {
@@ -190,6 +190,8 @@ export const openRazorpayModal = async ({
   onFailure,
   onDismiss
 }) => {
+  const activeKey = keyId || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RAZORPAY_KEY_ID) || 'rzp_test_Th5g1Ry8LxJurD';
+
   const isLoaded = await loadRazorpayScript();
   if (!isLoaded || typeof window.Razorpay !== 'function') {
     onFailure({ message: 'Could not load Razorpay payment gateway. Please check your internet connection.' });
@@ -197,7 +199,7 @@ export const openRazorpayModal = async ({
   }
 
   const options = {
-    key: keyId,
+    key: activeKey,
     amount: amount,
     currency: currency,
     name: 'LOOZARS®',

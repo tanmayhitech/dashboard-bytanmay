@@ -29,8 +29,11 @@ export const AdminAccessDenied = () => {
 
         <div className="pt-4 border-t border-[#1a1a1a] flex flex-col sm:flex-row gap-3 justify-center text-sm font-medium">
           <button
-            onClick={() => signOut()}
-            className="px-6 py-3 bg-[#181818] hover:bg-[#252525] text-[#EDE7DC] transition-all flex items-center justify-center gap-2 rounded-xl border border-[#242424]"
+            onClick={async () => {
+              await signOut();
+              navigateTo('home');
+            }}
+            className="px-6 py-3 bg-[#181818] hover:bg-[#252525] text-[#EDE7DC] transition-all flex items-center justify-center gap-2 rounded-xl border border-[#242424] cursor-pointer"
           >
             <LogOut size={15} />
             <span>Sign Out</span>

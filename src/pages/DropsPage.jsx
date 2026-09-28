@@ -90,7 +90,7 @@ export const DropsPage = () => {
       id: 'lookbook-08',
       src: campaignShoot01,
       title: 'MIDNIGHT TROLLEY',
-      subtitle: '4 FRIENDS · MUMBAI SPEEDWAY',
+      subtitle: '4 FRIENDS · KANPUR SPEEDWAY',
       caption: '08 / REAL PEOPLE',
       orientation: 'landscape'
     }
@@ -350,7 +350,7 @@ export const DropsPage = () => {
               REAL PLACES.
             </h3>
             <p className="text-xs text-[#8E8D8A] tracking-widest uppercase">
-              NO SETS. NO STAGED LIGHTING. RAW MUMBAI STREET CULTURE.
+              NO SETS. NO STAGED LIGHTING. RAW STREET CULTURE.
             </p>
           </div>
         </div>

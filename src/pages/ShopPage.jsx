@@ -307,7 +307,7 @@ export const ShopPage = () => {
                   <span className="font-bold text-white">DROP 01 // RACING DIVISION</span>
                   <span className="text-[#8E8D8A]">· 320 GSM COMBED HEAVYWEIGHT COTTON</span>
                 </span>
-                <span className="text-[#8E8D8A]">MUMBAI // DELHI // SPEEDWAY ARCHIVE</span>
+                <span className="text-[#8E8D8A]">KANPUR // UTTAR PRADESH // SPEEDWAY ARCHIVE</span>
                 <span className="text-[#8E1717] font-bold">LIMITED ALLOCATION</span>
                 <span className="text-white/40">·</span>
                 <span className="flex items-center gap-2">
@@ -322,7 +322,7 @@ export const ShopPage = () => {
                   <span className="font-bold text-white">DROP 01 // RACING DIVISION</span>
                   <span className="text-[#8E8D8A]">· 320 GSM COMBED HEAVYWEIGHT COTTON</span>
                 </span>
-                <span className="text-[#8E8D8A]">MUMBAI // DELHI // SPEEDWAY ARCHIVE</span>
+                <span className="text-[#8E8D8A]">KANPUR // UTTAR PRADESH // SPEEDWAY ARCHIVE</span>
                 <span className="text-[#8E1717] font-bold">LIMITED ALLOCATION</span>
                 <span className="text-white/40">·</span>
                 <span className="flex items-center gap-2">

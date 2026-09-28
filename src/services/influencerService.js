@@ -270,6 +270,13 @@ export const saveStoredCommissions = (commissions) => {
   }
 };
 
+const withTimeout = (promise, ms = 2500) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), ms))
+  ]);
+};
+
 let mockInfluencers = getStoredInfluencers();
 let mockCommissions = getStoredCommissions();
 
@@ -295,7 +302,10 @@ export const fetchAdminInfluencers = async () => {
   }
 
   try {
-    const { data, error } = await supabase.rpc('get_admin_influencer_performance');
+    const { data, error } = await withTimeout(
+      supabase.rpc('get_admin_influencer_performance'),
+      3000
+    );
 
     if (error) {
       const { data: rawInfluencers, error: infError } = await supabase
@@ -462,60 +472,69 @@ export const createAdminInfluencer = async ({
   }
 
   try {
-    const { data, error } = await supabase.rpc('create_influencer', {
-      p_name: name.trim(),
-      p_instagram_handle: handle,
-      p_email: email?.trim() || null,
-      p_phone: phone?.trim() || null,
-      p_collaboration_type: collaborationType,
-      p_coupon_code: cleanCode,
-      p_customer_discount_type: customerDiscountType,
-      p_customer_discount_value: Number(customerDiscountValue),
-      p_commission_type: commissionType,
-      p_commission_value: Number(commissionValue),
-      p_notes: notes?.trim() || null,
-      p_barter_details: barterDetails
-    });
+    const { data, error } = await withTimeout(
+      supabase.rpc('create_influencer', {
+        p_name: name.trim(),
+        p_instagram_handle: handle,
+        p_email: email?.trim() || null,
+        p_phone: phone?.trim() || null,
+        p_collaboration_type: collaborationType,
+        p_coupon_code: cleanCode,
+        p_customer_discount_type: customerDiscountType,
+        p_customer_discount_value: Number(customerDiscountValue),
+        p_commission_type: commissionType,
+        p_commission_value: Number(commissionValue),
+        p_notes: notes?.trim() || null,
+        p_barter_details: barterDetails
+      }),
+      2500
+    );
 
     if (error) {
       // Direct table fallback if RPC not yet created in PostgreSQL
       const infId = crypto.randomUUID ? crypto.randomUUID() : newMockInf.id;
       saveCreatorPassword(infId, cleanPassword);
 
-      const { data: directData, error: directErr } = await supabase
-        .from('influencers')
-        .insert({
-          id: infId,
-          name: name.trim(),
-          instagram_handle: handle,
-          email: email?.trim() || null,
-          phone: phone?.trim() || null,
-          collaboration_type: collaborationType,
-          coupon_code: cleanCode,
-          customer_discount_type: customerDiscountType,
-          customer_discount_value: Number(customerDiscountValue),
-          commission_type: commissionType,
-          commission_value: Number(commissionValue),
-          is_active: true,
-          notes: notes?.trim() || null,
-          barter_details: barterDetails
-        })
-        .select()
-        .single();
+      const { data: directData, error: directErr } = await withTimeout(
+        supabase
+          .from('influencers')
+          .insert({
+            id: infId,
+            name: name.trim(),
+            instagram_handle: handle,
+            email: email?.trim() || null,
+            phone: phone?.trim() || null,
+            collaboration_type: collaborationType,
+            coupon_code: cleanCode,
+            customer_discount_type: customerDiscountType,
+            customer_discount_value: Number(customerDiscountValue),
+            commission_type: commissionType,
+            commission_value: Number(commissionValue),
+            is_active: true,
+            notes: notes?.trim() || null,
+            barter_details: barterDetails
+          })
+          .select()
+          .single(),
+        2500
+      );
 
       if (directErr) {
         return { success: true, influencer: newMockInf, error: null };
       }
 
       // Upsert linked coupon
-      await supabase.from('coupons').upsert({
-        code: cleanCode,
-        description: `Creator Discount (@${handle})`,
-        discount_type: customerDiscountType,
-        discount_value: Number(customerDiscountValue),
-        influencer_id: infId,
-        is_active: true
-      }, { onConflict: 'code' });
+      await withTimeout(
+        supabase.from('coupons').upsert({
+          code: cleanCode,
+          description: `Creator Discount (@${handle})`,
+          discount_type: customerDiscountType,
+          discount_value: Number(customerDiscountValue),
+          influencer_id: infId,
+          is_active: true
+        }, { onConflict: 'code' }),
+        2500
+      );
 
       broadcastCatalogUpdate();
       return { success: true, influencer: { ...directData, password: cleanPassword }, error: null };
@@ -594,58 +613,67 @@ export const updateAdminInfluencer = async (influencerId, {
   }
 
   try {
-    const { data, error } = await supabase.rpc('update_influencer', {
-      p_influencer_id: influencerId,
-      p_name: name.trim(),
-      p_instagram_handle: handle,
-      p_email: email?.trim() || null,
-      p_phone: phone?.trim() || null,
-      p_collaboration_type: collaborationType,
-      p_customer_discount_type: customerDiscountType,
-      p_customer_discount_value: Number(customerDiscountValue),
-      p_commission_type: commissionType,
-      p_commission_value: Number(commissionValue),
-      p_is_active: Boolean(isActive),
-      p_notes: notes?.trim() || null,
-      p_barter_details: barterDetails
-    });
+    const { data, error } = await withTimeout(
+      supabase.rpc('update_influencer', {
+        p_influencer_id: influencerId,
+        p_name: name.trim(),
+        p_instagram_handle: handle,
+        p_email: email?.trim() || null,
+        p_phone: phone?.trim() || null,
+        p_collaboration_type: collaborationType,
+        p_customer_discount_type: customerDiscountType,
+        p_customer_discount_value: Number(customerDiscountValue),
+        p_commission_type: commissionType,
+        p_commission_value: Number(commissionValue),
+        p_is_active: Boolean(isActive),
+        p_notes: notes?.trim() || null,
+        p_barter_details: barterDetails
+      }),
+      2500
+    );
 
     if (error) {
-      const { data: directData, error: directErr } = await supabase
-        .from('influencers')
-        .update({
-          name: name.trim(),
-          instagram_handle: handle,
-          email: email?.trim() || null,
-          phone: phone?.trim() || null,
-          collaboration_type: collaborationType,
-          customer_discount_type: customerDiscountType,
-          customer_discount_value: Number(customerDiscountValue),
-          commission_type: commissionType,
-          commission_value: Number(commissionValue),
-          is_active: Boolean(isActive),
-          notes: notes?.trim() || null,
-          barter_details: barterDetails,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', influencerId)
-        .select()
-        .single();
+      const { data: directData, error: directErr } = await withTimeout(
+        supabase
+          .from('influencers')
+          .update({
+            name: name.trim(),
+            instagram_handle: handle,
+            email: email?.trim() || null,
+            phone: phone?.trim() || null,
+            collaboration_type: collaborationType,
+            customer_discount_type: customerDiscountType,
+            customer_discount_value: Number(customerDiscountValue),
+            commission_type: commissionType,
+            commission_value: Number(commissionValue),
+            is_active: Boolean(isActive),
+            notes: notes?.trim() || null,
+            barter_details: barterDetails,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', influencerId)
+          .select()
+          .single(),
+        2500
+      );
 
       if (directErr) {
         return localRes;
       }
 
-      await supabase
-        .from('coupons')
-        .update({
-          discount_type: customerDiscountType,
-          discount_value: Number(customerDiscountValue),
-          is_active: Boolean(isActive),
-          description: `Creator Discount (@${handle})`,
-          updated_at: new Date().toISOString()
-        })
-        .eq('influencer_id', influencerId);
+      await withTimeout(
+        supabase
+          .from('coupons')
+          .update({
+            discount_type: customerDiscountType,
+            discount_value: Number(customerDiscountValue),
+            is_active: Boolean(isActive),
+            description: `Creator Discount (@${handle})`,
+            updated_at: new Date().toISOString()
+          })
+          .eq('influencer_id', influencerId),
+        2500
+      );
 
       broadcastCatalogUpdate();
       return { success: true, influencer: { ...(directData || {}), password: password || localRes?.influencer?.password }, error: null };
@@ -678,21 +706,27 @@ export const toggleAdminInfluencerStatus = async (influencerId, isActive) => {
   }
 
   try {
-    const { data, error } = await supabase
-      .from('influencers')
-      .update({ is_active: isActive, updated_at: new Date().toISOString() })
-      .eq('id', influencerId)
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('influencers')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('id', influencerId)
+        .select()
+        .single(),
+      2500
+    );
 
     if (error) {
       return toggleLocal();
     }
 
-    await supabase
-      .from('coupons')
-      .update({ is_active: isActive, updated_at: new Date().toISOString() })
-      .eq('influencer_id', influencerId);
+    await withTimeout(
+      supabase
+        .from('coupons')
+        .update({ is_active: isActive, updated_at: new Date().toISOString() })
+        .eq('influencer_id', influencerId),
+      2500
+    );
 
     broadcastCatalogUpdate();
     return { success: true, influencer: data, error: null };
@@ -724,11 +758,14 @@ export const fetchInfluencerDossier = async (influencerId) => {
   }
 
   try {
-    const [infRes, commsRes, ordersRes] = await Promise.all([
-      supabase.from('influencers').select('*').eq('id', influencerId).single(),
-      supabase.from('influencer_commissions').select('*').eq('influencer_id', influencerId).order('created_at', { ascending: false }),
-      supabase.from('orders').select('*').eq('influencer_id', influencerId).order('created_at', { ascending: false })
-    ]);
+    const [infRes, commsRes, ordersRes] = await withTimeout(
+      Promise.all([
+        supabase.from('influencers').select('*').eq('id', influencerId).single(),
+        supabase.from('influencer_commissions').select('*').eq('influencer_id', influencerId).order('created_at', { ascending: false }),
+        supabase.from('orders').select('*').eq('influencer_id', influencerId).order('created_at', { ascending: false })
+      ]),
+      3000
+    );
 
     if (infRes.error) {
       return getLocalDossier();
@@ -804,25 +841,31 @@ export const markInfluencerPayoutPaid = async ({
   }
 
   try {
-    const { data, error } = await supabase.rpc('mark_influencer_payout_paid', {
-      p_commission_ids: commissionIds,
-      p_payout_reference: cleanRef,
-      p_notes: notes ? notes.trim() : null
-    });
+    const { data, error } = await withTimeout(
+      supabase.rpc('mark_influencer_payout_paid', {
+        p_commission_ids: commissionIds,
+        p_payout_reference: cleanRef,
+        p_notes: notes ? notes.trim() : null
+      }),
+      2500
+    );
 
     if (error) {
-      const { data: updatedRows, error: directErr } = await supabase
-        .from('influencer_commissions')
-        .update({
-          status: 'paid',
-          payout_reference: cleanRef,
-          paid_at: new Date().toISOString(),
-          notes: notes?.trim() || null,
-          updated_at: new Date().toISOString()
-        })
-        .in('id', commissionIds)
-        .eq('status', 'eligible')
-        .select();
+      const { data: updatedRows, error: directErr } = await withTimeout(
+        supabase
+          .from('influencer_commissions')
+          .update({
+            status: 'paid',
+            payout_reference: cleanRef,
+            paid_at: new Date().toISOString(),
+            notes: notes?.trim() || null,
+            updated_at: new Date().toISOString()
+          })
+          .in('id', commissionIds)
+          .eq('status', 'eligible')
+          .select(),
+        2500
+      );
 
       if (directErr) {
         return settleLocal();
@@ -898,39 +941,54 @@ export const fetchInfluencerDashboardData = async () => {
   }
 
   try {
-    const { data, error } = await supabase.rpc('get_influencer_dashboard_data');
+    const { data, error } = await withTimeout(
+      supabase.rpc('get_influencer_dashboard_data'),
+      2500
+    );
 
     if (error) {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user } } = await withTimeout(
+        supabase.auth.getUser(),
+        2000
+      );
       if (!user) {
         return getLocalDashboard();
       }
 
-      const { data: userMapping, error: mapErr } = await supabase
-        .from('influencer_users')
-        .select('influencer_id')
-        .eq('auth_user_id', user.id)
-        .single();
+      const { data: userMapping, error: mapErr } = await withTimeout(
+        supabase
+          .from('influencer_users')
+          .select('influencer_id')
+          .eq('auth_user_id', user.id)
+          .single(),
+        2000
+      );
 
       if (mapErr || !userMapping) {
         return getLocalDashboard();
       }
 
       const infId = userMapping.influencer_id;
-      const { data: inf, error: infErr } = await supabase
-        .from('influencers')
-        .select('*')
-        .eq('id', infId)
-        .single();
+      const { data: inf, error: infErr } = await withTimeout(
+        supabase
+          .from('influencers')
+          .select('*')
+          .eq('id', infId)
+          .single(),
+        2000
+      );
 
       if (infErr || !inf) {
         return getLocalDashboard();
       }
 
-      const [ordersRes, commsRes] = await Promise.all([
-        supabase.from('orders').select('id, order_number, customer_name, created_at, items, total_amount, subtotal_amount, payment_status, order_status, influencer_commission_amount').eq('influencer_id', infId).order('created_at', { ascending: false }),
-        supabase.from('influencer_commissions').select('*').eq('influencer_id', infId).order('created_at', { ascending: false })
-      ]);
+      const [ordersRes, commsRes] = await withTimeout(
+        Promise.all([
+          supabase.from('orders').select('id, order_number, customer_name, created_at, items, total_amount, subtotal_amount, payment_status, order_status, influencer_commission_amount').eq('influencer_id', infId).order('created_at', { ascending: false }),
+          supabase.from('influencer_commissions').select('*').eq('influencer_id', infId).order('created_at', { ascending: false })
+        ]),
+        2500
+      );
 
       const dbOrders = ordersRes.data || [];
       const dbComms = commsRes.data || [];
@@ -1046,26 +1104,38 @@ export const checkIsInfluencer = async () => {
   }
 
   try {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await withTimeout(
+      supabase.auth.getUser(),
+      2000
+    );
     if (!user) return { is_influencer: false };
 
-    const { data, error } = await supabase.rpc('check_is_influencer');
+    const { data, error } = await withTimeout(
+      supabase.rpc('check_is_influencer'),
+      2000
+    );
     if (!error && data) {
       return data;
     }
 
-    const { data: mapping } = await supabase
-      .from('influencer_users')
-      .select('influencer_id')
-      .eq('auth_user_id', user.id)
-      .single();
+    const { data: mapping } = await withTimeout(
+      supabase
+        .from('influencer_users')
+        .select('influencer_id')
+        .eq('auth_user_id', user.id)
+        .single(),
+      2000
+    );
 
     if (mapping?.influencer_id) {
-      const { data: inf } = await supabase
-        .from('influencers')
-        .select('*')
-        .eq('id', mapping.influencer_id)
-        .single();
+      const { data: inf } = await withTimeout(
+        supabase
+          .from('influencers')
+          .select('*')
+          .eq('id', mapping.influencer_id)
+          .single(),
+        2000
+      );
 
       if (inf && inf.is_active) {
         return {
@@ -1162,11 +1232,14 @@ export const recordInfluencerOrder = async ({
 
   if (!matched && isSupabaseConfigured) {
     try {
-      const { data: dbInf } = await supabase
-        .from('influencers')
-        .select('*')
-        .eq('coupon_code', cleanCode)
-        .single();
+      const { data: dbInf } = await withTimeout(
+        supabase
+          .from('influencers')
+          .select('*')
+          .eq('coupon_code', cleanCode)
+          .single(),
+        2000
+      );
       if (dbInf) {
         matched = dbInf;
       }
@@ -1252,38 +1325,44 @@ export const recordInfluencerOrder = async ({
   if (isSupabaseConfigured) {
     try {
       const orderDbId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : `ord-${Date.now()}`;
-      await supabase.from('orders').upsert({
-        id: orderDbId,
-        order_number: finalOrderNumber,
-        customer_name: customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone,
-        items: items || [],
-        subtotal_amount: subtotalAmount,
-        discount_amount: discountAmount,
-        total_amount: totalAmount,
-        coupon_code: cleanCode,
-        payment_method: paymentMethod,
-        payment_status: paymentStatus,
-        order_status: 'confirmed',
-        influencer_id: matched.id,
-        influencer_commission_amount: commissionAmount,
-        influencer_commission_rate_snapshot: commVal,
-        influencer_commission_type_snapshot: commType,
-        created_at: orderDate
-      }, { onConflict: 'order_number' });
+      await withTimeout(
+        supabase.from('orders').upsert({
+          id: orderDbId,
+          order_number: finalOrderNumber,
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone,
+          items: items || [],
+          subtotal_amount: subtotalAmount,
+          discount_amount: discountAmount,
+          total_amount: totalAmount,
+          coupon_code: cleanCode,
+          payment_method: paymentMethod,
+          payment_status: paymentStatus,
+          order_status: 'confirmed',
+          influencer_id: matched.id,
+          influencer_commission_amount: commissionAmount,
+          influencer_commission_rate_snapshot: commVal,
+          influencer_commission_type_snapshot: commType,
+          created_at: orderDate
+        }, { onConflict: 'order_number' }),
+        2500
+      );
 
-      await supabase.from('influencer_commissions').insert({
-        influencer_id: matched.id,
-        order_id: orderDbId,
-        commission_type_snapshot: commType,
-        commission_value_snapshot: commVal,
-        commission_base_amount: commBase,
-        commission_amount: commissionAmount,
-        status: 'eligible',
-        notes: `Attributed from order ${finalOrderNumber} via coupon ${cleanCode}`,
-        created_at: orderDate
-      });
+      await withTimeout(
+        supabase.from('influencer_commissions').insert({
+          influencer_id: matched.id,
+          order_id: orderDbId,
+          commission_type_snapshot: commType,
+          commission_value_snapshot: commVal,
+          commission_base_amount: commBase,
+          commission_amount: commissionAmount,
+          status: 'eligible',
+          notes: `Attributed from order ${finalOrderNumber} via coupon ${cleanCode}`,
+          created_at: orderDate
+        }),
+        2500
+      );
     } catch (err) {
       console.warn('[influencerService] Supabase remote commission save exception:', err);
     }

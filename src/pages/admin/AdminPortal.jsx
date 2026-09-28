@@ -109,8 +109,11 @@ export const AdminPortalContent = () => {
             </button>
 
             <button
-              onClick={() => signOut()}
-              className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors rounded-lg flex items-center gap-1.5 text-xs font-medium"
+              onClick={async () => {
+                await signOut();
+                navigateTo('home');
+              }}
+              className="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 transition-colors rounded-lg flex items-center gap-1.5 text-xs font-medium cursor-pointer"
             >
               <LogOut size={13} />
               <span>Sign Out</span>

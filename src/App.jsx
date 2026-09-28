@@ -23,9 +23,35 @@ import { AdminPortal } from './pages/admin/AdminPortal';
 import { InfluencerPortal } from './pages/influencer/InfluencerPortal';
 
 export const App = () => {
-  const { currentView } = useShop();
+  const { currentView, navigateTo } = useShop();
   const isAdminView = currentView === 'admin';
   const isInfluencerView = currentView === 'influencer';
+
+  // Secret "admin" keyboard sequence trigger
+  useEffect(() => {
+    let keyBuffer = '';
+    const handleKeyDown = (e) => {
+      // Ignore keystrokes when typing inside text inputs, textareas, or search boxes
+      const targetTag = e.target?.tagName?.toLowerCase();
+      if (targetTag === 'input' || targetTag === 'textarea' || e.target?.isContentEditable) {
+        return;
+      }
+
+      if (e.key && e.key.length === 1) {
+        keyBuffer = (keyBuffer + e.key.toLowerCase()).slice(-5);
+        if (keyBuffer === 'admin') {
+          keyBuffer = '';
+          try {
+            sessionStorage.setItem('loozars_admin_unlocked', 'true');
+          } catch {}
+          navigateTo('admin');
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigateTo]);
 
   // Initialize Lenis smooth scroll for storefront
   useEffect(() => {

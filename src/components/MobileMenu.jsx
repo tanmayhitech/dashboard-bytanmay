@@ -42,20 +42,27 @@ export const MobileMenu = ({ isOpen, onClose }) => {
         </button>
 
         <div className="flex items-center gap-2.5">
-          {/* Quick Cart Trigger */}
+          {/* Quick Textured Cart Trigger */}
           <button
             onClick={handleCartClick}
-            className="px-2.5 py-1.5 border border-white/15 text-[#EDE7DC] font-mono text-[10px] tracking-widest uppercase flex items-center gap-1.5 hover:border-[#8E1717] transition-colors"
+            className="nav-textured-pill px-3 py-1.5 rounded-xl flex items-center gap-2 text-[#EDE7DC] hover:text-white transition-all duration-300"
             aria-label="View bag"
           >
-            <ShoppingBag size={12} />
-            <span>BAG [{cartCount}]</span>
+            <ShoppingBag size={13} className="text-[#EDE7DC]" />
+            <span className="font-mono text-[10px] tracking-widest font-bold">BAG</span>
+            <span className={`font-mono text-[9px] px-1.5 py-0.5 rounded-md font-bold ${
+              cartCount > 0 
+                ? 'bg-[#A62626] text-white shadow-[0_0_8px_rgba(166,38,38,0.7)]' 
+                : 'bg-white/[0.08] text-[#8E8D8A]'
+            }`}>
+              {cartCount > 0 ? (cartCount < 10 ? `0${cartCount}` : cartCount) : '0'}
+            </span>
           </button>
 
           {/* Close Menu Button */}
           <button 
             onClick={onClose}
-            className="p-1.5 border border-white/20 text-[#EDE7DC] hover:border-[#8E1717] transition-colors"
+            className="w-8 h-8 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-[#EDE7DC] hover:text-white transition-colors"
             aria-label="Close menu"
           >
             <X size={16} />

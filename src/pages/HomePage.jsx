@@ -34,7 +34,7 @@ export const HomePage = () => {
             <span className="w-2 h-2 bg-[#8E1717] inline-block"></span>
             <span className="font-bold text-white">BY THE RARE. FOR THE RARE.</span>
           </span>
-          <span className="text-[#8E8D8A]">MUMBAI SPEEDWAY ARCHIVE</span>
+          <span className="text-[#8E8D8A]">KANPUR SPEEDWAY ARCHIVE</span>
           <span className="text-white/30">·</span>
           {/* Duplicate loop */}
           <span className="flex items-center gap-2">
@@ -49,7 +49,7 @@ export const HomePage = () => {
             <span className="w-2 h-2 bg-[#8E1717] inline-block"></span>
             <span className="font-bold text-white">BY THE RARE. FOR THE RARE.</span>
           </span>
-          <span className="text-[#8E8D8A]">MUMBAI SPEEDWAY ARCHIVE</span>
+          <span className="text-[#8E8D8A]">KANPUR SPEEDWAY ARCHIVE</span>
           <span className="text-white/30">·</span>
         </div>
       </div>

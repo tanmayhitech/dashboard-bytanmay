@@ -5,6 +5,13 @@ import { supabase, isSupabaseConfigured } from '../supabase/client.js';
  * Validates promo coupons in real time against Supabase PostgreSQL RPC (with offline fallback)
  */
 
+const withTimeout = (promise, ms = 2000) => {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('Operation timed out')), ms))
+  ]);
+};
+
 export const validateCoupon = async (code, cartSubtotal = 0) => {
   if (!code || !code.trim()) {
     return { valid: false, error: 'Please enter a promo code.' };
@@ -16,10 +23,13 @@ export const validateCoupon = async (code, cartSubtotal = 0) => {
   // 1. Authoritative Supabase Validation
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await supabase.rpc('validate_coupon', {
-        p_code: cleanCode,
-        p_cart_subtotal: subtotal
-      });
+      const { data, error } = await withTimeout(
+        supabase.rpc('validate_coupon', {
+          p_code: cleanCode,
+          p_cart_subtotal: subtotal
+        }),
+        2000
+      );
 
       if (!error && data) {
         if (!data.valid) {
@@ -72,6 +82,46 @@ export const validateCoupon = async (code, cartSubtotal = 0) => {
       description: '100% Community Member Discount (Max ₹500)',
       error: null
     };
+  }
+
+  // Check locally created admin coupons
+  if (typeof window !== 'undefined') {
+    try {
+      const localCouponsRaw = localStorage.getItem('loozars_local_coupons');
+      if (localCouponsRaw) {
+        const localCoupons = JSON.parse(localCouponsRaw);
+        const match = Array.isArray(localCoupons) && localCoupons.find(c => c.is_active && (c.code || '').toUpperCase() === cleanCode);
+        if (match) {
+          if (match.min_order_amount && subtotal < match.min_order_amount) {
+            return {
+              valid: false,
+              code: cleanCode,
+              error: `Minimum order amount of ₹${match.min_order_amount} required to use this coupon.`
+            };
+          }
+
+          const discountVal = Number(match.discount_value || 10);
+          const isPercent = (match.discount_type || 'percentage') === 'percentage';
+          let discount = isPercent ? Math.round((subtotal * discountVal) / 100) : Math.min(subtotal, Math.round(discountVal));
+          if (match.max_discount_amount && discount > match.max_discount_amount) {
+            discount = match.max_discount_amount;
+          }
+
+          return {
+            valid: true,
+            code: cleanCode,
+            discountType: match.discount_type || 'percentage',
+            discountValue: discountVal,
+            discountAmount: discount,
+            maxDiscountAmount: match.max_discount_amount || null,
+            description: match.description || (isPercent ? `${discountVal}% Promo Discount` : `₹${discountVal} Promo Discount`),
+            error: null
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('[couponService] Local coupon check error:', e);
+    }
   }
 
   // Check stored/mock creator coupons for local development mode

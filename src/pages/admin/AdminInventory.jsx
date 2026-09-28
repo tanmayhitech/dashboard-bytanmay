@@ -9,7 +9,6 @@ import {
   Sliders, 
   AlertTriangle, 
   CheckCircle2, 
-  Database,
   Layers,
   ArrowUpDown
 } from 'lucide-react';
@@ -20,14 +19,12 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
   const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'
   const [sizeFilter, setSizeFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
   const [selectedItemForAdjust, setSelectedItemForAdjust] = useState(initialSelectedItem);
 
   const loadInventory = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await fetchAdminInventory();
-      setIsOffline(Boolean(res.isOffline));
       setInventory(res.inventory || []);
     } catch (err) {
       console.error('[AdminInventory] Error loading inventory:', err);
@@ -54,7 +51,7 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
     }
     if (searchQuery.trim() !== '') {
       const q = searchQuery.toLowerCase();
-      const matchSku = item.sku.toLowerCase().includes(q);
+      const matchSku = item.sku?.toLowerCase().includes(q);
       const matchProduct = item.product?.name?.toLowerCase().includes(q);
       if (!matchSku && !matchProduct) return false;
     }
@@ -89,19 +86,11 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
         </div>
       </div>
 
-      {/* Offline Alert */}
-      {isOffline && (
-        <div className="p-4 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-300 flex items-center gap-3">
-          <Database size={16} className="shrink-0 text-amber-400" />
-          <span>Database offline: Variant inventory queries require a live Supabase database connection.</span>
-        </div>
-      )}
-
       {/* Stock Summary Strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
         <div className="bg-[#121212] border border-[#222222] p-4 rounded-xl">
           <span className="text-xs text-zinc-400 block">Total SKUs</span>
-          <span className="text-xl font-bold text-white mt-1 block">{inventory.length || 21}</span>
+          <span className="text-xl font-bold text-white mt-1 block">{inventory.length}</span>
         </div>
         <div className="bg-[#121212] border border-[#222222] p-4 rounded-xl">
           <span className="text-xs text-zinc-400 block">Total Units</span>
@@ -124,10 +113,9 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
           <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
             type="text"
-            placeholder="Search by SKU or Product Name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#121212] border border-[#242424] focus:border-zinc-500 text-white pl-10 pr-4 py-2.5 text-xs rounded-xl outline-none transition-colors placeholder-zinc-500"
+            className="w-full bg-[#121212] border border-[#242424] focus:border-zinc-500 text-white pl-10 pr-4 py-2.5 text-xs rounded-xl outline-none transition-colors"
           />
         </div>
 

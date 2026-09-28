@@ -15,10 +15,10 @@ export const OrderConfirmationPage = () => {
     shippingAddress: {
       firstName: 'Customer',
       lastName: '',
-      address: 'Bandra West',
-      city: 'Mumbai',
-      state: 'Maharashtra',
-      pincode: '400050',
+      address: 'Civil Lines',
+      city: 'Kanpur',
+      state: 'Uttar Pradesh',
+      pincode: '208001',
       phone: '9876543210'
     },
     trackingNumber: null,
@@ -50,7 +50,7 @@ export const OrderConfirmationPage = () => {
               YOUR PIECE IS RESERVED.
             </h1>
             <p className="font-mono text-xs sm:text-sm text-[#8E8D8A] leading-relaxed">
-              We have received your order. Your garment is being packaged in our Mumbai facility and prepared for dispatch.
+              We have received your order. Your garment is being packaged in our Kanpur, Uttar Pradesh atelier and prepared for dispatch.
             </p>
           </div>
 
