@@ -98,8 +98,8 @@ export const App = () => {
         {currentView === '404' && <NotFoundPage />}
       </div>
 
-      {/* 07 — FOOTER */}
-      <Footer />
+      {/* 07 — FOOTER (Non-home pages) */}
+      {currentView !== 'home' && <Footer />}
 
       {/* Global Interactive Drawers & Overlays */}
       <CartDrawer />

@@ -22,7 +22,11 @@ export default {
         display: ['Syne', 'sans-serif'],
         sans: ['Inter', '"Space Grotesk"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['"Space Mono"', 'monospace'],
-        hindi: ['"Cinzel Decorative"', '"Bodoni Moda"', 'serif']
+        hindi: ['"Cinzel Decorative"', '"Bodoni Moda"', 'serif'],
+        handwriting: ['Caveat', 'cursive'],
+        script: ['"Reenie Beanie"', 'Caveat', 'cursive'],
+        gothic: ['Cinzel', '"Bebas Neue"', 'serif'],
+        bebas: ['"Bebas Neue"', 'Anton', 'sans-serif'],
       },
       letterSpacing: {
         tighter: '-0.06em',

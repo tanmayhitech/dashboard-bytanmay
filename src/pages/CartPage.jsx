@@ -14,7 +14,6 @@ import {
   RefreshCw,
   MapPin,
   CheckCircle2,
-  Sparkles,
   Lock
 } from 'lucide-react';
 
@@ -33,7 +32,6 @@ export const CartPage = () => {
     freeShippingThreshold, 
     cartTotal, 
     navigateTo,
-    deliveryPincode,
     deliveryInfo,
     isCheckingPincode,
     checkDeliveryPincode,
@@ -48,8 +46,9 @@ export const CartPage = () => {
   const [pincodeInput, setPincodeInput] = useState('');
   const [pincodeError, setPincodeError] = useState('');
 
-  const handleApplyPromo = async (codeToApply = null) => {
-    const code = (codeToApply || promoCodeInput).trim();
+  const handleApplyPromo = async (e) => {
+    e?.preventDefault();
+    const code = promoCodeInput.trim();
     if (!code) return;
 
     setIsValidatingPromo(true);
@@ -89,73 +88,76 @@ export const CartPage = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="w-full min-h-[75vh] bg-[#090909] pt-36 pb-24 px-6 flex flex-col items-center justify-center text-center">
-        <div className="w-16 h-16 rounded-full bg-[#141414] border border-[#222222] flex items-center justify-center text-[#8E8D8A] mb-4">
-          <ShoppingBag size={24} />
+      <div className="w-full min-h-[75vh] bg-[#F1EEE6] text-[#0A0A0A] pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center select-none font-mono">
+        <div className="w-16 h-16 rounded-full bg-[#E8E4DA] border border-[#0A0A0A]/15 flex items-center justify-center text-[#0A0A0A] mb-4">
+          <ShoppingBag size={22} />
         </div>
-        <h1 className="text-xl font-medium text-[#EDE7DC] mb-2">Your Shopping Bag is Empty</h1>
-        <p className="text-xs sm:text-sm text-[#8E8D8A] max-w-sm mb-6">
-          Looks like you haven't added any pieces yet. Explore our Drop 01 archive collection.
+        <div className="text-xs text-[#0A0A0A]/60 tracking-[0.25em] uppercase mb-1">00 // ARCHIVE EMPTY</div>
+        <h1 className="font-editorial text-3xl sm:text-4xl font-bold uppercase text-[#0A0A0A] mb-2">
+          Your Shopping Bag is Empty
+        </h1>
+        <p className="text-xs text-[#0A0A0A]/70 max-w-sm mb-6 uppercase tracking-wider">
+          Discover heavyweight silhouettes from the Drop 01 archive.
         </p>
         <button
           onClick={() => navigateTo('shop')}
-          className="bg-[#EDE7DC] text-[#080808] px-8 py-3.5 text-xs font-semibold tracking-wider uppercase hover:bg-white transition-all shadow-lg"
+          className="bg-[#0A0A0A] text-[#F1EEE6] hover:bg-[#8E1717] hover:text-white px-8 py-3.5 text-xs font-bold tracking-[0.25em] uppercase transition-all rounded-none shadow-md"
         >
-          Explore Drop 01
+          EXPLORE THE ARCHIVE →
         </button>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#090909] text-[#EDE7DC] pt-28 sm:pt-36 pb-24 px-4 sm:px-8 lg:px-14">
-      <div className="max-w-[1360px] mx-auto">
+    <div className="w-full min-h-screen bg-[#F1EEE6] text-[#0A0A0A] pt-24 sm:pt-32 pb-24 px-5 sm:px-10 lg:px-14 select-none font-mono">
+      <div className="max-w-[1560px] mx-auto space-y-8">
         
         {/* Page Navigation & Title */}
-        <div className="border-b border-[#1a1a1a] pb-6 mb-8 flex flex-col sm:flex-row sm:items-baseline justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono text-[#8E8D8A] uppercase tracking-wider mb-1">
-              <span>Bag</span>
+        <div className="border-b border-[#0A0A0A]/15 pb-6 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 text-[10px] sm:text-[11px] text-[#0A0A0A]/60 uppercase tracking-[0.25em]">
+              <span>01</span>
+              <span className="w-6 h-[1px] bg-[#0A0A0A]/35 inline-block"></span>
+              <span>SHOPPING BAG</span>
               <span>/</span>
-              <span className="text-[#EDE7DC]">{totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}</span>
+              <span className="text-[#8E1717] font-bold">[{totalItemsCount} {totalItemsCount === 1 ? 'PIECE' : 'PIECES'}]</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-medium tracking-tight text-[#EDE7DC]">
-              Shopping Bag
+            <h1 className="font-editorial text-3xl sm:text-5xl font-bold uppercase tracking-tight text-[#0A0A0A]">
+              YOUR SELECTION
             </h1>
           </div>
 
           <button
             onClick={() => navigateTo('shop')}
-            className="inline-flex items-center gap-2 text-xs text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors self-start sm:self-auto"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#0A0A0A] hover:text-[#8E1717] transition-colors self-start sm:self-auto"
           >
             <ArrowLeft size={14} />
-            <span>Continue Shopping</span>
+            <span>CONTINUE BROWSING</span>
           </button>
         </div>
 
         {/* Free Shipping Progress Indicator */}
-        <div className="bg-[#111111] border border-[#1e1e1e] p-4 rounded-sm mb-8 space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs font-mono">
+        <div className="bg-[#E8E4DA] border border-[#0A0A0A]/15 p-4 space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs uppercase tracking-wider">
             {amountToFreeShipping === 0 ? (
-              <span className="text-[#A3E635] flex items-center gap-1.5 font-medium">
+              <span className="text-[#15803d] flex items-center gap-1.5 font-bold">
                 <CheckCircle2 size={14} />
-                <span>✓ You have qualified for FREE Express Shipping across India!</span>
+                <span>FREE PAN-INDIA EXPRESS DELIVERY UNLOCKED</span>
               </span>
             ) : (
-              <span className="text-[#8E8D8A]">
-                Add <strong className="text-[#EDE7DC]">₹{amountToFreeShipping.toLocaleString('en-IN')}</strong> more to unlock <strong className="text-[#EDE7DC]">FREE Pan-India Express Delivery</strong>
+              <span className="text-[#0A0A0A]/80">
+                ADD <strong className="text-[#0A0A0A]">₹{amountToFreeShipping.toLocaleString('en-IN')}</strong> MORE FOR <strong className="text-[#8E1717]">FREE SHIPPING</strong>
               </span>
             )}
-            <span className="text-[11px] text-[#666666] hidden sm:inline">
-              Threshold: ₹2,000 ({shippingProgress}% achieved)
+            <span className="text-[10px] text-[#0A0A0A]/60">
+              THRESHOLD: ₹2,000 ({shippingProgress}%)
             </span>
           </div>
-          <div className="w-full h-1.5 bg-[#222222] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-[#D8D4CA] overflow-hidden">
             <div 
-              className={`h-full transition-all duration-500 rounded-full ${
-                amountToFreeShipping === 0 
-                  ? 'bg-gradient-to-r from-[#84cc16] to-[#A3E635]' 
-                  : 'bg-[#EDE7DC]'
+              className={`h-full transition-all duration-500 ${
+                amountToFreeShipping === 0 ? 'bg-[#15803d]' : 'bg-[#0A0A0A]'
               }`}
               style={{ width: `${shippingProgress}%` }}
             />
@@ -170,34 +172,35 @@ export const CartPage = () => {
             {cart.map((item, idx) => {
               const itemImg = item.product?.images?.[0] || item.image || '';
               const itemName = item.product?.name || item.name || 'LOOZARS Archive Apparel';
-              const itemSubtitle = item.product?.subtitle || 'Heavyweight 100% French Terry Cotton';
+              const itemSubtitle = item.product?.subtitle || '320 GSM 100% Combed Cotton';
               const itemPrice = item.product?.price || item.unitPrice || 899;
-              const itemBasePrice = item.product?.basePrice;
-              const isSale = item.product?.isSale;
               const lineTotal = itemPrice * item.quantity;
               const itemId = item.variantId || item.product?.id || item.productId;
 
               return (
                 <div 
                   key={item.variantId || `${item.productId}-${item.size}-${idx}`}
-                  className="bg-[#0e0e0e] border border-[#1a1a1a] p-4 sm:p-5 flex gap-4 sm:gap-6 rounded-sm transition-all hover:border-[#262626] group"
+                  className="bg-[#E8E4DA] border border-[#0A0A0A]/15 p-4 sm:p-5 flex gap-4 sm:gap-6 transition-all hover:border-[#0A0A0A]/40 group"
                 >
                   {/* Thumbnail */}
                   <div 
                     onClick={() => navigateTo('product', item.product?.id || item.productId)}
-                    className="w-24 sm:w-28 aspect-[3/4] bg-[#141414] overflow-hidden shrink-0 border border-[#222222] rounded-sm cursor-pointer relative"
+                    className="w-24 sm:w-28 aspect-[3/4] bg-[#D8D4CA] overflow-hidden shrink-0 border border-[#0A0A0A]/15 cursor-pointer relative"
                   >
                     {itemImg ? (
                       <img 
                         src={itemImg} 
                         alt={itemName} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 filter contrast-[1.05]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[#444444] text-xs">
+                      <div className="w-full h-full flex items-center justify-center text-[#444] text-xs">
                         LZR
                       </div>
                     )}
+                    <div className="absolute top-1 left-1 font-mono text-[8px] bg-black text-white px-1">
+                      0{idx + 1}
+                    </div>
                   </div>
 
                   {/* Details */}
@@ -206,58 +209,49 @@ export const CartPage = () => {
                       <div className="flex justify-between items-start gap-2">
                         <h2 
                           onClick={() => navigateTo('product', item.product?.id || item.productId)}
-                          className="text-base font-medium text-[#EDE7DC] hover:text-[#A3E635] transition-colors cursor-pointer truncate"
+                          className="font-mono text-sm sm:text-base font-bold text-[#0A0A0A] hover:text-[#8E1717] transition-colors cursor-pointer truncate uppercase tracking-wider"
                         >
                           {itemName}
                         </h2>
                         
                         <div className="text-right shrink-0">
-                          <span className="text-base font-semibold text-[#EDE7DC]">
+                          <span className="font-mono text-base font-bold text-[#0A0A0A]">
                             ₹{lineTotal.toLocaleString('en-IN')}
                           </span>
-                          {isSale && itemBasePrice && (
-                            <span className="block text-xs text-[#666666] line-through font-mono">
-                              ₹{(itemBasePrice * item.quantity).toLocaleString('en-IN')}
-                            </span>
-                          )}
                         </div>
                       </div>
 
-                      <p className="text-xs text-[#8E8D8A] line-clamp-1">
+                      <p className="text-xs text-[#0A0A0A]/70 line-clamp-1 uppercase tracking-wide">
                         {itemSubtitle}
                       </p>
 
-                      <div className="flex items-center gap-2 pt-1">
-                        <div className="inline-flex items-center px-2.5 py-0.5 rounded-sm bg-[#161616] border border-[#242424] text-xs font-mono text-[#EDE7DC]">
-                          Size: <strong className="ml-1 text-white">{item.size || 'M'}</strong>
-                        </div>
-                        {isSale && (
-                          <span className="text-[10px] bg-[#8E1717] text-white px-2 py-0.5 rounded-sm uppercase tracking-wider font-mono font-bold">
-                            SALE
-                          </span>
-                        )}
-                        <span className="text-[11px] text-[#666666] font-mono">
+                      <div className="flex items-center gap-2 pt-1 text-xs">
+                        <span className="text-[#0A0A0A]/70 uppercase">
+                          SIZE: <strong className="text-[#0A0A0A]">{item.size || 'M'}</strong>
+                        </span>
+                        <span className="text-[#0A0A0A]/40">·</span>
+                        <span className="text-[#0A0A0A]/70">
                           (₹{itemPrice.toLocaleString('en-IN')} each)
                         </span>
                       </div>
                     </div>
 
                     {/* Quantity & Delete Controls */}
-                    <div className="flex items-center justify-between pt-4 border-t border-[#181818] mt-3">
-                      <div className="flex items-center border border-[#282828] bg-[#141414] rounded-sm">
+                    <div className="flex items-center justify-between pt-3 border-t border-[#0A0A0A]/10 mt-3">
+                      <div className="flex items-center border border-[#0A0A0A]/25 bg-transparent">
                         <button 
                           onClick={() => updateQuantity(itemId, item.size, -1)}
-                          className="px-3 py-1.5 text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors"
+                          className="px-2.5 py-1 text-[#0A0A0A]/70 hover:text-[#0A0A0A] transition-colors"
                           aria-label="Decrease quantity"
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="w-8 text-center text-xs font-mono font-semibold text-[#EDE7DC]">
+                        <span className="w-8 text-center text-xs font-mono font-bold text-[#0A0A0A]">
                           {item.quantity}
                         </span>
                         <button 
                           onClick={() => updateQuantity(itemId, item.size, 1)}
-                          className="px-3 py-1.5 text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors"
+                          className="px-2.5 py-1 text-[#0A0A0A]/70 hover:text-[#0A0A0A] transition-colors"
                           aria-label="Increase quantity"
                         >
                           <Plus size={12} />
@@ -266,11 +260,11 @@ export const CartPage = () => {
 
                       <button
                         onClick={() => removeFromCart(itemId, item.size)}
-                        className="inline-flex items-center gap-1.5 text-xs text-[#8E8D8A] hover:text-[#EF4444] transition-colors p-1.5 hover:bg-white/5 rounded-sm"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#0A0A0A]/60 hover:text-[#8E1717] uppercase tracking-wider transition-colors"
                         title="Remove piece from bag"
                       >
                         <Trash2 size={13} />
-                        <span className="hidden sm:inline">Remove</span>
+                        <span className="hidden sm:inline">REMOVE</span>
                       </button>
                     </div>
 
@@ -283,40 +277,40 @@ export const CartPage = () => {
           {/* Right Column: Order Summary (5 cols) */}
           <div className="lg:col-span-5 space-y-6">
             
-            <div className="bg-[#0e0e0e] border border-[#1a1a1a] p-6 rounded-sm space-y-5 shadow-lg">
-              <h2 className="text-base font-medium text-[#EDE7DC] border-b border-[#1a1a1a] pb-4 flex items-center justify-between">
-                <span>Order Summary</span>
-                <span className="text-xs font-mono text-[#8E8D8A]">
-                  {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}
+            <div className="bg-[#E8E4DA] border border-[#0A0A0A]/15 p-6 space-y-5">
+              <h2 className="font-mono text-xs font-bold uppercase tracking-[0.2em] text-[#0A0A0A] border-b border-[#0A0A0A]/15 pb-4 flex items-center justify-between">
+                <span>ORDER DOSSIER</span>
+                <span className="text-[#8E1717]">
+                  [{totalItemsCount} PIECES]
                 </span>
               </h2>
 
               {/* Delivery Estimator */}
-              <div className="bg-[#141414] border border-[#222222] rounded-sm p-4 space-y-2.5">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-[#EDE7DC] font-medium">
-                    <MapPin size={14} className="text-[#A3E635]" />
-                    <span>Delivery Pincode</span>
+              <div className="bg-[#D8D4CA] border border-[#0A0A0A]/10 p-4 space-y-2.5">
+                <div className="flex items-center justify-between text-xs uppercase tracking-wider">
+                  <div className="flex items-center gap-1.5 text-[#0A0A0A] font-bold">
+                    <MapPin size={13} className="text-[#8E1717]" />
+                    <span>DELIVERY PINCODE</span>
                   </div>
 
                   {deliveryInfo?.valid && (
                     <button
                       onClick={clearDeliveryInfo}
-                      className="text-[11px] text-[#8E8D8A] hover:text-[#EF4444] transition-colors"
+                      className="text-[10px] text-[#0A0A0A]/60 hover:text-[#8E1717] underline uppercase"
                     >
-                      Change
+                      CHANGE
                     </button>
                   )}
                 </div>
 
                 {deliveryInfo?.valid ? (
-                  <div className="bg-[#181818] border border-[#262626] p-3 rounded-sm flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2 text-[#EDE7DC]">
-                      <span className="font-semibold">{deliveryInfo.city}, {deliveryInfo.state}</span>
-                      <span className="font-mono text-[#A3E635]">({deliveryInfo.pincode})</span>
+                  <div className="bg-[#E8E4DA] border border-[#0A0A0A]/15 p-3 flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2 text-[#0A0A0A]">
+                      <span className="font-bold">{deliveryInfo.city}, {deliveryInfo.state}</span>
+                      <span className="text-[#8E1717] font-bold">({deliveryInfo.pincode})</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-[11px] text-[#8E8D8A] font-mono">
-                      <Truck size={13} className="text-[#A3E635]" />
+                    <div className="flex items-center gap-1.5 text-[11px] text-[#0A0A0A]/70">
+                      <Truck size={13} className="text-[#0A0A0A]" />
                       <span>{deliveryInfo.estimatedDays}</span>
                     </div>
                   </div>
@@ -326,23 +320,23 @@ export const CartPage = () => {
                       <input
                         type="text"
                         maxLength={6}
-                        placeholder="Enter 6-digit PIN"
+                        placeholder="ENTER 6-DIGIT PIN"
                         value={pincodeInput}
                         onChange={(e) => setPincodeInput(e.target.value.replace(/\D/g, ''))}
-                        className="flex-1 bg-[#181818] border border-[#282828] px-3.5 py-2 text-xs font-mono text-[#EDE7DC] placeholder-[#666666] focus:outline-none focus:border-[#A3E635] rounded-sm"
+                        className="flex-1 bg-[#E8E4DA] border border-[#0A0A0A]/20 px-3.5 py-2 text-xs font-mono text-[#0A0A0A] placeholder-[#0A0A0A]/50 focus:outline-none focus:border-[#0A0A0A] uppercase"
                       />
                       <button
                         type="submit"
                         disabled={isCheckingPincode || pincodeInput.length !== 6}
-                        className="bg-[#242424] text-[#EDE7DC] hover:bg-[#333333] px-4 py-2 text-xs font-medium uppercase tracking-wider transition-colors disabled:opacity-40 rounded-sm flex items-center gap-1 border border-[#303030]"
+                        className="bg-[#0A0A0A] text-[#F1EEE6] hover:bg-[#8E1717] px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-40 flex items-center gap-1"
                       >
                         {isCheckingPincode ? <RefreshCw size={11} className="animate-spin" /> : null}
-                        <span>Check</span>
+                        <span>CHECK</span>
                       </button>
                     </div>
 
                     {pincodeError && (
-                      <p className="text-xs text-[#EF4444]">
+                      <p className="text-xs text-[#8E1717]">
                         {pincodeError}
                       </p>
                     )}
@@ -352,45 +346,45 @@ export const CartPage = () => {
 
               {/* Promo / Coupon Section */}
               {appliedCoupon ? (
-                <div className="p-3.5 bg-[#141414] border border-[#262626] rounded-sm flex items-center justify-between text-xs">
+                <div className="p-3.5 bg-[#D8D4CA] border border-[#0A0A0A]/15 flex items-center justify-between text-xs uppercase tracking-wider">
                   <div className="flex items-center gap-2.5">
-                    <Tag size={15} className="text-[#A3E635]" />
+                    <Tag size={14} className="text-[#15803d]" />
                     <div>
-                      <span className="text-[#EDE7DC] font-mono font-bold">{appliedCoupon.code}</span>
-                      <span className="text-[#A3E635] text-[11px] block font-medium">
-                        -₹{couponDiscount.toLocaleString('en-IN')} Applied
+                      <span className="text-[#0A0A0A] font-bold">{appliedCoupon.code}</span>
+                      <span className="text-[#15803d] text-[10px] block font-bold">
+                        -₹{couponDiscount.toLocaleString('en-IN')} APPLIED
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={removeCoupon}
-                    className="text-[#8E8D8A] hover:text-[#EF4444] text-xs underline uppercase tracking-wider transition-colors"
+                    className="text-[#0A0A0A]/70 hover:text-[#8E1717] text-xs underline uppercase"
                   >
-                    Remove
+                    REMOVE
                   </button>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <form onSubmit={(e) => { e.preventDefault(); handleApplyPromo(); }} className="flex gap-2">
+                  <form onSubmit={handleApplyPromo} className="flex gap-2">
                     <input
                       type="text"
-                      placeholder="Promo Code"
+                      placeholder="PROMO CODE"
                       value={promoCodeInput}
                       onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                      className="flex-1 bg-[#141414] border border-[#262626] px-3.5 py-2.5 text-xs font-mono text-[#EDE7DC] placeholder-[#666666] focus:outline-none focus:border-[#888888] rounded-sm uppercase"
+                      className="flex-1 bg-[#D8D4CA] border border-[#0A0A0A]/20 px-3.5 py-2 text-xs font-mono text-[#0A0A0A] placeholder-[#0A0A0A]/50 focus:outline-none focus:border-[#0A0A0A] uppercase"
                     />
                     <button
                       type="submit"
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="bg-[#222222] border border-[#333333] text-[#EDE7DC] px-4 py-2.5 text-xs font-medium uppercase tracking-wider hover:bg-[#333333] transition-colors rounded-sm flex items-center gap-1.5 disabled:opacity-50"
+                      className="bg-[#0A0A0A] text-[#F1EEE6] hover:bg-[#8E1717] px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-40 flex items-center gap-1"
                     >
                       {isValidatingPromo ? <RefreshCw size={12} className="animate-spin" /> : null}
-                      <span>Apply</span>
+                      <span>APPLY</span>
                     </button>
                   </form>
 
                   {promoError && (
-                    <p className="text-xs text-[#EF4444]">
+                    <p className="text-xs text-[#8E1717]">
                       {promoError}
                     </p>
                   )}
@@ -398,32 +392,32 @@ export const CartPage = () => {
               )}
 
               {/* Pricing breakdown */}
-              <div className="space-y-2.5 pt-4 border-t border-[#1a1a1a] text-xs">
-                <div className="flex justify-between text-[#8E8D8A]">
-                  <span>Subtotal</span>
-                  <span className="text-[#EDE7DC] font-medium">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+              <div className="space-y-2 pt-4 border-t border-[#0A0A0A]/15 text-xs uppercase tracking-wider">
+                <div className="flex justify-between text-[#0A0A0A]/70">
+                  <span>SUBTOTAL</span>
+                  <span className="text-[#0A0A0A] font-bold">₹{cartSubtotal.toLocaleString('en-IN')}</span>
                 </div>
 
                 {appliedCoupon && couponDiscount > 0 && (
-                  <div className="flex justify-between text-[#A3E635]">
-                    <span>Discount ({appliedCoupon.code})</span>
+                  <div className="flex justify-between text-[#15803d] font-bold">
+                    <span>COUPON DISCOUNT</span>
                     <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between text-[#8E8D8A]">
-                  <span>Express Shipping</span>
-                  <span className={shippingCost === 0 ? 'text-[#A3E635] font-medium' : 'text-[#EDE7DC] font-medium'}>
+                <div className="flex justify-between text-[#0A0A0A]/70">
+                  <span>EXPRESS SHIPPING</span>
+                  <span className={shippingCost === 0 ? 'text-[#15803d] font-bold' : 'text-[#0A0A0A]'}>
                     {shippingCost === 0 ? 'FREE' : `₹${shippingCost}`}
                   </span>
                 </div>
 
-                <div className="flex justify-between text-base font-semibold text-[#EDE7DC] pt-3 border-t border-[#222222]">
-                  <span>Total Due</span>
+                <div className="flex justify-between text-base font-bold text-[#0A0A0A] pt-3 border-t border-[#0A0A0A]/20">
+                  <span>TOTAL DUE</span>
                   <span>₹{cartTotal.toLocaleString('en-IN')}</span>
                 </div>
-                <p className="text-[10px] text-[#666666]">
-                  Inclusive of all taxes & duty charges across India.
+                <p className="text-[10px] text-[#0A0A0A]/60">
+                  INCLUSIVE OF ALL TAXES & DUTY CHARGES ACROSS INDIA.
                 </p>
               </div>
 
@@ -431,28 +425,28 @@ export const CartPage = () => {
               <div className="pt-2">
                 <button
                   onClick={() => navigateTo('checkout')}
-                  className="w-full bg-[#EDE7DC] text-[#080808] py-4 text-xs font-semibold tracking-wider uppercase hover:bg-white transition-all flex items-center justify-center gap-2 rounded-sm shadow-xl active:scale-[0.99]"
+                  className="w-full bg-[#0A0A0A] text-[#F1EEE6] hover:bg-[#8E1717] hover:text-white py-4 text-xs font-bold tracking-[0.25em] uppercase transition-all flex items-center justify-center gap-2 rounded-none shadow-xl active:scale-[0.99]"
                 >
-                  <span>Proceed to Checkout</span>
+                  <span>PROCEED TO CHECKOUT</span>
                   <ArrowRight size={15} />
                 </button>
               </div>
 
             </div>
 
-            {/* Quiet Reassurance Badges */}
-            <div className="grid grid-cols-3 gap-3 text-center text-[11px] text-[#8E8D8A]">
-              <div className="p-3 bg-[#0c0c0c] border border-[#161616] rounded-sm flex flex-col items-center gap-1.5">
-                <Truck size={16} className="text-[#A3E635]" />
-                <span>Pan-India Delivery</span>
+            {/* Reassurance Badges */}
+            <div className="grid grid-cols-3 gap-3 text-center text-[10px] uppercase tracking-wider text-[#0A0A0A]/70">
+              <div className="p-3 bg-[#E8E4DA] border border-[#0A0A0A]/15 flex flex-col items-center gap-1.5">
+                <Truck size={15} className="text-[#8E1717]" />
+                <span>PAN-INDIA</span>
               </div>
-              <div className="p-3 bg-[#0c0c0c] border border-[#161616] rounded-sm flex flex-col items-center gap-1.5">
-                <Lock size={16} className="text-[#A3E635]" />
-                <span>Encrypted Payments</span>
+              <div className="p-3 bg-[#E8E4DA] border border-[#0A0A0A]/15 flex flex-col items-center gap-1.5">
+                <Lock size={15} className="text-[#8E1717]" />
+                <span>ENCRYPTED</span>
               </div>
-              <div className="p-3 bg-[#0c0c0c] border border-[#161616] rounded-sm flex flex-col items-center gap-1.5">
-                <RotateCcw size={16} className="text-[#A3E635]" />
-                <span>7-Day Exchanges</span>
+              <div className="p-3 bg-[#E8E4DA] border border-[#0A0A0A]/15 flex flex-col items-center gap-1.5">
+                <RotateCcw size={15} className="text-[#8E1717]" />
+                <span>7-DAY EXCHANGES</span>
               </div>
             </div>
 

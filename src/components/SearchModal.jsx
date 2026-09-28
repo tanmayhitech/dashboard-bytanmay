@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useShop } from '../context/ShopContext';
 import { PRODUCTS as STATIC_PRODUCTS } from '../data/products';
-import { X, ArrowRight, Lock, Sparkles, UserCheck, ShieldCheck } from 'lucide-react';
+import { X, ArrowRight, Lock, Search } from 'lucide-react';
 
 export const SearchModal = () => {
   const { isSearchOpen, setIsSearchOpen, navigateTo, products } = useShop();
@@ -36,13 +36,7 @@ export const SearchModal = () => {
         if (isAuthQuery) {
           e.preventDefault();
           setIsSearchOpen(false);
-          if (q.includes('admin') || q.includes('atelier')) {
-            navigateTo('login');
-          } else if (q.includes('creator') || q.includes('influencer')) {
-            navigateTo('login');
-          } else {
-            navigateTo('login');
-          }
+          navigateTo('login');
         }
       }
     };
@@ -50,7 +44,7 @@ export const SearchModal = () => {
       window.addEventListener('keydown', handleKeyDown);
     }
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isSearchOpen, setIsSearchOpen, isAuthQuery, q, navigateTo]);
+  }, [isSearchOpen, setIsSearchOpen, isAuthQuery, navigateTo]);
 
   if (!isSearchOpen) return null;
 
@@ -64,103 +58,67 @@ export const SearchModal = () => {
   });
 
   return (
-    <div className="fixed inset-0 z-[100] overflow-hidden select-none bg-[#080808]/98 backdrop-blur-lg flex flex-col justify-start p-6 sm:p-12 lg:p-20 animate-fadeIn">
-      <div className="max-w-4xl w-full mx-auto space-y-8">
+    <div className="fixed inset-0 z-[100] overflow-hidden select-none bg-[#070707]/98 backdrop-blur-xl flex flex-col justify-start p-6 sm:p-12 lg:p-16 animate-fadeIn text-[#EDE7DC] font-sans">
+      <div className="max-w-3xl w-full mx-auto space-y-6">
         
-        {/* Top bar with heading: SEARCH LOOZARS & close */}
-        <div className="flex items-center justify-between border-b border-[#181818] pb-6">
-          <h2 className="font-editorial text-2xl sm:text-3xl text-[#EDE7DC] uppercase tracking-wide">
-            SEARCH LOOZARS
-          </h2>
+        {/* Top bar with index tag and close */}
+        <div className="flex items-center justify-between border-b border-white/10 pb-4 font-mono text-[11px] tracking-[0.25em] text-[#8E8D8A] uppercase">
+          <div className="flex items-center gap-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#8E1717] animate-pulse"></span>
+            <span>SEARCH ARCHIVE</span>
+          </div>
+
           <button 
             onClick={() => setIsSearchOpen(false)}
             className="text-[#8E8D8A] hover:text-[#EDE7DC] p-1 transition-colors"
             aria-label="Close search"
           >
-            <X size={24} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Minimal Search Input */}
+        {/* Minimal Sans-Serif Search Input */}
         <div className="relative">
           <input
             type="text"
             autoFocus
-            placeholder="TYPE TO SEARCH (e.g. 'LOGIN', 'TEES', 'APEX')..."
+            placeholder="TYPE TO SEARCH (e.g. 'VELO', 'APEX', 'BURGUNDY', 'LOGIN')..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full bg-transparent border-b border-[#222222] focus:border-[#A3E635] text-xl sm:text-3xl font-editorial text-[#EDE7DC] placeholder:text-[#333333] py-4 focus:outline-none transition-colors uppercase"
+            className="w-full bg-transparent border-b border-white/15 focus:border-[#EDE7DC] text-lg sm:text-2xl font-sans font-medium text-[#EDE7DC] placeholder:text-[#8E8D8A]/40 py-3 focus:outline-none transition-colors uppercase tracking-wider"
           />
         </div>
 
-        {/* Search Results */}
-        <div className="space-y-3 pt-4 max-h-[55vh] overflow-y-auto pr-1">
+        {/* Search Results Container */}
+        <div className="space-y-2.5 pt-2 max-h-[55vh] overflow-y-auto pr-1">
           
-          {/* Priority Quick Access Portal Card on 'login' / 'admin' / 'creator' queries */}
+          {/* Quick Access Portal Card on 'login' / 'admin' / 'creator' queries */}
           {isAuthQuery && (
-            <div className="mb-4 bg-gradient-to-r from-[#141414] to-[#1a1a1a] border border-[#2e2e2e] hover:border-[#A3E635] p-4 sm:p-5 rounded-xl transition-all shadow-xl group">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-10 h-10 rounded-lg bg-[#222222] border border-[#333333] flex items-center justify-center text-[#A3E635] shrink-0 group-hover:scale-105 transition-transform">
-                    <Lock size={18} />
+            <div className="mb-3 bg-[#111111] border border-white/15 p-4 transition-all shadow-xl space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-[#181818] border border-white/10 flex items-center justify-center text-[#8E1717] shrink-0">
+                    <Lock size={15} />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-sm sm:text-base font-semibold text-[#EDE7DC] font-mono tracking-wide">
-                        LOOZARS® ACCESS PORTAL
-                      </h3>
-                      <span className="text-[10px] bg-[#A3E635]/15 text-[#A3E635] border border-[#A3E635]/30 px-2 py-0.5 rounded font-mono font-bold uppercase">
-                        Quick Access
-                      </span>
-                    </div>
-                    <p className="text-xs text-[#8E8D8A] mt-0.5">
-                      Unified sign-in for Brand Administrators & Creator Affiliates
+                    <h3 className="text-xs font-semibold text-[#EDE7DC] font-mono tracking-wider uppercase">
+                      LOOZARS® ACCESS PORTAL
+                    </h3>
+                    <p className="text-[11px] text-[#8E8D8A] font-sans">
+                      Staff Admin & Creator Affiliates Sign In
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      navigateTo('login');
-                    }}
-                    className="px-4 py-2 bg-[#EDE7DC] hover:bg-white text-[#090909] text-xs font-semibold uppercase tracking-wider rounded-lg transition-colors flex items-center gap-1.5 shadow"
-                  >
-                    <span>Open Sign In</span>
-                    <ArrowRight size={13} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Sub-portal links */}
-              <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-[#262626]">
                 <button
                   onClick={() => {
                     setIsSearchOpen(false);
                     navigateTo('login');
                   }}
-                  className="p-2 bg-[#121212] hover:bg-[#1c1c1c] border border-[#222222] rounded-lg text-left transition-colors flex items-center justify-between text-xs"
+                  className="px-3.5 py-1.5 bg-[#EDE7DC] hover:bg-[#8E1717] hover:text-white text-[#080808] text-[11px] font-mono font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 shrink-0"
                 >
-                  <span className="flex items-center gap-1.5 text-[#EDE7DC]">
-                    <Sparkles size={12} className="text-[#A3E635]" />
-                    <span>Creator / Partner Portal</span>
-                  </span>
-                  <ArrowRight size={12} className="text-[#666666]" />
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsSearchOpen(false);
-                    navigateTo('login');
-                  }}
-                  className="p-2 bg-[#121212] hover:bg-[#1c1c1c] border border-[#222222] rounded-lg text-left transition-colors flex items-center justify-between text-xs"
-                >
-                  <span className="flex items-center gap-1.5 text-[#EDE7DC]">
-                    <ShieldCheck size={12} className="text-[#EDE7DC]" />
-                    <span>Admin Atelier Console</span>
-                  </span>
-                  <ArrowRight size={12} className="text-[#666666]" />
+                  <span>Open</span>
+                  <ArrowRight size={12} />
                 </button>
               </div>
             </div>
@@ -174,29 +132,29 @@ export const SearchModal = () => {
                 setIsSearchOpen(false);
                 navigateTo('product', product.id);
               }}
-              className="flex items-center justify-between p-3.5 bg-[#111111] border border-[#1a1a1a] hover:border-[#A3E635] cursor-pointer group transition-colors rounded-sm"
+              className="flex items-center justify-between p-3 bg-[#0e0e0e] border border-white/10 hover:border-white/30 cursor-pointer group transition-all"
             >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-16 bg-[#181818] overflow-hidden border border-[#222222] rounded-sm shrink-0">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-14 bg-[#161616] overflow-hidden border border-white/10 shrink-0">
                   <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
                 <div>
-                  <span className="font-mono text-[10px] text-[#A3E635] tracking-widest">{product.sku}</span>
-                  <h3 className="font-editorial text-base sm:text-lg text-[#EDE7DC] group-hover:text-[#A3E635] transition-colors uppercase">
+                  <span className="font-mono text-[9px] text-[#8E1717] tracking-widest block uppercase">{product.sku}</span>
+                  <h3 className="font-sans text-sm font-semibold text-[#EDE7DC] group-hover:text-[#8E1717] transition-colors uppercase tracking-wide">
                     {product.name}
                   </h3>
-                  <span className="font-mono text-xs text-[#8E8D8A]">{product.formattedPrice}</span>
+                  <span className="font-mono text-xs text-[#8E8D8A]">{product.formattedPrice || `₹${product.price}`}</span>
                 </div>
               </div>
 
-              <ArrowRight size={14} className="text-[#8E8D8A] group-hover:text-[#A3E635] group-hover:translate-x-1 transition-transform" />
+              <ArrowRight size={13} className="text-[#8E8D8A] group-hover:text-[#EDE7DC] group-hover:translate-x-0.5 transition-transform" />
             </div>
           ))}
 
-          {/* Empty state when no product & not auth query */}
+          {/* Empty state */}
           {q !== '' && results.length === 0 && !isAuthQuery && (
-            <div className="text-center py-12 font-mono text-xs text-[#8E8D8A] tracking-widest uppercase">
-              NOTHING FOUND FOR "{query.toUpperCase()}".
+            <div className="text-center py-10 font-mono text-xs text-[#8E8D8A] tracking-[0.25em] uppercase">
+              NO PIECES MATCH "{query.toUpperCase()}".
             </div>
           )}
 

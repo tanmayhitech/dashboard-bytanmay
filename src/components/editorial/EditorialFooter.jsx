@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useShop } from '../context/ShopContext';
-import loozarsLogo from '../assets/images/loozars-official-logo.png';
+import { useShop } from '../../context/ShopContext';
+import loozarsLogo from '../../assets/images/loozars-official-logo.png';
 import { Instagram, Youtube, ArrowRight, Check } from 'lucide-react';
 
-export const Footer = () => {
+export const EditorialFooter = () => {
   const { navigateTo, setActiveModal } = useShop();
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -112,6 +112,7 @@ export const Footer = () => {
               >
                 <Instagram size={17} />
               </a>
+              {/* X / Twitter Icon */}
               <a
                 href="https://x.com"
                 target="_blank"

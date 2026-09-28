@@ -1,10 +1,10 @@
 import React from 'react';
 import { useShop } from '../context/ShopContext';
 import headerLogoImg from '../assets/images/loozars-official-logo.png';
-import { X, ArrowRight, Instagram, Globe } from 'lucide-react';
+import { X, ArrowRight, Instagram, Search, ShoppingBag } from 'lucide-react';
 
 export const MobileMenu = ({ isOpen, onClose }) => {
-  const { navigateTo, setActiveModal } = useShop();
+  const { navigateTo, setActiveModal, setIsSearchOpen, cartCount, setIsCartOpen } = useShop();
 
   if (!isOpen) return null;
 
@@ -13,87 +13,145 @@ export const MobileMenu = ({ isOpen, onClose }) => {
     onClose();
   };
 
+  const handleSearchClick = () => {
+    onClose();
+    setIsSearchOpen(true);
+  };
+
+  const handleCartClick = () => {
+    onClose();
+    setIsCartOpen(true);
+  };
+
   const handleModal = (modalName) => {
     setActiveModal(modalName);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#080808] flex flex-col justify-between p-6 sm:p-10 select-none animate-fadeIn">
+    <div className="fixed inset-0 z-[100] bg-[#070707] flex flex-col justify-between p-6 sm:p-8 select-none overflow-y-auto animate-fadeIn text-[#EDE7DC] font-sans">
       
-      {/* Top Header */}
-      <div className="flex items-center justify-between border-b border-[#181818] pb-4">
-        <button onClick={() => handleNav('home')}>
+      {/* Top Bar: Brand Logo + Cart + Close */}
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
+        <button onClick={() => handleNav('home')} className="focus:outline-none">
           <img 
             src={headerLogoImg} 
             alt="LOOZARS®" 
-            className="h-6 w-auto object-contain brightness-110" 
+            className="h-5 w-auto object-contain brightness-125 contrast-125" 
           />
         </button>
 
-        <button 
-          onClick={onClose}
-          className="p-2 border border-[#222222] text-[#8E8D8A] hover:text-[#EDE7DC] hover:border-[#8E1717] transition-colors"
-          aria-label="Close menu"
+        <div className="flex items-center gap-2.5">
+          {/* Quick Cart Trigger */}
+          <button
+            onClick={handleCartClick}
+            className="px-2.5 py-1.5 border border-white/15 text-[#EDE7DC] font-mono text-[10px] tracking-widest uppercase flex items-center gap-1.5 hover:border-[#8E1717] transition-colors"
+            aria-label="View bag"
+          >
+            <ShoppingBag size={12} />
+            <span>BAG [{cartCount}]</span>
+          </button>
+
+          {/* Close Menu Button */}
+          <button 
+            onClick={onClose}
+            className="p-1.5 border border-white/20 text-[#EDE7DC] hover:border-[#8E1717] transition-colors"
+            aria-label="Close menu"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Minimal Search Trigger Bar */}
+      <div className="pt-5 pb-2">
+        <button
+          onClick={handleSearchClick}
+          className="w-full bg-[#111111] border border-white/10 px-4 py-2.5 text-left font-mono text-xs text-[#8E8D8A] hover:text-[#EDE7DC] hover:border-white/25 transition-all flex items-center justify-between uppercase tracking-wider"
         >
-          <X size={20} />
+          <span>SEARCH THE ARCHIVE...</span>
+          <Search size={13} className="text-[#8E1717]" />
         </button>
       </div>
 
-      {/* Center Nav Links in Bold Editorial Serif */}
-      <nav className="flex flex-col space-y-6 sm:space-y-8 my-auto">
+      {/* Center Nav Links with Minimal Sans-Serif Typography */}
+      <nav className="flex flex-col space-y-5 sm:space-y-6 my-auto py-6 font-sans">
+        
         <button
           onClick={() => handleNav('shop')}
-          className="group text-left flex items-center justify-between font-editorial text-4xl sm:text-5xl text-[#EDE7DC] hover:text-[#8E1717] transition-colors uppercase tracking-tight"
+          className="group text-left flex items-center justify-between text-2xl sm:text-3xl font-medium tracking-[0.15em] text-[#EDE7DC] hover:text-[#8E1717] transition-colors uppercase"
         >
-          <span>SHOP</span>
-          <ArrowRight size={24} className="text-[#8E1717] opacity-0 group-hover:opacity-100 transition-opacity" />
-        </button>
-
-        <button
-          onClick={() => handleNav('drops')}
-          className="group text-left flex items-center justify-between font-editorial text-4xl sm:text-5xl text-[#EDE7DC] hover:text-[#8E1717] transition-colors uppercase tracking-tight"
-        >
-          <span>DROPS</span>
-          <ArrowRight size={24} className="text-[#8E1717] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[11px] text-[#8E8D8A] group-hover:text-[#8E1717] tracking-widest">01</span>
+            <span>SHOP</span>
+          </div>
+          <ArrowRight size={16} className="text-[#8E1717] opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
         </button>
 
         <button
           onClick={() => handleNav('about')}
-          className="group text-left flex items-center justify-between font-editorial text-4xl sm:text-5xl text-[#EDE7DC] hover:text-[#8E1717] transition-colors uppercase tracking-tight"
+          className="group text-left flex items-center justify-between text-2xl sm:text-3xl font-medium tracking-[0.15em] text-[#EDE7DC] hover:text-[#8E1717] transition-colors uppercase"
         >
-          <span>ABOUT</span>
-          <ArrowRight size={24} className="text-[#8E1717] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[11px] text-[#8E8D8A] group-hover:text-[#8E1717] tracking-widest">02</span>
+            <span>OUR STORY</span>
+          </div>
+          <ArrowRight size={16} className="text-[#8E1717] opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
         </button>
-
-        <a
-          href="https://www.instagram.com/theloozars/"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group text-left flex items-center justify-between font-editorial text-4xl sm:text-5xl text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors uppercase tracking-tight"
-        >
-          <span>INSTAGRAM</span>
-          <Instagram size={24} className="text-[#8E1717]" />
-        </a>
 
         <button
-          onClick={() => handleModal('contact')}
-          className="group text-left flex items-center justify-between font-editorial text-4xl sm:text-5xl text-[#8E8D8A] hover:text-[#EDE7DC] transition-colors uppercase tracking-tight"
+          onClick={() => handleNav('drops')}
+          className="group text-left flex items-center justify-between text-2xl sm:text-3xl font-medium tracking-[0.15em] text-[#EDE7DC] hover:text-[#8E1717] transition-colors uppercase"
         >
-          <span>CONTACT</span>
-          <ArrowRight size={24} className="text-[#8E1717] opacity-0 group-hover:opacity-100 transition-opacity" />
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-[11px] text-[#8E8D8A] group-hover:text-[#8E1717] tracking-widest">03</span>
+            <span>LOOKBOOK</span>
+          </div>
+          <ArrowRight size={16} className="text-[#8E1717] opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
         </button>
+
       </nav>
 
-      {/* Bottom Metadata */}
-      <div className="border-t border-[#181818] pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-[10px] sm:text-xs text-[#8E8D8A] tracking-[0.2em] uppercase">
-        <div className="flex items-center gap-2">
-          <span className="text-[#8E1717]">🞊</span>
-          <span>EST. 2025 // INDIA</span>
+      {/* Bottom Minimal Policy & Region Footer */}
+      <div className="border-t border-white/[0.08] pt-4 space-y-3 font-mono text-[10px] text-[#8E8D8A] tracking-[0.2em] uppercase">
+        
+        {/* Policy Modals Row */}
+        <div className="flex flex-wrap items-center gap-3 text-[#8E8D8A]">
+          <button onClick={() => handleModal('shipping')} className="hover:text-[#EDE7DC] transition-colors">
+            SHIPPING
+          </button>
+          <span>•</span>
+          <button onClick={() => handleModal('returns')} className="hover:text-[#EDE7DC] transition-colors">
+            RETURNS
+          </button>
+          <span>•</span>
+          <button onClick={() => handleModal('sizing')} className="hover:text-[#EDE7DC] transition-colors">
+            SIZING
+          </button>
+          <span>•</span>
+          <button onClick={() => handleModal('contact')} className="hover:text-[#EDE7DC] transition-colors">
+            CONTACT
+          </button>
         </div>
-        <div>
-          "AN UNNECESSARY CLOTHING BRAND."
+
+        {/* Region & Instagram Row */}
+        <div className="flex items-center justify-between pt-2 border-t border-white/[0.04] text-[9px]">
+          <div className="flex items-center gap-2 text-[#EDE7DC]/80">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#8E1717] animate-pulse"></span>
+            <span>INDIA (₹) // 18°55'N 72°50'E</span>
+          </div>
+
+          <a
+            href="https://www.instagram.com/theloozars/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-[#EDE7DC] hover:text-[#8E1717] transition-colors"
+          >
+            <span>INSTAGRAM</span>
+            <Instagram size={11} className="text-[#8E1717]" />
+          </a>
         </div>
+
       </div>
 
     </div>

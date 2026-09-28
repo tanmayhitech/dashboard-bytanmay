@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useShop } from '../context/ShopContext';
-import headerLogoImg from '../assets/images/loozars-official-logo.png';
+import { useShop } from '../../context/ShopContext';
+import loozarsLogoImg from '../../assets/images/loozars-official-logo.png';
 import { Search, ShoppingBag, ChevronDown, Menu } from 'lucide-react';
-import { MobileMenu } from './MobileMenu';
+import { MobileMenu } from '../MobileMenu';
 
-export const Header = () => {
+export const EditorialNavbar = () => {
   const { currentView, navigateTo, cartCount, setIsCartOpen, setIsSearchOpen } = useShop();
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -17,16 +17,13 @@ export const Header = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Only render on non-home pages (HomePage has its own EditorialNavbar)
-  if (currentView === 'home') return null;
-
   return (
     <>
       <header 
         className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 select-none ${
           isScrolled 
-            ? 'bg-[#080808]/95 backdrop-blur-md py-3 sm:py-3.5 border-b border-white/[0.06] shadow-2xl' 
-            : 'bg-[#080808]/85 backdrop-blur-sm py-4 sm:py-5 border-b border-white/[0.04]'
+            ? 'bg-[#080808]/90 backdrop-blur-md py-3 sm:py-3.5 border-b border-white/[0.06] shadow-2xl' 
+            : 'bg-transparent py-4 sm:py-5'
         }`}
       >
         <div className="max-w-[1760px] mx-auto px-5 sm:px-10 lg:px-14 grid grid-cols-3 items-center">
@@ -35,25 +32,19 @@ export const Header = () => {
           <nav className="hidden md:flex items-center space-x-6 lg:space-x-8 text-[11px] font-mono tracking-[0.22em] text-[#EDE7DC]/80">
             <button
               onClick={() => navigateTo('shop')}
-              className={`uppercase tracking-[0.25em] transition-colors ${
-                currentView === 'shop' ? 'text-white font-bold' : 'hover:text-white'
-              }`}
+              className="hover:text-white transition-colors uppercase tracking-[0.25em]"
             >
               SHOP
             </button>
             <button
               onClick={() => navigateTo('about')}
-              className={`uppercase tracking-[0.25em] transition-colors ${
-                currentView === 'about' ? 'text-white font-bold' : 'hover:text-white'
-              }`}
+              className="hover:text-white transition-colors uppercase tracking-[0.25em]"
             >
               OUR STORY
             </button>
             <button
               onClick={() => navigateTo('drops')}
-              className={`uppercase tracking-[0.25em] transition-colors ${
-                currentView === 'drops' ? 'text-white font-bold' : 'hover:text-white'
-              }`}
+              className="hover:text-white transition-colors uppercase tracking-[0.25em]"
             >
               LOOKBOOK
             </button>
@@ -78,7 +69,7 @@ export const Header = () => {
               aria-label="LOOZARS Home"
             >
               <img 
-                src={headerLogoImg} 
+                src={loozarsLogoImg} 
                 alt="LOOZARS®" 
                 className="h-5 sm:h-6 lg:h-7 w-auto object-contain filter brightness-110 contrast-125"
               />
