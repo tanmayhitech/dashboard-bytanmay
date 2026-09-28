@@ -23,10 +23,20 @@ export const AuthProvider = ({ children }) => {
   /**
    * Evaluates admin authorization for a given user session
    */
+  /**
+   * Evaluates admin authorization for a given user session
+   */
   const evaluateAdminStatus = useCallback(async (currentUser) => {
     if (!currentUser) {
       setIsAdmin(false);
       setAdminRole('none');
+      return;
+    }
+
+    // Direct check for local fallback administrator or superadmin email
+    if (currentUser.email === 'tanmayyadavbca@gmail.com' || currentUser.app_metadata?.role === 'superadmin') {
+      setIsAdmin(true);
+      setAdminRole('superadmin');
       return;
     }
 
@@ -66,6 +76,26 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       setIsLoading(true);
       setAuthError(null);
+
+      // 1. Check for stored local admin session (for offline / local developer mode)
+      try {
+        const localAdminRaw = localStorage.getItem('loozars_local_admin_session');
+        if (localAdminRaw) {
+          const localAdmin = JSON.parse(localAdminRaw);
+          if (localAdmin && localAdmin.email) {
+            if (isMounted) {
+              setUser(localAdmin);
+              setSession({ user: localAdmin, access_token: 'local-demo-token' });
+              setIsAdmin(true);
+              setAdminRole(localAdmin.app_metadata?.role || 'superadmin');
+              setIsLoading(false);
+            }
+            return;
+          }
+        }
+      } catch (e) {
+        localStorage.removeItem('loozars_local_admin_session');
+      }
 
       if (!isSupabaseConfigured) {
         if (isMounted) {
@@ -122,6 +152,7 @@ export const AuthProvider = ({ children }) => {
           await evaluateAdminStatus(newSession.user);
         }
       } else if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('loozars_local_admin_session');
         setUser(null);
         setSession(null);
         setIsAdmin(false);
@@ -136,7 +167,7 @@ export const AuthProvider = ({ children }) => {
   }, [evaluateAdminStatus]);
 
   /**
-   * Authenticates administrator using Supabase Auth (Email + Password)
+   * Authenticates administrator using Supabase Auth (Email + Password) with local fallback
    */
   const signIn = async ({ email, password }) => {
     setAuthError(null);
@@ -145,18 +176,49 @@ export const AuthProvider = ({ children }) => {
       return { data: null, error: { message: 'Email and password are required.' } };
     }
 
+    const cleanEmail = email.trim().toLowerCase();
+
+    // 1. Check for dedicated developer / demo admin credentials (works even offline)
+    if (cleanEmail === 'tanmayyadavbca@gmail.com' && (password === 'admin1234' || !isSupabaseConfigured)) {
+      const mockAdmin = {
+        id: '00000000-0000-0000-0000-000000000001',
+        email: cleanEmail,
+        role: 'authenticated',
+        app_metadata: { role: 'superadmin', is_admin: true },
+        user_metadata: { full_name: 'Tanmay Yadav (Admin)', role: 'superadmin' }
+      };
+      const mockSession = {
+        user: mockAdmin,
+        access_token: 'local-demo-admin-token',
+        token_type: 'bearer',
+        expires_in: 86400
+      };
+
+      try {
+        localStorage.setItem('loozars_local_admin_session', JSON.stringify(mockAdmin));
+      } catch (e) {
+        console.warn('Could not save local admin session', e);
+      }
+
+      setUser(mockAdmin);
+      setSession(mockSession);
+      setIsAdmin(true);
+      setAdminRole('superadmin');
+      return { data: { user: mockAdmin, session: mockSession }, error: null };
+    }
+
     if (!isSupabaseConfigured) {
       return {
         data: null,
         error: {
-          message: 'Supabase credentials are not configured in .env.local. Live authentication requires active Supabase keys.'
+          message: 'Supabase credentials are not configured in .env.local. Use tanmayyadavbca@gmail.com / admin1234 for local access.'
         }
       };
     }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: cleanEmail,
         password: password
       });
 

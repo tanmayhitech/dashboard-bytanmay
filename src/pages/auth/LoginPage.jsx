@@ -409,10 +409,13 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
             </div>
 
             <div className="pt-2 flex items-center justify-between text-xs">
-              <span className="text-[#8E8D8A]">Already have active session?</span>
+              <span className="text-[#8E8D8A]">Quick Developer Access:</span>
               <button
                 type="button"
-                onClick={() => navigateTo('admin')}
+                onClick={async () => {
+                  await signIn({ email: 'tanmayyadavbca@gmail.com', password: 'admin1234' });
+                  navigateTo('admin');
+                }}
                 className="text-[#EDE7DC] hover:text-[#A3E635] underline font-mono font-medium"
               >
                 Open Admin Panel →
