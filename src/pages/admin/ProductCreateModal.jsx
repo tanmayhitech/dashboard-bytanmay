@@ -518,18 +518,18 @@ export const ProductCreateModal = ({ onClose, onProductCreated }) => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#24242A]">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2 sm:gap-2.5 pt-3 border-t border-[#24242A]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[#1E1E24] hover:bg-[#26262E] text-zinc-300 text-xs font-medium rounded-xl border border-[#2B2B33] transition-colors"
+              className="w-full sm:w-auto px-4 py-2.5 bg-[#1E1E24] hover:bg-[#26262E] text-zinc-300 text-xs font-medium rounded-xl border border-[#2B2B33] transition-colors min-h-[40px] flex items-center justify-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs"
+              className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-xs min-h-[42px]"
             >
               {isSubmitting ? <RefreshCw size={13} className="animate-spin text-zinc-900" /> : <Plus size={13} />}
               <span>Create Product</span>

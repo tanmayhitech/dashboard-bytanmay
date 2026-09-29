@@ -284,18 +284,18 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
           </label>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#22222C]">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2 sm:gap-2.5 pt-3 border-t border-[#22222C]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-[#1C1C24] hover:bg-[#252530] text-zinc-300 text-xs font-medium rounded-xl border border-[#2C2C38] transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 bg-[#1C1C24] hover:bg-[#252530] text-zinc-300 text-xs font-medium rounded-xl border border-[#2C2C38] transition-colors cursor-pointer min-h-[40px] flex items-center justify-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[42px]"
             >
               {isSaving ? <RefreshCw size={13} className="animate-spin text-zinc-900" /> : null}
               <span>{isEditing ? 'Save Changes' : 'Create Coupon'}</span>

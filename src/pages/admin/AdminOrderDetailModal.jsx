@@ -657,24 +657,24 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
               </div>
             </div>
 
-            <div className="flex items-center justify-between pt-3 border-t border-[#1E1E26]">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-[#1E1E26]">
+              <div className="flex items-center gap-2 flex-wrap">
                 {isArchived ? (
                   <button
                     type="button"
                     onClick={handleRestore}
-                    className="px-3.5 py-2 bg-[#1A1A22] hover:bg-emerald-950 text-zinc-300 hover:text-emerald-300 border border-[#2A2A38] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    className="px-3.5 py-2.5 bg-[#1A1A22] hover:bg-emerald-950 text-zinc-300 hover:text-emerald-300 border border-[#2A2A38] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs min-h-[40px]"
                   >
-                    <RotateCcw size={12} />
+                    <RotateCcw size={13} />
                     <span>Restore Order</span>
                   </button>
                 ) : (
                   <button
                     type="button"
                     onClick={handleArchive}
-                    className="px-3.5 py-2 bg-[#1A1A22] hover:bg-amber-950 text-zinc-400 hover:text-amber-300 border border-[#2A2A38] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    className="px-3.5 py-2.5 bg-[#1A1A22] hover:bg-amber-950 text-zinc-400 hover:text-amber-300 border border-[#2A2A38] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs min-h-[40px]"
                   >
-                    <Archive size={12} />
+                    <Archive size={13} />
                     <span>Archive</span>
                   </button>
                 )}
@@ -683,10 +683,10 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="px-3.5 py-2 bg-[#1A1A22] hover:bg-rose-950 text-zinc-400 hover:text-rose-400 border border-[#2A2A38] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    className="px-3.5 py-2.5 bg-[#1A1A22] hover:bg-rose-950 text-zinc-400 hover:text-rose-400 border border-[#2A2A38] rounded-xl text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs min-h-[40px]"
                     title="Delete permanently"
                   >
-                    <Trash2 size={12} />
+                    <Trash2 size={13} />
                     <span>Delete</span>
                   </button>
                 ) : (
@@ -696,14 +696,14 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
                       type="button"
                       onClick={handleDelete}
                       disabled={isDeleting}
-                      className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold transition-colors cursor-pointer disabled:opacity-50 min-h-[36px]"
                     >
                       {isDeleting ? '...' : 'Confirm'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowDeleteConfirm(false)}
-                      className="px-2 py-1 bg-[#1C1C24] hover:bg-[#252530] text-zinc-400 hover:text-zinc-200 rounded-lg text-[10px] transition-colors cursor-pointer"
+                      className="px-3 py-1.5 bg-[#1C1C24] hover:bg-[#252530] text-zinc-400 hover:text-zinc-200 rounded-lg text-[10px] transition-colors cursor-pointer min-h-[36px]"
                     >
                       Cancel
                     </button>
@@ -714,9 +714,9 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
               <button
                 type="submit"
                 disabled={isUpdating}
-                className="px-5 py-2 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black font-semibold rounded-xl transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                className="w-full sm:w-auto px-6 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black font-semibold rounded-xl transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer min-h-[42px]"
               >
-                {isUpdating ? <RefreshCw size={12} className="animate-spin text-zinc-900" /> : null}
+                {isUpdating ? <RefreshCw size={13} className="animate-spin text-zinc-900" /> : null}
                 <span>Save Changes</span>
               </button>
             </div>

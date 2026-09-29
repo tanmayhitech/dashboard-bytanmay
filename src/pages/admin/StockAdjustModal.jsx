@@ -260,18 +260,18 @@ export const StockAdjustModal = ({ item, onClose, onStockAdjusted }) => {
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#1E1E26]">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-2 sm:gap-2.5 pt-3 border-t border-[#1E1E26]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[#1A1A22] hover:bg-[#22222C] text-zinc-300 text-xs font-medium rounded-xl border border-[#2A2A38] transition-colors cursor-pointer shadow-xs"
+              className="w-full sm:w-auto px-4 py-2.5 bg-[#1A1A22] hover:bg-[#22222C] text-zinc-300 text-xs font-medium rounded-xl border border-[#2A2A38] transition-colors cursor-pointer shadow-xs min-h-[40px] flex items-center justify-center"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting || isInvalid}
-              className="px-5 py-2 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[42px]"
             >
               {isSubmitting ? <RefreshCw size={13} className="animate-spin text-zinc-900" /> : null}
               <span>Save Adjustment</span>

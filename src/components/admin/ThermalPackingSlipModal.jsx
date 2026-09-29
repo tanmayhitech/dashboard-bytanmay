@@ -277,28 +277,39 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Screen Header Toolbar (Hidden in Print) */}
-        <div className="bg-[#181818] border-b border-[#262626] px-5 py-3.5 flex items-center justify-between shrink-0 no-print">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center font-bold">
-              <FileText size={16} />
+        <div className="bg-[#181818] border-b border-[#262626] px-4 sm:px-5 py-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 no-print">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-white text-black flex items-center justify-center font-bold shrink-0">
+                <FileText size={16} />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+                  <span>Tax Invoice & Packing Slip</span>
+                  <span className="px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-300 font-mono border border-zinc-700">
+                    A4 / PDF
+                  </span>
+                </h3>
+                <p className="text-[11px] text-zinc-400 truncate">
+                  Order {orderNumber} • LOOZARS, Kanpur Atelier
+                </p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-                <span>Tax Invoice & Packing Slip</span>
-                <span className="px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-zinc-300 font-mono border border-zinc-700">
-                  A4 / PDF
-                </span>
-              </h3>
-              <p className="text-[11px] text-zinc-400">
-                Order {orderNumber} • LOOZARS, Kanpur Atelier
-              </p>
-            </div>
+
+            {/* Mobile Close Button */}
+            <button
+              onClick={onClose}
+              className="sm:hidden p-2 text-zinc-400 hover:text-white hover:bg-[#242424] rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
+              title="Close Preview"
+            >
+              <X size={18} />
+            </button>
           </div>
 
           <div className="flex items-center gap-2">
             <button
               onClick={handleOpenInNewTab}
-              className="hidden sm:flex px-3 py-1.5 bg-[#222222] hover:bg-[#2e2e2e] text-zinc-300 hover:text-white text-xs font-medium rounded-lg transition-colors items-center gap-1.5 border border-[#333333]"
+              className="hidden sm:flex px-3 py-2 bg-[#222222] hover:bg-[#2e2e2e] text-zinc-300 hover:text-white text-xs font-medium rounded-xl transition-colors items-center gap-1.5 border border-[#333333] min-h-[38px]"
               title="Open full bill in separate tab"
             >
               <ExternalLink size={13} />
@@ -306,7 +317,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
             </button>
             <button
               onClick={handlePrint}
-              className="px-4 py-2 bg-white hover:bg-zinc-200 text-black text-xs font-bold rounded-lg transition-colors flex items-center gap-2 shadow-sm"
+              className="flex-1 sm:flex-none px-4 py-2.5 bg-white hover:bg-zinc-200 text-black text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm min-h-[40px]"
               title="Print or Save as PDF"
             >
               <Printer size={14} />
@@ -314,7 +325,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
             </button>
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-white hover:bg-[#242424] rounded-lg transition-colors"
+              className="hidden sm:flex p-2 text-zinc-400 hover:text-white hover:bg-[#242424] rounded-xl transition-colors min-h-[38px] min-w-[38px] items-center justify-center"
               title="Close Preview"
             >
               <X size={16} />

@@ -30,7 +30,9 @@ import {
   Bell,
   CheckCircle2,
   Menu,
-  X
+  X,
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 
 import { AdminFeedbackProvider } from '../../context/AdminFeedbackContext';
@@ -46,28 +48,61 @@ export const AdminPortalContent = () => {
   const [modalStockItem, setModalStockItem] = useState(null);
   const [globalSearch, setGlobalSearch] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
   const searchInputRef = useRef(null);
+  const mobileSearchInputRef = useRef(null);
 
+  // Keyboard shortcut ⌘K / Ctrl+K
   useEffect(() => {
     const handleKeyDown = (e) => {
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
-        searchInputRef.current?.focus();
-        searchInputRef.current?.select();
+        if (window.innerWidth < 640) {
+          setIsMobileSearchOpen(prev => !prev);
+        } else {
+          searchInputRef.current?.focus();
+          searchInputRef.current?.select();
+        }
       }
-      if (e.key === 'Escape' && document.activeElement === searchInputRef.current) {
-        searchInputRef.current?.blur();
+      if (e.key === 'Escape') {
+        if (isMobileSearchOpen) setIsMobileSearchOpen(false);
+        if (isMobileNavOpen) setIsMobileNavOpen(false);
+        if (document.activeElement === searchInputRef.current) {
+          searchInputRef.current?.blur();
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isMobileSearchOpen, isMobileNavOpen]);
+
+  // Mobile body scroll lock
+  useEffect(() => {
+    if (isMobileNavOpen || isMobileSearchOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileNavOpen, isMobileSearchOpen]);
+
+  // Focus mobile search input when opened
+  useEffect(() => {
+    if (isMobileSearchOpen) {
+      setTimeout(() => {
+        mobileSearchInputRef.current?.focus();
+      }, 100);
+    }
+  }, [isMobileSearchOpen]);
 
   const handleTabSwitch = (tabId) => {
     setActiveTab(tabId);
     setVisitedTabs(prev => new Set(prev).add(tabId));
     setIsMobileNavOpen(false);
+    setIsMobileSearchOpen(false);
   };
 
   const handleGlobalRefresh = () => {
@@ -153,38 +188,84 @@ export const AdminPortalContent = () => {
   return (
     <div className="min-h-screen bg-[#0B0B0D] text-[#EDEDF0] font-sans flex flex-col md:flex-row antialiased">
       
-      {/* Mobile Header */}
-      <div className="md:hidden bg-[#121215] border-b border-[#1F1F24] px-4 py-3 flex items-center justify-between sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <span className="font-black text-sm tracking-widest text-zinc-100">LOOZARS</span>
-          <span className="text-[10px] font-medium bg-[#1F1F24] text-zinc-400 px-1.5 py-0.5 rounded">Admin</span>
+      {/* Mobile Backdrop Overlay (Click to Dismiss) */}
+      {isMobileNavOpen && (
+        <div 
+          onClick={() => setIsMobileNavOpen(false)}
+          className="fixed inset-0 bg-black/80 backdrop-blur-xs z-40 md:hidden transition-opacity duration-200"
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Mobile Top Header */}
+      <div className="md:hidden bg-[#121215] border-b border-[#1F1F24] px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+        <div className="flex items-center gap-2.5">
+          <button
+            onClick={() => setIsMobileNavOpen(true)}
+            className="p-2 -ml-1.5 text-zinc-300 hover:text-white rounded-xl hover:bg-[#1C1C21] active:scale-95 transition-all min-h-[40px] min-w-[40px] flex items-center justify-center"
+            aria-label="Open Navigation Menu"
+          >
+            <Menu size={20} />
+          </button>
+          <div className="flex items-center gap-1.5">
+            <span className="font-black text-sm tracking-widest text-zinc-100">LOOZARS</span>
+            <span className="text-[10px] font-semibold bg-[#1C1C24] text-zinc-300 px-1.5 py-0.5 rounded border border-[#2E2E3C] font-mono uppercase tracking-wider">
+              Atelier
+            </span>
+          </div>
         </div>
-        <button
-          onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-          className="p-1.5 text-zinc-400 hover:text-zinc-100 rounded-lg hover:bg-[#1C1C21]"
-          aria-label="Toggle Navigation"
-        >
-          {isMobileNavOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
+
+        <div className="flex items-center gap-1.5">
+          {/* Mobile Quick Search Button */}
+          <button
+            onClick={() => setIsMobileSearchOpen(true)}
+            className="p-2 text-zinc-400 hover:text-zinc-100 rounded-xl hover:bg-[#1C1C21] active:scale-95 transition-all min-h-[40px] min-w-[40px] flex items-center justify-center"
+            aria-label="Open Search"
+          >
+            <Search size={18} />
+          </button>
+
+          {/* Mobile Quick Refresh */}
+          <button
+            onClick={handleGlobalRefresh}
+            disabled={isGlobalRefreshing}
+            className="p-2 text-zinc-400 hover:text-zinc-100 rounded-xl hover:bg-[#1C1C21] active:scale-95 transition-all min-h-[40px] min-w-[40px] flex items-center justify-center"
+            aria-label="Refresh Data"
+          >
+            <RefreshCw size={17} className={isGlobalRefreshing ? 'animate-spin text-zinc-200' : ''} />
+          </button>
+        </div>
       </div>
 
       {/* Sidebar Navigation */}
       <aside className={`
-        fixed md:sticky top-0 z-40 h-screen w-64 bg-[#121215] border-r border-[#1F1F24] flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0
-        ${isMobileNavOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        fixed md:sticky top-0 z-50 md:z-40 h-screen w-64 bg-[#121215] border-r border-[#1F1F24] flex flex-col justify-between transition-transform duration-200 ease-in-out shrink-0
+        ${isMobileNavOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full md:translate-x-0'}
       `}>
         {/* Top Sidebar Header */}
         <div className="flex flex-col flex-1 overflow-y-auto">
-          <div className="h-14 px-6 border-b border-[#1F1F24] flex items-center justify-between">
+          <div className="h-14 px-5 border-b border-[#1F1F24] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="font-extrabold text-sm tracking-widest text-zinc-100">LOOZARS</span>
               <span className="text-[10px] font-semibold bg-[#1C1C24] text-zinc-300 px-1.5 py-0.5 rounded border border-[#2E2E3C] font-mono uppercase tracking-wider">
                 Atelier
               </span>
             </div>
-            <span className="flex h-2 w-2 relative" title="System Online">
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 relative" title="System Online">
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+
+              {/* Mobile Close Button */}
+              <button
+                onClick={() => setIsMobileNavOpen(false)}
+                className="md:hidden p-1.5 text-zinc-400 hover:text-white rounded-lg hover:bg-[#1C1C21] transition-colors"
+                aria-label="Close Navigation"
+              >
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
           {/* Navigation Links */}
@@ -203,13 +284,13 @@ export const AdminPortalContent = () => {
                     <button
                       key={item.id}
                       onClick={() => handleTabSwitch(item.id)}
-                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium transition-all text-left cursor-pointer ${
+                      className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium transition-all text-left cursor-pointer min-h-[40px] ${
                         isActive
                           ? 'bg-[#1C1C24] text-white font-semibold border border-[#2E2E3C] shadow-xs'
                           : 'text-zinc-400 hover:text-zinc-100 hover:bg-[#18181D]'
                       }`}
                     >
-                      <Icon size={15} className={isActive ? 'text-white' : 'text-zinc-500'} />
+                      <Icon size={16} className={isActive ? 'text-white' : 'text-zinc-500'} />
                       <span>{item.label}</span>
                     </button>
                   );
@@ -229,7 +310,7 @@ export const AdminPortalContent = () => {
             </span>
             <button
               onClick={() => navigateTo('home')}
-              className="text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1 text-[11px]"
+              className="text-zinc-400 hover:text-zinc-200 transition-colors flex items-center gap-1 text-[11px] py-1 px-1.5 -mr-1.5 rounded hover:bg-[#1C1C21]"
               title="Open storefront"
             >
               <span>View</span>
@@ -252,7 +333,7 @@ export const AdminPortalContent = () => {
                 await signOut();
                 navigateTo('home');
               }}
-              className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-red-950/40 rounded-lg transition-colors"
+              className="p-2 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center"
               title="Sign Out"
               aria-label="Sign Out"
             >
@@ -265,8 +346,8 @@ export const AdminPortalContent = () => {
       {/* Main Workspace Area */}
       <div className="flex-1 flex flex-col min-w-0">
         
-        {/* Dark Top Bar */}
-        <header className="sticky top-0 z-30 bg-[#121215]/95 backdrop-blur-md border-b border-[#1F1F24] h-14 px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
+        {/* Dark Top Bar (Desktop / Tablet) */}
+        <header className="hidden md:flex sticky top-0 z-30 bg-[#121215]/95 backdrop-blur-md border-b border-[#1F1F24] h-14 px-4 sm:px-6 lg:px-8 items-center justify-between gap-4">
           
           {/* Left: Page Title */}
           <div className="flex items-center gap-3">
@@ -303,16 +384,16 @@ export const AdminPortalContent = () => {
             <button
               onClick={handleGlobalRefresh}
               disabled={isGlobalRefreshing}
-              className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-[#1C1C21] rounded-lg transition-colors border border-transparent hover:border-[#24242A]"
+              className="p-2 text-zinc-400 hover:text-zinc-100 hover:bg-[#1C1C21] rounded-xl transition-colors border border-transparent hover:border-[#24242A] min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
               title="Refresh store data"
               aria-label="Refresh store data"
             >
-              <RefreshCw size={14} className={isGlobalRefreshing ? 'animate-spin text-[#E66A6A]' : ''} />
+              <RefreshCw size={14} className={isGlobalRefreshing ? 'animate-spin text-zinc-200' : ''} />
             </button>
 
             <button
               onClick={() => navigateTo('home')}
-              className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-zinc-300 hover:text-white hover:bg-[#1C1C21] rounded-xl transition-colors border border-[#24242A]"
+              className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:text-white hover:bg-[#1C1C21] rounded-xl transition-colors border border-[#24242A]"
             >
               <Store size={13} />
               <span>Storefront</span>
@@ -322,7 +403,7 @@ export const AdminPortalContent = () => {
         </header>
 
         {/* Content Body View Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {visitedTabs.has('overview') && (
             <div className={activeTab === 'overview' ? 'block' : 'hidden'}>
               <AdminOverview
@@ -378,7 +459,7 @@ export const AdminPortalContent = () => {
 
           {visitedTabs.has('settings') && (
             <div className={activeTab === 'settings' ? 'block' : 'hidden'}>
-              <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-6 space-y-6">
+              <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-6">
                 <div>
                   <h2 className="text-sm font-semibold text-zinc-100">Store Settings</h2>
                   <p className="text-xs text-zinc-400 mt-0.5">Core brand metadata, payment gateways, and studio fulfillments.</p>
@@ -399,6 +480,84 @@ export const AdminPortalContent = () => {
             </div>
           )}
         </main>
+
+        {/* Mobile 1-Tap Quick Search / Command Palette Drawer Modal */}
+        {isMobileSearchOpen && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-4 font-sans animate-fadeIn">
+            <div className="flex items-center justify-between pb-3 border-b border-[#24242A]">
+              <div className="flex items-center gap-2">
+                <Search size={16} className="text-zinc-400" />
+                <span className="text-xs font-semibold text-zinc-200">Quick Command & Search</span>
+              </div>
+              <button
+                onClick={() => setIsMobileSearchOpen(false)}
+                className="p-2 text-zinc-400 hover:text-white rounded-xl hover:bg-[#1C1C21] min-h-[40px] min-w-[40px] flex items-center justify-center"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="pt-4 pb-2">
+              <div className="relative">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+                <input
+                  ref={mobileSearchInputRef}
+                  type="text"
+                  value={globalSearch}
+                  onChange={(e) => {
+                    setGlobalSearch(e.target.value);
+                  }}
+                  placeholder="Type to filter orders, customers, SKUs..."
+                  className="w-full pl-10 pr-4 py-3 bg-[#16161A] border border-[#2E2E3C] text-sm text-zinc-100 placeholder-zinc-500 rounded-2xl focus:outline-none focus:border-white transition-all shadow-lg"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto py-3 space-y-4">
+              {globalSearch.trim().length > 0 && (
+                <button
+                  onClick={() => {
+                    handleTabSwitch('orders');
+                  }}
+                  className="w-full p-3.5 bg-white text-black font-semibold rounded-2xl text-xs flex items-center justify-between shadow-lg"
+                >
+                  <span>Search "{globalSearch}" in Orders</span>
+                  <ArrowRight size={14} />
+                </button>
+              )}
+
+              <div>
+                <p className="text-[10px] font-mono tracking-wider uppercase text-zinc-500 px-1 pb-2">
+                  Jump to Module
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+                    { id: 'orders', label: 'Orders', icon: ShoppingBag },
+                    { id: 'crm', label: 'CRM Dossiers', icon: Users },
+                    { id: 'products', label: 'Products', icon: Layers },
+                    { id: 'inventory', label: 'Inventory', icon: Package },
+                    { id: 'coupons', label: 'Coupons', icon: Tag },
+                    { id: 'influencers', label: 'Influencers', icon: Users },
+                    { id: 'logs', label: 'Activity Logs', icon: FileText }
+                  ].map((m) => {
+                    const Icon = m.icon;
+                    return (
+                      <button
+                        key={m.id}
+                        onClick={() => handleTabSwitch(m.id)}
+                        className="p-3 bg-[#16161A] hover:bg-[#1E1E24] border border-[#24242A] rounded-xl text-left flex items-center gap-2.5 text-xs text-zinc-200 active:scale-98 transition-all min-h-[48px]"
+                      >
+                        <Icon size={16} className="text-zinc-400 shrink-0" />
+                        <span className="truncate font-medium">{m.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Global Modals */}
         {modalOrder && (

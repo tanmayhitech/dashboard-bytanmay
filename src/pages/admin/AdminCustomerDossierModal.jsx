@@ -109,90 +109,90 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
   const whatsAppUrl = generateWhatsAppUrl(customer, selectedWaTemplate);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="relative w-full max-w-4xl max-h-[90vh] bg-[#141418] border border-[#242430] rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#EDEDF0] font-sans"
+        className="relative w-full max-w-4xl max-h-[92vh] bg-[#141418] border border-[#242430] rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#EDEDF0] font-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-5 bg-[#121216] border-b border-[#22222C] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#1C1C24] text-white border border-[#2E2E3C] flex items-center justify-center text-base font-bold shadow-xs tracking-wider shrink-0">
+        <div className="sticky top-0 z-20 px-4 sm:px-6 py-4 bg-[#121216]/95 backdrop-blur-md border-b border-[#22222C] flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-[#1C1C24] text-white border border-[#2E2E3C] flex items-center justify-center text-sm sm:text-base font-bold shadow-xs tracking-wider shrink-0">
               {customer.initials}
             </div>
 
-            <div>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h2 className="text-base sm:text-xl font-bold text-white tracking-tight truncate">
                   {customer.name}
                 </h2>
                 {isVipState ? (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#1C1C26] border border-[#3E3E4E] text-zinc-100 text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
-                    <Crown size={12} className="text-zinc-300 fill-zinc-300/30" />
+                  <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-[#1C1C26] border border-[#3E3E4E] text-zinc-100 text-[10px] sm:text-[11px] font-bold flex items-center gap-1.5 shadow-xs">
+                    <Crown size={11} className="text-zinc-300 fill-zinc-300/30" />
                     <span>VIP Whitelist</span>
                   </span>
                 ) : customer.orderCount >= 2 ? (
-                  <span className="px-2.5 py-0.5 rounded-full bg-violet-950/50 border border-violet-800/60 text-violet-300 text-[11px] font-medium">
+                  <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-violet-950/50 border border-violet-800/60 text-violet-300 text-[10px] sm:text-[11px] font-medium">
                     Repeat Collector
                   </span>
                 ) : (
-                  <span className="px-2.5 py-0.5 rounded-full bg-[#1C1C24] border border-[#2C2C38] text-zinc-400 text-[11px]">
+                  <span className="px-2 sm:px-2.5 py-0.5 rounded-full bg-[#1C1C24] border border-[#2C2C38] text-zinc-400 text-[10px] sm:text-[11px]">
                     First-Time Buyer
                   </span>
                 )}
               </div>
 
-              <div className="text-xs text-zinc-400 mt-1 flex items-center gap-2.5 flex-wrap">
+              <div className="text-xs text-zinc-400 mt-0.5 flex items-center gap-2 flex-wrap">
                 {customer.email && (
                   <button
                     onClick={() => handleCopy(customer.email, 'email')}
-                    className="hover:text-zinc-200 transition-colors flex items-center gap-1 group cursor-pointer"
+                    className="hover:text-zinc-200 transition-colors flex items-center gap-1 group cursor-pointer max-w-[180px] sm:max-w-none truncate"
                     title="Click to copy email"
                   >
-                    <Mail size={12} className="text-zinc-500 group-hover:text-zinc-300" />
-                    <span>{customer.email}</span>
+                    <Mail size={11} className="text-zinc-500 group-hover:text-zinc-300 shrink-0" />
+                    <span className="truncate">{customer.email}</span>
                   </button>
                 )}
 
                 {customer.phone && (
                   <>
-                    <span className="text-zinc-600">•</span>
+                    <span className="text-zinc-600 hidden sm:inline">•</span>
                     <button
                       onClick={() => handleCopy(customer.phone, 'phone')}
                       className="hover:text-zinc-200 transition-colors flex items-center gap-1 group font-mono cursor-pointer"
                       title="Click to copy phone"
                     >
-                      <Phone size={12} className="text-zinc-500 group-hover:text-zinc-300" />
+                      <Phone size={11} className="text-zinc-500 group-hover:text-zinc-300 shrink-0" />
                       <span>{customer.phone}</span>
                     </button>
                   </>
                 )}
 
-                <span className="text-zinc-600">•</span>
+                <span className="text-zinc-600 hidden sm:inline">•</span>
                 <span className="flex items-center gap-1 text-zinc-400">
-                  <MapPin size={12} className="text-zinc-500" />
+                  <MapPin size={11} className="text-zinc-500 shrink-0" />
                   <span>{customer.city || 'Kanpur'}, {customer.state || 'UP'}</span>
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between sm:justify-end gap-2 pt-1 sm:pt-0 border-t sm:border-t-0 border-[#1E1E26]">
             <button
               onClick={handleToggleVip}
-              className={`px-3.5 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 border shadow-xs cursor-pointer ${
+              className={`px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 border shadow-xs cursor-pointer min-h-[36px] ${
                 isVipState
                   ? 'bg-[#22222E] text-zinc-100 border-[#3E3E50] hover:bg-[#2A2A38]'
                   : 'bg-[#1C1C24] hover:bg-[#252530] text-zinc-300 border-[#2E2E3C]'
               }`}
             >
-              <Crown size={13} className={isVipState ? 'text-zinc-200 fill-zinc-300/30' : 'text-zinc-500'} />
+              <Crown size={12} className={isVipState ? 'text-zinc-200 fill-zinc-300/30' : 'text-zinc-500'} />
               <span>{isVipState ? 'VIP Whitelist Active' : 'Promote to VIP'}</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-white hover:bg-[#20202A] rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-zinc-400 hover:text-white hover:bg-[#20202A] rounded-xl transition-colors cursor-pointer min-h-[36px] min-w-[36px] flex items-center justify-center"
             >
               <X size={18} />
             </button>
@@ -200,7 +200,7 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
         </div>
 
         {/* Tab Navigation */}
-        <div className="px-6 border-b border-[#22222C] bg-[#121216] flex items-center gap-1 overflow-x-auto">
+        <div className="px-4 sm:px-6 border-b border-[#22222C] bg-[#121216] flex items-center gap-1 overflow-x-auto scrollbar-thin">
           {[
             { id: 'overview', label: 'Overview & Metrics', icon: Sparkles },
             { id: 'orders', label: `Orders (${customer.orderCount})`, icon: ShoppingBag },
@@ -214,7 +214,7 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-3 px-3.5 text-xs font-medium border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+                className={`py-3 px-3 sm:px-3.5 text-xs font-medium border-b-2 transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer min-h-[40px] ${
                   isActive
                     ? 'border-white text-white font-semibold'
                     : 'border-transparent text-zinc-400 hover:text-zinc-200'
@@ -228,7 +228,7 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
         </div>
 
         {/* Tab Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 text-xs text-zinc-300">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs text-zinc-300">
           
           {/* 1. Overview */}
           {activeTab === 'overview' && (
@@ -380,14 +380,14 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
                 {decodeURIComponent(whatsAppUrl.split('text=')[1] || '')}
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end pt-1">
                 <a
                   href={whatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-600 text-white font-semibold rounded-xl flex items-center gap-2 shadow-xs transition-colors cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-3 bg-emerald-700 hover:bg-emerald-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer min-h-[44px]"
                 >
-                  <Send size={13} />
+                  <Send size={14} />
                   <span>Launch WhatsApp Outreach</span>
                 </a>
               </div>
@@ -397,17 +397,17 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
           {/* 4. Staff Notes */}
           {activeTab === 'notes' && (
             <div className="space-y-4">
-              <form onSubmit={handleAddNote} className="flex gap-2.5">
+              <form onSubmit={handleAddNote} className="flex flex-col sm:flex-row gap-2.5">
                 <input
                   type="text"
                   placeholder="Add private staff note (e.g., requested gift box, preferred courier)..."
                   value={newNoteText}
                   onChange={(e) => setNewNoteText(e.target.value)}
-                  className="flex-1 bg-[#16161D] border border-[#262634] px-4 py-2.5 rounded-xl text-xs text-zinc-100 outline-none focus:border-zinc-400 shadow-xs placeholder-zinc-600"
+                  className="flex-1 bg-[#16161D] border border-[#262634] px-4 py-2.5 rounded-xl text-xs text-zinc-100 outline-none focus:border-zinc-400 shadow-xs placeholder-zinc-600 min-h-[42px]"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl text-xs transition-colors shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl text-xs transition-colors shadow-xs cursor-pointer min-h-[42px] flex items-center justify-center"
                 >
                   Add Note
                 </button>
@@ -423,8 +423,8 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
                           Recorded by {n.author || 'Admin'} • {new Date(n.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </span>
                       </div>
-                      <button onClick={() => handleDeleteNote(n.id)} className="text-zinc-500 hover:text-rose-400 p-1.5 rounded-lg hover:bg-[#1C1C24] cursor-pointer transition-colors">
-                        <Trash2 size={13} />
+                      <button onClick={() => handleDeleteNote(n.id)} className="text-zinc-500 hover:text-rose-400 p-2 rounded-lg hover:bg-[#1C1C24] cursor-pointer transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center">
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   ))
@@ -440,17 +440,17 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
           {/* 5. Custom Tags */}
           {activeTab === 'tags' && (
             <div className="space-y-4">
-              <form onSubmit={(e) => { e.preventDefault(); handleAddTag(); }} className="flex gap-2.5">
+              <form onSubmit={(e) => { e.preventDefault(); handleAddTag(); }} className="flex flex-col sm:flex-row gap-2.5">
                 <input
                   type="text"
                   placeholder="Add customer tag (e.g. VIP Whitelist, Heavy Spender, Stylist)..."
                   value={newTagInput}
                   onChange={(e) => setNewTagInput(e.target.value)}
-                  className="flex-1 bg-[#16161D] border border-[#262634] px-4 py-2.5 rounded-xl text-xs text-zinc-100 outline-none focus:border-zinc-400 shadow-xs placeholder-zinc-600"
+                  className="flex-1 bg-[#16161D] border border-[#262634] px-4 py-2.5 rounded-xl text-xs text-zinc-100 outline-none focus:border-zinc-400 shadow-xs placeholder-zinc-600 min-h-[42px]"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl text-xs transition-colors shadow-xs cursor-pointer"
+                  className="w-full sm:w-auto px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl text-xs transition-colors shadow-xs cursor-pointer min-h-[42px] flex items-center justify-center"
                 >
                   Add Tag
                 </button>
@@ -458,10 +458,10 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
 
               <div className="flex items-center gap-2 flex-wrap">
                 {tagsList.map((t, idx) => (
-                  <span key={idx} className="px-3 py-1.5 bg-[#16161D] border border-[#262634] text-zinc-200 rounded-xl text-xs flex items-center gap-2 shadow-xs font-medium">
+                  <span key={idx} className="px-3 py-2 bg-[#16161D] border border-[#262634] text-zinc-200 rounded-xl text-xs flex items-center gap-2 shadow-xs font-medium">
                     <span>#{t}</span>
-                    <button onClick={() => handleRemoveTag(t)} className="text-zinc-500 hover:text-rose-400 cursor-pointer">
-                      <X size={12} />
+                    <button onClick={() => handleRemoveTag(t)} className="text-zinc-500 hover:text-rose-400 cursor-pointer p-0.5">
+                      <X size={13} />
                     </button>
                   </span>
                 ))}
