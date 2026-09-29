@@ -2,21 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { fetchAdminInventory } from '../../services/adminService';
 import { StockAdjustModal } from './StockAdjustModal';
 import { 
-  Package, 
   Search, 
-  Filter, 
   RefreshCw, 
   Sliders, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Layers,
-  ArrowUpDown
+  Database,
+  Package,
+  AlertTriangle
 } from 'lucide-react';
 
 export const AdminInventory = ({ initialSelectedItem = null }) => {
   const [inventory, setInventory] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL'); // 'ALL' | 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK'
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [sizeFilter, setSizeFilter] = useState('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [selectedItemForAdjust, setSelectedItemForAdjust] = useState(initialSelectedItem);
@@ -41,7 +38,6 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
     setInventory(prev => prev.map(item => item.variantId === updatedItem.variantId ? { ...item, ...updatedItem } : item));
   };
 
-  // Filter items
   const filteredInventory = inventory.filter(item => {
     if (statusFilter !== 'ALL' && item.status !== statusFilter) {
       return false;
@@ -64,67 +60,100 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
 
   return (
     <div className="space-y-6 font-sans">
-      {/* View Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
         <div>
-          <h2 className="text-xl font-semibold text-white tracking-tight">
-            Inventory & Stock Matrix
-          </h2>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Real-time stock counts across sizes, reserved cart quantities, and manual adjustments
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-bold text-white tracking-tight">Studio Inventory Matrix</h2>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#181820] text-zinc-400 border border-[#2A2A38] text-[10px] font-mono font-medium">
+              Real-Time Sync
+            </span>
+          </div>
+          <p className="text-xs text-zinc-400 mt-1">
+            Real-time SKU stock levels, reserved allocation tracking, and manual inventory adjustments
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <button
             onClick={loadInventory}
-            className="px-3.5 py-2 bg-[#141414] hover:bg-[#1f1f1f] text-zinc-300 hover:text-white border border-[#262626] text-xs font-medium rounded-lg transition-colors flex items-center gap-2"
+            className="px-3.5 py-2 bg-[#16161D] hover:bg-[#20202A] text-zinc-200 border border-[#262634] text-xs font-medium rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer"
           >
-            <RefreshCw size={13} className={isLoading ? 'animate-spin' : ''} />
+            <RefreshCw size={13} className={isLoading ? 'animate-spin text-zinc-400' : 'text-zinc-400'} />
             <span>Refresh</span>
           </button>
         </div>
       </div>
 
-      {/* Stock Summary Strip */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div className="bg-[#121212] border border-[#222222] p-4 rounded-xl">
-          <span className="text-xs text-zinc-400 block">Total SKUs</span>
-          <span className="text-xl font-bold text-white mt-1 block">{inventory.length}</span>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div className="bg-[#141418] border border-[#22222C] p-5 rounded-2xl shadow-xs space-y-1 group hover:border-[#333342] transition-colors">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="font-medium text-zinc-300">Total SKUs</span>
+            <Package size={14} className="text-zinc-500" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-[#EDEDF0] tracking-tight tabular-nums font-mono">
+            {inventory.length}
+          </div>
+          <p className="text-[11px] text-zinc-500">Tracked size variants</p>
         </div>
-        <div className="bg-[#121212] border border-[#222222] p-4 rounded-xl">
-          <span className="text-xs text-zinc-400 block">Total Units</span>
-          <span className="text-xl font-bold text-white mt-1 block">{totalUnits}</span>
+
+        <div className="bg-[#141418] border border-[#22222C] p-5 rounded-2xl shadow-xs space-y-1 group hover:border-[#333342] transition-colors">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="font-medium text-zinc-300">Available Units</span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" />
+          </div>
+          <div className="text-2xl sm:text-3xl font-bold text-[#EDEDF0] tracking-tight tabular-nums font-mono">
+            {totalUnits}
+          </div>
+          <p className="text-[11px] text-zinc-500">Total physical atelier units</p>
         </div>
-        <div className="bg-[#121212] border border-[#222222] p-4 rounded-xl">
-          <span className="text-xs text-amber-400 block">Low Stock (≤ 5)</span>
-          <span className="text-xl font-bold text-amber-400 mt-1 block">{lowStockCount}</span>
+
+        <div className="bg-[#141418] border border-[#22222C] p-5 rounded-2xl shadow-xs space-y-1 group hover:border-[#333342] transition-colors">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="font-medium text-zinc-300">Low Stock Alerts</span>
+            <span className="text-[10px] font-mono text-zinc-400 bg-[#1C1C24] px-2 py-0.5 rounded-md border border-[#2A2A38]">
+              ≤ 5 units
+            </span>
+          </div>
+          <div className={`text-2xl sm:text-3xl font-bold tracking-tight tabular-nums font-mono ${lowStockCount > 0 ? 'text-rose-300' : 'text-[#EDEDF0]'}`}>
+            {lowStockCount}
+          </div>
+          <p className="text-[11px] text-zinc-500">{lowStockCount > 0 ? 'Requires inward restock' : 'All sizes healthy'}</p>
         </div>
-        <div className="bg-[#121212] border border-[#222222] p-4 rounded-xl">
-          <span className="text-xs text-rose-400 block">Out of Stock (0)</span>
-          <span className="text-xl font-bold text-rose-400 mt-1 block">{outOfStockCount}</span>
+
+        <div className="bg-[#141418] border border-[#22222C] p-5 rounded-2xl shadow-xs space-y-1 group hover:border-[#333342] transition-colors">
+          <div className="flex items-center justify-between text-zinc-400">
+            <span className="font-medium text-zinc-300">Sold Out SKUs</span>
+            <span className="text-[10px] font-mono text-zinc-400 bg-[#1C1C24] px-2 py-0.5 rounded-md border border-[#2A2A38]">
+              0 units
+            </span>
+          </div>
+          <div className={`text-2xl sm:text-3xl font-bold tracking-tight tabular-nums font-mono ${outOfStockCount > 0 ? 'text-rose-400' : 'text-[#EDEDF0]'}`}>
+            {outOfStockCount}
+          </div>
+          <p className="text-[11px] text-zinc-500">{outOfStockCount > 0 ? 'Disabled on storefront' : 'Zero stockout incidents'}</p>
         </div>
       </div>
 
-      {/* Controls Bar: Search & Filter */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-        {/* Search Input (6 cols) */}
+      {/* Search & Filter Bar */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 bg-[#141418] border border-[#23232D] p-3.5 rounded-2xl shadow-xs">
         <div className="md:col-span-6 relative">
-          <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
           <input
             type="text"
+            placeholder="Search variant by SKU, size, or product name..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-[#121212] border border-[#242424] focus:border-zinc-500 text-white pl-10 pr-4 py-2.5 text-xs rounded-xl outline-none transition-colors"
+            className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-zinc-100 pl-9 pr-4 py-2.5 text-xs rounded-xl outline-none transition-colors shadow-xs placeholder-zinc-500"
           />
         </div>
 
-        {/* Status Filter (3 cols) */}
         <div className="md:col-span-3">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full bg-[#121212] border border-[#242424] focus:border-zinc-500 text-white px-3.5 py-2.5 text-xs rounded-xl outline-none transition-colors cursor-pointer"
+            className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-zinc-200 px-3.5 py-2.5 text-xs rounded-xl outline-none transition-colors cursor-pointer shadow-xs"
           >
             <option value="ALL">All Stock Statuses</option>
             <option value="IN_STOCK">In Stock (&gt; 5)</option>
@@ -133,14 +162,13 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
           </select>
         </div>
 
-        {/* Size Filter (3 cols) */}
         <div className="md:col-span-3">
           <select
             value={sizeFilter}
             onChange={(e) => setSizeFilter(e.target.value)}
-            className="w-full bg-[#121212] border border-[#242424] focus:border-zinc-500 text-white px-3.5 py-2.5 text-xs rounded-xl outline-none transition-colors cursor-pointer"
+            className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-zinc-200 px-3.5 py-2.5 text-xs rounded-xl outline-none transition-colors cursor-pointer shadow-xs"
           >
-            <option value="ALL">All Sizes</option>
+            <option value="ALL">All Sizes (XS - XXL)</option>
             <option value="XS">Size XS</option>
             <option value="S">Size S</option>
             <option value="M">Size M</option>
@@ -152,88 +180,86 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-[#121212] border border-[#222222] rounded-xl overflow-hidden shadow-sm">
+      <div className="bg-[#141418] border border-[#23232D] rounded-2xl shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left">
-            <thead className="bg-[#161616] text-zinc-400 text-[11px] font-medium border-b border-[#222222]">
+            <thead className="bg-[#0E0E12] text-zinc-500 font-mono border-b border-[#20202A] uppercase text-[10px] tracking-widest">
               <tr>
-                <th className="py-3.5 px-5">SKU / Identifier</th>
-                <th className="py-3.5 px-4">Product Name</th>
-                <th className="py-3.5 px-4 text-center">Size</th>
-                <th className="py-3.5 px-4 text-center">In Stock</th>
-                <th className="py-3.5 px-4 text-center">Reserved</th>
-                <th className="py-3.5 px-4 text-center">Available</th>
-                <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-5 text-right">Action</th>
+                <th className="py-3.5 px-4 font-normal">Variant SKU</th>
+                <th className="py-3.5 px-4 font-normal">Product Name</th>
+                <th className="py-3.5 px-3 text-center font-normal">Size</th>
+                <th className="py-3.5 px-3 text-center font-normal">Stock Count</th>
+                <th className="py-3.5 px-3 text-center font-normal">Reserved</th>
+                <th className="py-3.5 px-3 text-center font-normal">Available</th>
+                <th className="py-3.5 px-4 text-center font-normal">Status</th>
+                <th className="py-3.5 px-4 text-right font-normal">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#1c1c1c]">
+            <tbody className="divide-y divide-[#1D1D26]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center text-zinc-500">
+                  <td colSpan={8} className="py-20 text-center text-zinc-500">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <RefreshCw size={18} className="animate-spin text-zinc-400" />
-                      <span>Loading inventory...</span>
+                      <RefreshCw size={20} className="animate-spin text-zinc-500" />
+                      <span>Loading studio inventory...</span>
                     </div>
                   </td>
                 </tr>
               ) : filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center text-zinc-500">
-                    <div className="space-y-1">
-                      <p className="font-semibold text-zinc-400">No SKUs Found</p>
-                      <p className="text-xs">No variants matched the selected filters.</p>
-                    </div>
+                  <td colSpan={8} className="py-20 text-center text-zinc-500">
+                    <p className="font-semibold text-zinc-300 text-sm">No SKUs Found</p>
+                    <p className="text-xs text-zinc-500 mt-0.5">No variants matched the selected filters.</p>
                   </td>
                 </tr>
               ) : (
                 filteredInventory.map((item) => {
                   return (
-                    <tr 
-                      key={item.variantId} 
-                      className="hover:bg-[#181818] transition-colors"
-                    >
-                      <td className="py-3.5 px-5 font-semibold text-white">
+                    <tr key={item.variantId} className="hover:bg-[#1A1A22] transition-colors">
+                      <td className="py-3.5 px-4 font-mono font-medium text-zinc-200">
                         {item.sku}
                       </td>
-                      <td className="py-3.5 px-4 text-zinc-300">
+                      <td className="py-3.5 px-4 text-zinc-200 font-medium">
                         {item.product?.name || 'Product'}
                       </td>
-                      <td className="py-3.5 px-4 text-center">
-                        <span className="px-2.5 py-0.5 bg-[#181818] text-zinc-200 border border-[#2a2a2a] rounded-md font-semibold text-xs">
+                      <td className="py-3.5 px-3 text-center">
+                        <span className="font-mono text-xs text-zinc-300 font-medium">
                           {item.size}
                         </span>
                       </td>
-                      <td className="py-3.5 px-4 text-center font-bold text-white">
+                      <td className="py-3.5 px-3 text-center font-semibold text-white font-mono">
                         {item.stockQuantity}
                       </td>
-                      <td className="py-3.5 px-4 text-center text-zinc-500">
+                      <td className="py-3.5 px-3 text-center text-zinc-500 font-mono">
                         {item.reservedQuantity || 0}
                       </td>
-                      <td className="py-3.5 px-4 text-center font-semibold text-zinc-200">
+                      <td className="py-3.5 px-3 text-center font-semibold text-zinc-200 font-mono">
                         {item.availableStock}
                       </td>
                       <td className="py-3.5 px-4 text-center">
                         {item.status === 'OUT_OF_STOCK' && (
-                          <span className="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
-                            Out of Stock
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-500">
+                            <span className="w-1.5 h-1.5 rounded-full border border-zinc-600 bg-transparent" />
+                            <span>Out of Stock</span>
                           </span>
                         )}
                         {item.status === 'LOW_STOCK' && (
-                          <span className="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
-                            Low Stock
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-rose-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                            <span>Low Stock</span>
                           </span>
                         )}
                         {item.status === 'IN_STOCK' && (
-                          <span className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-xs font-medium capitalize">
-                            In Stock
+                          <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-300">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                            <span>In Stock</span>
                           </span>
                         )}
                       </td>
-                      <td className="py-3.5 px-5 text-right">
+                      <td className="py-3.5 px-4 text-right">
                         <button
                           onClick={() => setSelectedItemForAdjust(item)}
-                          className="px-3 py-1 bg-[#1c1c1c] hover:bg-white hover:text-black text-zinc-200 border border-[#2d2d2d] rounded-lg transition-colors text-xs font-medium inline-flex items-center gap-1.5"
+                          className="px-3 py-1.5 bg-[#1C1C24] hover:bg-[#252532] text-zinc-200 border border-[#2D2D3B] hover:border-[#3D3D4E] rounded-xl transition-all text-xs font-medium inline-flex items-center gap-1.5 shadow-xs cursor-pointer"
                         >
                           <Sliders size={12} />
                           <span>Adjust</span>
@@ -247,10 +273,10 @@ export const AdminInventory = ({ initialSelectedItem = null }) => {
           </table>
         </div>
 
-        {/* Footer info */}
-        <div className="bg-[#161616] border-t border-[#202020] p-4 text-zinc-400 text-xs flex items-center justify-between">
+        {/* Footer */}
+        <div className="bg-[#0E0E12] border-t border-[#20202A] p-3 px-4 text-zinc-400 text-xs flex items-center justify-between">
           <span>Displaying {filteredInventory.length} of {inventory.length} total SKUs</span>
-          <span className="text-xs text-zinc-500">Server-authoritative database stock synchronization</span>
+          <span className="text-zinc-500 text-[11px] font-mono">Server-authoritative database stock</span>
         </div>
       </div>
 

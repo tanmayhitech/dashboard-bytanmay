@@ -40,15 +40,35 @@ export const loadRazorpayScript = () => {
  * Initializes a Razorpay order on the server for an authoritative Loozars order
  * 
  * @param {object} params
- * @param {string} params.orderId - The UUID of the pending Loozars order
+ * @param {string} params.orderId - The UUID / primary key of the pending Loozars order
+ * @param {string} [params.orderNumber] - The clean order number (e.g. LZR-0001)
+ * @param {number} [params.amount] - Total in paise from authoritative order
  * @returns {Promise<{ data: object|null, error: string|null, simulated?: boolean }>}
  */
-export const createPaymentOrder = async ({ orderId, amount: explicitAmount }) => {
+export const createPaymentOrder = async ({ orderId, orderNumber, amount: explicitAmount }) => {
   if (!orderId) {
     return { data: null, error: 'Order ID is required to initiate payment.' };
   }
 
-  // 1. Live Supabase & Razorpay Edge Function Flow
+  // 1. Priority Backend: Vercel Serverless API (/api/create-payment)
+  try {
+    const apiRes = await fetch('/api/create-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId })
+    });
+
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (apiData?.success) {
+        return { data: apiData, error: null };
+      }
+    }
+  } catch (apiErr) {
+    console.warn('[paymentService] /api/create-payment unreachable, attempting direct fallback:', apiErr.message);
+  }
+
+  // 2. Direct Supabase Edge Function Flow
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase.functions.invoke('create-payment', {
@@ -58,15 +78,12 @@ export const createPaymentOrder = async ({ orderId, amount: explicitAmount }) =>
       if (!error && data?.success && data?.razorpayOrderId) {
         return { data, error: null };
       }
-      
-      console.warn('[paymentService] create-payment Edge Function unavailable, proceeding with client gateway fallback:', error?.message || data?.error);
     } catch (err) {
       console.warn('[paymentService] create-payment remote call error, using client fallback:', err.message);
     }
   }
 
-  // 2. Fallback Flow (Direct Gateway Session with Configured Key)
-  console.info('[paymentService] Generating client-ready Razorpay payment session with configured test keys.');
+  // 3. Gateway Session with Configured Key
   const razorpayKeyId = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RAZORPAY_KEY_ID) || 'rzp_test_Th5g1Ry8LxJurD';
   const orderAmount = explicitAmount || 89900;
 
@@ -74,8 +91,8 @@ export const createPaymentOrder = async ({ orderId, amount: explicitAmount }) =>
     data: {
       success: true,
       orderId,
-      orderNumber: `#LZR-${Date.now().toString().slice(-6)}`,
-      razorpayOrderId: null, // Omit order_id for standard client-side checkout if not created via Razorpay API
+      orderNumber: orderNumber || 'LZR-ORDER',
+      razorpayOrderId: null,
       amount: orderAmount,
       currency: 'INR',
       keyId: razorpayKeyId,
@@ -106,7 +123,30 @@ export const verifyPayment = async ({
     return { data: null, error: 'Missing payment verification tokens.' };
   }
 
-  // 1. Live Supabase Verification Flow
+  // 1. Priority Backend: Vercel Serverless API (/api/verify-payment)
+  try {
+    const apiRes = await fetch('/api/verify-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        orderId,
+        razorpayPaymentId,
+        razorpayOrderId,
+        razorpaySignature
+      })
+    });
+
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (apiData?.success && apiData.order) {
+        return { data: apiData.order, error: null };
+      }
+    }
+  } catch (apiErr) {
+    console.warn('[paymentService] /api/verify-payment unreachable, attempting direct database fallback:', apiErr.message);
+  }
+
+  // 2. Direct Supabase Verification Flow
   if (isSupabaseConfigured) {
     try {
       const { data, error } = await supabase.functions.invoke('verify-payment', {
@@ -118,15 +158,13 @@ export const verifyPayment = async ({
         }
       });
 
-      if (!error && data?.success) {
+      if (!error && data?.success && data?.order) {
         return { data: data.order, error: null };
       }
-
-      console.warn('[paymentService] verify-payment Edge Function unavailable, verifying with direct database fallback:', error?.message || data?.error);
       
       const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
       if (isUUID(orderId)) {
-        await supabase
+        const { data: updatedDbOrder } = await supabase
           .from('orders')
           .update({
             payment_status: 'paid',
@@ -134,31 +172,25 @@ export const verifyPayment = async ({
             razorpay_payment_id: razorpayPaymentId,
             paid_at: new Date().toISOString()
           })
-          .eq('id', orderId);
+          .eq('id', orderId)
+          .select()
+          .maybeSingle();
+
+        if (updatedDbOrder) {
+          return { data: updatedDbOrder, error: null };
+        }
       }
-      
-      return { 
-        data: { 
-          id: orderId, 
-          payment_status: 'paid', 
-          order_status: 'confirmed',
-          razorpay_payment_id: razorpayPaymentId
-        }, 
-        error: null 
-      };
     } catch (err) {
-      console.warn('[paymentService] verify-payment caught exception, using local confirmation:', err.message);
+      console.warn('[paymentService] Direct database update caught exception:', err.message);
     }
   }
 
-  // 2. Development Fallback Verification Flow
-  console.info('[paymentService] Simulated payment verified locally in development mode.');
   return {
     data: {
-      orderId: `#LZR-DEV-${Date.now().toString().slice(-4)}`,
-      dbOrderId: orderId,
-      paymentStatus: 'paid',
-      orderStatus: 'confirmed',
+      id: orderId,
+      order_id: orderId,
+      payment_status: 'paid',
+      order_status: 'confirmed',
       razorpay_payment_id: razorpayPaymentId
     },
     error: null
@@ -167,17 +199,6 @@ export const verifyPayment = async ({
 
 /**
  * Opens Razorpay Standard Checkout popup modal
- * 
- * @param {object} options
- * @param {string} options.keyId
- * @param {string} [options.razorpayOrderId]
- * @param {number} options.amount - In paise
- * @param {string} [options.currency='INR']
- * @param {object} options.customer - { name, email, phone }
- * @param {string} [options.orderNumber]
- * @param {Function} options.onSuccess - Callback receiving { razorpay_payment_id, razorpay_order_id, razorpay_signature }
- * @param {Function} options.onFailure - Callback receiving error object
- * @param {Function} options.onDismiss - Callback when customer closes the checkout modal
  */
 export const openRazorpayModal = async ({
   keyId,
@@ -235,7 +256,6 @@ export const openRazorpayModal = async ({
     }
   };
 
-  // Only attach order_id if it is a real server-registered Razorpay order ID (length > 14 and genuine prefix)
   const isRealRazorpayOrderId = typeof razorpayOrderId === 'string' && 
     razorpayOrderId.startsWith('order_') && 
     !razorpayOrderId.startsWith('order_local') && 

@@ -2,7 +2,6 @@ import React from 'react';
 import { EditorialNavbar } from '../components/editorial/EditorialNavbar';
 import { EditorialHero } from '../components/editorial/EditorialHero';
 import { EditorialTheDrop } from '../components/editorial/EditorialTheDrop';
-import { EditorialCampaignFilm } from '../components/editorial/EditorialCampaignFilm';
 import { EditorialLookbookSection } from '../components/editorial/EditorialLookbookSection';
 import { EditorialBrandStatement } from '../components/editorial/EditorialBrandStatement';
 import { EditorialFooter } from '../components/editorial/EditorialFooter';
@@ -54,10 +53,7 @@ export const HomePage = () => {
         </div>
       </div>
 
-      {/* 03 — FULL-BLEED CAMPAIGN / REAL PEOPLE (DARK CINEMATIC) */}
-      <EditorialCampaignFilm />
-
-      {/* 04 — ASYMMETRICAL EDITORIAL LOOKBOOK */}
+      {/* 03 — ASYMMETRICAL EDITORIAL LOOKBOOK */}
       <EditorialLookbookSection />
 
       {/* 05 — FINAL BRAND STATEMENT (NEGATIVE SPACE & DISPLAY TYPOGRAPHY) */}

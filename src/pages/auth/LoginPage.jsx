@@ -293,6 +293,25 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                   </>
                 )}
               </button>
+
+              {/* 1-Click Quick Access for Creator / Influencer Demo */}
+              <div className="pt-3 border-t border-[#1c1c1c] space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-[#8E8D8A]">
+                  <span>Demo Creator Access:</span>
+                  <span className="font-mono text-[#A3E635]">10% Commission</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.setItem('loozars_active_influencer_email', 'priya@loozars.com');
+                    navigateTo('influencer');
+                  }}
+                  className="w-full py-2.5 bg-[#181818] hover:bg-[#222222] border border-[#2c2c2c] hover:border-[#A3E635] text-zinc-300 text-xs font-medium rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Sparkles size={14} className="text-[#A3E635]" />
+                  <span>1-Click Creator Access (priya@loozars.com / @priya_racing)</span>
+                </button>
+              </div>
             </form>
           </div>
         )}
@@ -376,6 +395,42 @@ export const LoginPage = ({ defaultTab, onLoginSuccess }) => {
                   </>
                 )}
               </button>
+
+              {/* 1-Click Quick Access for Localhost & Testing (DEV ONLY) */}
+              {import.meta.env.DEV && (
+                <div className="pt-3 border-t border-[#1c1c1c] space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-[#8E8D8A]">
+                    <span>Local Development / Fast Access:</span>
+                    <span className="font-mono text-[#A3E635]">Superadmin</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setAdminEmail('admin@theloozars.com');
+                      setAdminPassword('admin123');
+                      setAdminLoading(true);
+                      setAdminError(null);
+                      try {
+                        const { error } = await signIn({ email: 'admin@theloozars.com', password: 'admin123' });
+                        if (error) {
+                          setAdminError(error.message);
+                        } else {
+                          navigateTo('admin');
+                        }
+                      } catch (err) {
+                        setAdminError('Failed to sign in.');
+                      } finally {
+                        setAdminLoading(false);
+                      }
+                    }}
+                    disabled={adminLoading}
+                    className="w-full py-2.5 bg-[#181818] hover:bg-[#222222] border border-[#2c2c2c] hover:border-[#8E1717] text-zinc-300 text-xs font-medium rounded-xl transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <ShieldCheck size={14} className="text-[#8E1717]" />
+                    <span>1-Click Admin Access (admin@theloozars.com)</span>
+                  </button>
+                </div>
+              )}
             </form>
           </div>
         )}

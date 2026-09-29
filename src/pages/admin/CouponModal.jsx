@@ -5,13 +5,9 @@ import {
   X, 
   Tag, 
   Percent, 
-  DollarSign, 
-  Calendar, 
   AlertCircle, 
   CheckCircle2, 
-  RefreshCw,
-  Clock,
-  Database
+  RefreshCw
 } from 'lucide-react';
 
 export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
@@ -33,13 +29,11 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [lastDuration, setLastDuration] = useState(null);
 
   const handleSubmit = async (e) => {
     e?.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
-    setLastDuration(null);
 
     const cleanCode = code.trim().toUpperCase();
     const val = parseFloat(discountValue);
@@ -60,10 +54,8 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
     }
 
     const actionTitle = isEditing 
-      ? `Coupon ${cleanCode} updated successfully` 
-      : `Coupon ${cleanCode} created successfully`;
-
-    const detailString = `Code: ${cleanCode} • ${discountType === 'percentage' ? `${val}% OFF` : `₹${val} OFF`} • Min Order: ₹${minOrderAmount} • Status: ${isActive ? 'Active' : 'Disabled'}`;
+      ? `Coupon ${cleanCode} updated` 
+      : `Coupon ${cleanCode} created`;
 
     setIsSaving(true);
 
@@ -84,10 +76,10 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
       {
         label: isEditing ? 'Updating coupon...' : 'Creating coupon...',
         successTitle: actionTitle,
-        errorTitle: isEditing ? 'Coupon could not be updated' : 'Coupon could not be created',
+        errorTitle: 'Coupon could not be saved',
         entityType: 'coupon',
         entityId: cleanCode,
-        detail: detailString
+        detail: `Code: ${cleanCode}`
       }
     );
 
@@ -95,128 +87,104 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
 
     if (outcome.success) {
       setSuccessMessage(actionTitle);
-      setLastDuration(outcome.duration);
       if (onCouponSaved) {
         onCouponSaved(outcome.data.coupon);
       }
       setTimeout(() => {
         onClose();
-      }, 800);
+      }, 700);
     } else {
       setErrorMessage(outcome.error);
-      setLastDuration(outcome.duration);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="bg-[#121212] border border-[#242424] w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl"
+        className="relative w-full max-w-lg max-h-[90vh] bg-[#141418] border border-[#242430] rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#EDEDF0] font-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#121212]/95 backdrop-blur border-b border-[#202020] px-6 py-4 flex items-center justify-between z-10">
+        <div className="px-6 py-5 bg-[#121216] border-b border-[#22222C] flex items-center justify-between z-10">
           <div>
-            <span className="text-[10px] text-[#8E8D8A] font-semibold tracking-wider uppercase block">
-              Promotion Engine
+            <span className="text-[10px] text-zinc-500 font-semibold tracking-wider uppercase block">
+              Promotions & Vouchers
             </span>
-            <h3 className="text-lg font-semibold text-[#EDE7DC]">
-              {isEditing ? `Edit Coupon: ${coupon.code}` : 'Create Promo Code'}
+            <h3 className="text-lg font-bold text-white tracking-tight">
+              {isEditing ? `Edit Coupon: ${coupon.code}` : 'Create Coupon'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-[#8E8D8A] hover:text-[#EDE7DC] hover:bg-[#1a1a1a] rounded-full transition-colors"
+            className="p-2 text-zinc-400 hover:text-white hover:bg-[#20202A] rounded-xl transition-colors cursor-pointer"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Content & Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5 text-xs">
-
-          {/* Feedback */}
+        {/* Content */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs text-zinc-300">
           {errorMessage && (
-            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-2xl space-y-1.5">
-              <div className="flex items-center gap-2.5">
-                <AlertCircle size={15} className="shrink-0 text-rose-400" />
-                <span className="font-semibold text-xs">Operation Failed</span>
-              </div>
-              <p className="text-[11px] text-rose-300/90 pl-6">{errorMessage}</p>
-              {lastDuration && (
-                <div className="pl-6 pt-1 flex items-center gap-2 text-[10px] font-mono text-zinc-400">
-                  <span className="px-2 py-0.5 bg-[#181818] rounded border border-[#2a2a2a]">⏱ {lastDuration}</span>
-                  <span className="text-zinc-500">Database: Unchanged</span>
-                </div>
-              )}
+            <div className="p-3.5 bg-rose-950/50 border border-rose-800/60 text-rose-300 rounded-2xl flex items-center gap-2.5 shadow-xs">
+              <AlertCircle size={16} className="text-rose-400 shrink-0" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-2xl space-y-1.5">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 size={15} className="shrink-0 text-emerald-400" />
-                <span className="font-semibold text-xs">{successMessage}</span>
-              </div>
-              {lastDuration && (
-                <div className="pl-6 pt-1 flex items-center gap-2 text-[10px] font-mono">
-                  <span className="px-2 py-0.5 bg-[#181818] text-zinc-300 rounded border border-[#2a2a2a]">⏱ {lastDuration}</span>
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">Database: Updated</span>
-                  <span className="px-2 py-0.5 bg-sky-500/20 text-sky-300 rounded border border-sky-500/30">Sync: Complete</span>
-                </div>
-              )}
+            <div className="p-3.5 bg-emerald-950/50 border border-emerald-800/60 text-emerald-300 rounded-2xl flex items-center gap-2.5 shadow-xs">
+              <CheckCircle2 size={16} className="text-emerald-400 shrink-0" />
+              <span>{successMessage}</span>
             </div>
           )}
 
-          {/* Coupon Code */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[#8E8D8A] block">
-              Promo Code
-            </label>
+          {/* Code */}
+          <div>
+            <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">Coupon Promo Code *</label>
             <input
               type="text"
-              placeholder="e.g. LOOZARS10, SPEED100, RACING"
+              placeholder="e.g. LOOZARS10, SPEED100"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
-              className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold uppercase tracking-wider outline-none transition-colors"
+              className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white px-3.5 py-2.5 rounded-xl text-sm font-mono font-bold uppercase tracking-wider outline-none placeholder-zinc-600 shadow-xs"
               required
             />
           </div>
 
-          {/* Discount Type Selector */}
+          {/* Type */}
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setDiscountType('percentage')}
-              className={`p-3 border rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all ${
+              className={`p-3 border rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 discountType === 'percentage' 
-                  ? 'bg-white text-black border-white shadow-sm' 
-                  : 'bg-[#0c0c0c] border-[#222222] text-[#8E8D8A] hover:text-[#EDE7DC] hover:border-[#333]'
+                  ? 'bg-[#22222C] text-white border-[#3E3E50] shadow-xs font-semibold' 
+                  : 'bg-[#16161D] border-[#262634] text-zinc-400 hover:text-zinc-200 hover:bg-[#1C1C24]'
               }`}
             >
-              <Percent size={13} />
+              <Percent size={14} />
               <span>Percentage (%)</span>
             </button>
 
             <button
               type="button"
               onClick={() => setDiscountType('fixed')}
-              className={`p-3 border rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all ${
+              className={`p-3 border rounded-xl font-medium text-xs flex items-center justify-center gap-2 transition-all cursor-pointer ${
                 discountType === 'fixed' 
-                  ? 'bg-white text-black border-white shadow-sm' 
-                  : 'bg-[#0c0c0c] border-[#222222] text-[#8E8D8A] hover:text-[#EDE7DC] hover:border-[#333]'
+                  ? 'bg-[#22222C] text-white border-[#3E3E50] shadow-xs font-semibold' 
+                  : 'bg-[#16161D] border-[#262634] text-zinc-400 hover:text-zinc-200 hover:bg-[#1C1C24]'
               }`}
             >
-              <Tag size={13} />
+              <Tag size={14} />
               <span>Fixed INR (₹)</span>
             </button>
           </div>
 
-          {/* Discount Value & Max Discount */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#8E8D8A] block">
-                {discountType === 'percentage' ? 'Percentage Value (%)' : 'Fixed Discount (₹ INR)'}
+          {/* Discount Value & Max Cap */}
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">
+                {discountType === 'percentage' ? 'Percentage Value (%) *' : 'Fixed Discount (₹) *'}
               </label>
               <input
                 type="number"
@@ -224,14 +192,14 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
                 max={discountType === 'percentage' ? '100' : undefined}
                 value={discountValue}
                 onChange={(e) => setDiscountValue(e.target.value)}
-                className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white font-mono font-bold px-3.5 py-2.5 rounded-xl text-xs outline-none shadow-xs"
                 required
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#8E8D8A] block">
-                Max Discount Cap (₹, Optional)
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">
+                Max Cap (₹, Optional)
               </label>
               <input
                 type="number"
@@ -239,28 +207,28 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
                 placeholder="e.g. 500"
                 value={maxDiscountAmount}
                 onChange={(e) => setMaxDiscountAmount(e.target.value)}
-                className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none placeholder-zinc-600 shadow-xs"
               />
             </div>
           </div>
 
-          {/* Min Order Amount & Usage Limit */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#8E8D8A] block">
-                Min Order Amount (₹ INR)
+          {/* Min Order & Usage Limit */}
+          <div className="grid grid-cols-2 gap-3.5">
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">
+                Min Order Subtotal (₹)
               </label>
               <input
                 type="number"
                 min="0"
                 value={minOrderAmount}
                 onChange={(e) => setMinOrderAmount(e.target.value)}
-                className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none shadow-xs"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-medium text-[#8E8D8A] block">
+            <div>
+              <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">
                 Total Usage Limit (Optional)
               </label>
               <input
@@ -269,71 +237,70 @@ export const CouponModal = ({ coupon, onClose, onCouponSaved }) => {
                 placeholder="Unlimited"
                 value={usageLimit}
                 onChange={(e) => setUsageLimit(e.target.value)}
-                className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none placeholder-zinc-600 shadow-xs"
               />
             </div>
           </div>
 
-          {/* Expiration Date */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[#8E8D8A] block">
+          {/* Expiration */}
+          <div>
+            <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">
               Expiration Date & Time (Optional)
             </label>
             <input
               type="datetime-local"
               value={expiresAt}
               onChange={(e) => setExpiresAt(e.target.value)}
-              className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+              className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none shadow-xs"
             />
           </div>
 
           {/* Description */}
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-medium text-[#8E8D8A] block">
-              Description / Campaign Note
+          <div>
+            <label className="text-zinc-300 font-semibold block mb-1.5 text-xs">
+              Description / Internal Notes
             </label>
             <input
               type="text"
-              placeholder="e.g. VIP Early Access Drop 01 promotion"
+              placeholder="e.g. VIP secret drop launch voucher"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full bg-[#0c0c0c] border border-[#222222] focus:border-[#444] text-[#EDE7DC] px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+              className="w-full bg-[#16161D] border border-[#262634] focus:border-zinc-400 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none placeholder-zinc-600 shadow-xs"
             />
           </div>
 
           {/* Active Toggle */}
-          <label className="flex items-center gap-3 p-3.5 bg-[#0c0c0c] border border-[#202020] rounded-2xl cursor-pointer select-none hover:border-[#2a2a2a] transition-colors">
+          <label className="flex items-center gap-3 p-3.5 bg-[#111115] border border-[#22222C] rounded-2xl cursor-pointer select-none hover:bg-[#16161D] transition-colors shadow-xs">
             <input
               type="checkbox"
               checked={isActive}
               onChange={(e) => setIsActive(e.target.checked)}
-              className="accent-white w-4 h-4 rounded"
+              className="w-4 h-4 rounded accent-white bg-[#16161D] border-[#262634]"
             />
             <div>
-              <span className="text-xs text-[#EDE7DC] font-medium block">Coupon Enabled</span>
-              <span className="text-[11px] text-[#777]">Customers can apply and redeem this code during checkout</span>
+              <span className="text-xs font-semibold text-white block">Coupon Active</span>
+              <span className="text-[11px] text-zinc-400">Shoppers can apply this promo code during checkout</span>
             </div>
           </label>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-[#1e1e1e]">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#22222C]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-[#161616] hover:bg-[#202020] text-[#A39E99] hover:text-[#EDE7DC] text-xs font-medium rounded-xl border border-[#262626] transition-colors"
+              className="px-4 py-2.5 bg-[#1C1C24] hover:bg-[#252530] text-zinc-300 text-xs font-medium rounded-xl border border-[#2C2C38] transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-5 py-2 bg-white hover:bg-[#EDE7DC] disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center gap-2"
+              className="px-5 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              {isSaving ? <RefreshCw size={13} className="animate-spin text-black" /> : null}
-              <span>{isSaving ? 'Saving...' : isEditing ? 'Update Coupon' : 'Create Coupon'}</span>
+              {isSaving ? <RefreshCw size={13} className="animate-spin text-zinc-900" /> : null}
+              <span>{isEditing ? 'Save Changes' : 'Create Coupon'}</span>
             </button>
           </div>
-
         </form>
       </div>
     </div>

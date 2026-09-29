@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useAdminFeedback } from '../../context/AdminFeedbackContext';
+import { formatOrderNumber } from '../../services/orderService';
 import { 
   Printer, 
   X, 
@@ -110,7 +111,7 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
 
   const address = parseAddress(order.shipping_address || order.shippingAddress);
   const items = parseItems(order.items);
-  const orderNumber = order.order_number || order.orderNumber || order.orderId || `#LZR-${Date.now().toString().slice(-6)}`;
+  const orderNumber = formatOrderNumber(order.order_number || order.orderNumber || order.orderId);
   const invoiceNumber = `INV-LZR-${orderNumber.replace(/[^A-Za-z0-9]/g, '')}`;
   const orderDate = formatDate(order.created_at || order.createdAt || order.date);
 

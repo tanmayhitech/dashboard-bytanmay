@@ -105,7 +105,8 @@ CREATE TABLE IF NOT EXISTS coupons (
   starts_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   expires_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  CONSTRAINT check_coupon_usage_limit CHECK (usage_limit IS NULL OR times_used <= usage_limit)
 );
 
 CREATE INDEX IF NOT EXISTS idx_coupons_code ON coupons(UPPER(code));
@@ -179,6 +180,7 @@ CREATE INDEX IF NOT EXISTS idx_orders_order_status ON orders(order_status);
 CREATE INDEX IF NOT EXISTS idx_orders_razorpay_order_id ON orders(razorpay_order_id);
 CREATE INDEX IF NOT EXISTS idx_orders_idempotency_key ON orders(idempotency_key);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_orders_created_status ON orders(created_at DESC, order_status, payment_status);
 
 DROP TRIGGER IF EXISTS trigger_orders_updated_at ON orders;
 CREATE TRIGGER trigger_orders_updated_at
@@ -1191,7 +1193,8 @@ BEGIN
     v_paid_orders,
     v_pending_payments,
     v_total_revenue
-  FROM orders;
+  FROM orders
+  WHERE notes IS NULL OR notes NOT ILIKE '%[ARCHIVED]%';
 
   SELECT
     count(*),

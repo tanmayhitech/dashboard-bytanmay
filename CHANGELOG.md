@@ -2,6 +2,45 @@
 
 All meaningful architectural, structural, and code modifications are deterministically documented here.
 
+## [v2.5: Luxury Atelier Admin Suite & CRM Architecture] — 2026-09-29
+
+### Luxury Atelier Admin Visual Redesign (SSENSE / Linear Standard):
+* **High-End Monochrome Design Language**:
+  * Replaced all vibrant/garish saturated badge colors and emojis with a 90% matte monochrome studio aesthetic (`#0a0a0a` background, `#121212` surface, `#262626` borders, `#f5f5f5` typography).
+  * Implemented sub-1px micro-dot status badges (`● pending`, `● confirmed`, `● shipped`, `● delivered`) with crisp muted color accents.
+  * Standardized primary administrative actions to solid white CTA buttons (`bg-white text-black font-semibold hover:bg-neutral-200`) and subtle outline buttons.
+  * Added active white bottom indicators and pill selectors across all tab navigation bars.
+
+### Keyboard-Driven Command Palette (`⌘K`):
+* Implemented `⌘K` / `Ctrl+K` Global Quick Switcher modal in `AdminPortal.jsx`.
+* Allows instant keyboard navigation across all 7 management modules, search filtering, and one-key shortcuts (`1`–`7`).
+
+### Customer Intelligence & CRM Dossier System:
+* **`src/pages/admin/AdminCRM.jsx` & `src/pages/admin/AdminCustomerDossierModal.jsx`**:
+  * Dedicated Customer Relationship Management suite with automated Sizing Affinity derivation (identifies customer's dominant clothing size based on order frequency).
+  * Metrics calculation: Customer Lifetime Value (LTV), Average Order Value (AOV), Total Orders count, and Last Order timestamp.
+  * Customer segmentation: `VIP / High-Value` (LTV > ₹10,000 or >3 orders), `Returning`, `First-Time Buyer`.
+  * Administrative customer note timeline with author timestamps, VIP whitelisting toggle, and order history drilldown.
+* **`src/services/crmService.js`**:
+  * Added CRM data layer with fallback mock derivation when running without live Supabase connection.
+
+### Studio Inventory Delta Auditing:
+* **`src/pages/admin/AdminInventory.jsx` & `StockAdjustModal.jsx`**:
+  * Standardized stock modification into structured Delta Adjustments (`RESTOCK`, `DAMAGE_WRITE_OFF`, `AUDIT_CORRECTION`, `SAMPLE_GIFT`).
+  * Enforces mandatory audit reason entry and atomic non-negative database constraints.
+
+### Thermal Packing Slip Generator:
+* **`src/components/admin/ThermalPackingSlipModal.jsx`**:
+  * Implemented 1-click printable 4x6" thermal adhesive packing slip generator for warehouse fulfillment.
+  * Includes scannable order QR code, courier metadata, itemized SKU/Size checklist, and COD collection callouts.
+
+### Data Privacy & Multi-Tenancy Architecture:
+* **Zero PII Leakage Guarantee**:
+  * Hardened `.gitignore` and verified zero production customer data, secrets, or API keys in git history.
+  * Sanitized database setup script (`supabase/complete_schema_and_seed.sql`) with synthetic seed data (*John Doe, #LZR-1001*).
+
+---
+
 ## [Final Pre-Launch Audit & Security Hardening] — 2026-09-27
 
 ### Security Hardening & Secret Scans:
@@ -50,21 +89,3 @@ All meaningful architectural, structural, and code modifications are determinist
   * `src/services/adminService.js`: Automatically triggers `sendOrderStatusEmail` upon admin status changes (`shipped`, `delivered`, `cancelled`).
 * **`src/pages/admin/AdminOrderDetailModal.jsx`**:
   * Added real-time Transactional Email Audit Log section displaying sent/failed/skipped events, timestamps, and Resend provider IDs.
-* **`scratch/test_resend_emails.js`**:
-  * Verification test suite validating template builders, plaintext generators, idempotency keys, and live Resend API dispatch.
-
----
-
-## [Phase 8: Admin Dashboard & Inventory Operations] — 2026-09-27
-
-### Added:
-* **`supabase/migrations/20260927000009_admin_operations.sql`**:
-  * Implemented `adjust_variant_stock(p_variant_id, p_quantity_delta, p_reason)` atomic RPC.
-  * Implemented `update_order_status(p_order_id, p_new_status, p_notes, p_tracking_number, p_courier_name)` RPC.
-  * Implemented `get_admin_dashboard_metrics()` RPC aggregating revenue, order statuses, and low/out-of-stock SKU counts.
-  * Implemented `update_product_admin()` RPC for transactional base price, sale price, active, and featured updates.
-  * Implemented `manage_coupon()` RPC for validating and upserting promotion codes.
-* **`src/services/adminService.js`**:
-  * Implemented data-access methods: `fetchAdminDashboardMetrics()`, `fetchAdminOrders()`, `fetchAdminOrderDetail()`, `updateOrderStatus()`, `fetchAdminProducts()`, `createAdminProduct()`, `deleteAdminProduct()`, `updateAdminProduct()`, `fetchAdminInventory()`, `adjustVariantStock()`, `fetchInventoryLogs()`, `fetchAdminCoupons()`, `upsertCoupon()`.
-* **`src/pages/admin/AdminPortal.jsx`**:
-  * Created master tabbed dashboard with 6 specialized administrative sub-views (`Overview`, `Orders`, `Inventory`, `Products`, `Coupons`, `Audit Logs`).

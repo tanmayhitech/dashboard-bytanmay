@@ -142,17 +142,24 @@ export const Footer = () => {
         {/* Bottom Policy Strip */}
         <div className="pt-6 border-t border-[#080808]/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 font-mono text-[10px] tracking-[0.2em] text-[#080808]/60 uppercase">
           <div className="flex flex-wrap items-center gap-5">
-            <button onClick={() => setActiveModal('shipping')} className="hover:text-[#080808] transition-colors">
+            <button onClick={() => setActiveModal('shipping')} className="hover:text-[#080808] transition-colors cursor-pointer">
               Shipping
             </button>
-            <button onClick={() => setActiveModal('returns')} className="hover:text-[#080808] transition-colors">
+            <button onClick={() => setActiveModal('returns')} className="hover:text-[#080808] transition-colors cursor-pointer">
               Returns
             </button>
-            <button onClick={() => setActiveModal('sizing')} className="hover:text-[#080808] transition-colors">
+            <button onClick={() => setActiveModal('sizing')} className="hover:text-[#080808] transition-colors cursor-pointer">
               Sizing
             </button>
-            <button onClick={() => setActiveModal('contact')} className="hover:text-[#080808] transition-colors">
+            <button onClick={() => setActiveModal('contact')} className="hover:text-[#080808] transition-colors cursor-pointer">
               Contact
+            </button>
+            <span className="text-[#080808]/30">|</span>
+            <button onClick={() => navigateTo('admin')} className="text-[#080808]/70 hover:text-[#8E1717] font-semibold transition-colors cursor-pointer">
+              Atelier Portal
+            </button>
+            <button onClick={() => navigateTo('influencer')} className="text-[#080808]/70 hover:text-[#080808] transition-colors cursor-pointer">
+              Partner Portal
             </button>
           </div>
 

@@ -52,7 +52,7 @@ export const ShopProvider = ({ children }) => {
       }
     }
     return 'home';
-  }); // 'home' | 'shop' | 'drops' | 'about' | 'product' | 'cart' | 'checkout' | 'confirmation' | 'login' | 'admin' | 'influencer'
+  });
   const [activeProductId, setActiveProductId] = useState('lzr-velo-07');
   
   // Catalog / Product Data State
@@ -270,6 +270,55 @@ export const ShopProvider = ({ children }) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentView, activeProductId]);
 
+  // Browser History & URL synchronization
+  useEffect(() => {
+    const handleUrlChange = () => {
+      if (typeof window === 'undefined') return;
+      const path = window.location.pathname.toLowerCase();
+      const search = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.toLowerCase();
+
+      if (path === '/admin' || path.startsWith('/admin') || search.get('view') === 'admin' || hash === '#admin') {
+        setCurrentView('admin');
+        return;
+      }
+      if (path === '/influencer' || path.startsWith('/influencer') || path === '/creator' || path.startsWith('/creator') || search.get('view') === 'influencer' || hash === '#influencer') {
+        setCurrentView('influencer');
+        return;
+      }
+      if (path === '/checkout' || search.get('view') === 'checkout' || hash === '#checkout') {
+        setCurrentView('checkout');
+        return;
+      }
+      if (path === '/cart' || search.get('view') === 'cart' || hash === '#cart') {
+        setCurrentView('cart');
+        return;
+      }
+      if (path === '/shop' || search.get('view') === 'shop' || hash === '#shop') {
+        setCurrentView('shop');
+        return;
+      }
+      if (path === '/confirmation' || search.get('view') === 'confirmation' || hash === '#confirmation') {
+        setCurrentView('confirmation');
+        return;
+      }
+      if (path === '/login' || search.get('view') === 'login' || hash === '#login') {
+        setCurrentView('login');
+        return;
+      }
+      if (path === '/' || path === '') {
+        setCurrentView('home');
+      }
+    };
+
+    window.addEventListener('popstate', handleUrlChange);
+    window.addEventListener('hashchange', handleUrlChange);
+    return () => {
+      window.removeEventListener('popstate', handleUrlChange);
+      window.removeEventListener('hashchange', handleUrlChange);
+    };
+  }, []);
+
   const navigateTo = (view, productId = null) => {
     if (productId) {
       setActiveProductId(productId);
@@ -278,6 +327,13 @@ export const ShopProvider = ({ children }) => {
     setIsCartOpen(false);
     setIsSearchOpen(false);
     setActiveModal(null);
+
+    if (typeof window !== 'undefined' && window.history?.pushState) {
+      const targetPath = view === 'home' ? '/' : `/${view}`;
+      if (window.location.pathname !== targetPath) {
+        window.history.pushState({ view }, '', targetPath);
+      }
+    }
   };
 
   /**
@@ -291,7 +347,7 @@ export const ShopProvider = ({ children }) => {
     setCart(prev => {
       const existingIndex = prev.findIndex(item => 
         (item.variantId && item.variantId === variantId) ||
-        (item.product.id === liveProduct.id && item.size === size)
+        (item.product?.id === liveProduct.id && item.size === size)
       );
 
       if (existingIndex > -1) {
@@ -385,12 +441,53 @@ export const ShopProvider = ({ children }) => {
   };
 
   /**
-   * Dynamically evaluates cart subtotal using latest prices from live catalog
+   * Authoritative Stale Cart Detection & Refresh:
+   * Checks if catalog prices changed while user had items in cart
+   */
+  const checkAndRefreshCartPrices = useCallback(() => {
+    let hasPriceChanges = false;
+    const priceChangeNotices = [];
+
+    const updatedCart = cart.map(item => {
+      const liveProduct = products.find(p => p.id === item.product?.id || p.db_id === item.product?.db_id || p.id === item.productId || p.db_id === item.productId);
+      if (!liveProduct) return item;
+
+      const liveVariant = liveProduct.variants?.find(v => v.id === item.variantId || v.size === item.size);
+      const currentAuthoritativePrice = liveVariant?.priceOverride ?? liveProduct.salePrice ?? liveProduct.price ?? 899;
+      const oldPrice = item.product?.price ?? item.price ?? 899;
+
+      if (currentAuthoritativePrice !== oldPrice) {
+        hasPriceChanges = true;
+        priceChangeNotices.push(`Price for ${liveProduct.name} (${item.size}) updated to ₹${currentAuthoritativePrice.toLocaleString('en-IN')}`);
+        return {
+          ...item,
+          product: {
+            ...liveProduct,
+            price: currentAuthoritativePrice
+          },
+          variant: liveVariant || item.variant,
+          unitPrice: currentAuthoritativePrice
+        };
+      }
+      return item;
+    });
+
+    if (hasPriceChanges) {
+      setCart(updatedCart);
+      return { updated: true, notices: priceChangeNotices };
+    }
+
+    return { updated: false, notices: [] };
+  }, [cart, products]);
+
+  /**
+   * Dynamically evaluates cart subtotal using latest authoritative prices from live catalog
    */
   const cartSubtotal = useMemo(() => {
     return cart.reduce((total, item) => {
-      const liveProd = products.find(p => p.id === item.product?.id || p.db_id === item.product?.db_id);
-      const unitPrice = liveProd ? liveProd.price : item.product?.price || 899;
+      const liveProd = products.find(p => p.id === item.product?.id || p.db_id === item.product?.db_id || p.id === item.productId || p.db_id === item.productId);
+      const liveVariant = liveProd?.variants?.find(v => v.id === item.variantId || v.size === item.size);
+      const unitPrice = liveVariant?.priceOverride ?? liveProd?.salePrice ?? liveProd?.price ?? item.product?.price ?? 899;
       return total + (unitPrice * item.quantity);
     }, 0);
   }, [cart, products]);
@@ -416,15 +513,15 @@ export const ShopProvider = ({ children }) => {
     setAppliedCoupon(null);
   };
 
-
   // Re-verify coupon discount against live subtotal
   const couponDiscount = useMemo(() => {
+    if (!appliedCoupon) return 0;
     return calculateCouponDiscount(appliedCoupon, cartSubtotal);
   }, [appliedCoupon, cartSubtotal]);
 
   const netSubtotal = Math.max(0, cartSubtotal - couponDiscount);
   const freeShippingThreshold = 2000;
-  const shippingCost = netSubtotal >= freeShippingThreshold || cartSubtotal === 0 ? 0 : 99;
+  const shippingCost = (netSubtotal >= freeShippingThreshold || cartSubtotal === 0) ? 0 : 99;
   const cartTotal = netSubtotal + shippingCost;
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
@@ -449,6 +546,7 @@ export const ShopProvider = ({ children }) => {
       updateQuantity,
       clearCart,
       validateCart,
+      checkAndRefreshCartPrices,
       cartCount,
       cartSubtotal,
       appliedCoupon,

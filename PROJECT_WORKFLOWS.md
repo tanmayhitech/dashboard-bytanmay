@@ -147,4 +147,64 @@ flowchart LR
 
 ---
 
-### Developed with ❤️ by Tanmay (`ecommerce-admin-engine-by-tanmay`)
+## 5. 👤 Customer CRM & Sizing Affinity Derivation Lifecycle
+
+How the CRM calculates customer lifetime spend, sizing preference, and generates 1-click WhatsApp concierge links.
+
+```mermaid
+flowchart TD
+    A[Order Confirmed] --> B[Aggregate Orders by Customer Email / Phone]
+    B --> C[Calculate Total Lifetime Spend LTV & AOV]
+    B --> D[Scan Line Items for Garment Sizes: XS, S, M, L, XL, XXL]
+    D --> E[Derive Primary Sizing Affinity Profile: e.g. Size L Boxy Standard]
+    
+    C --> F[Populate Customer Dossier Record]
+    E --> F
+    
+    F --> G{Admin Selects Outreach Action}
+    G -->|VIP Drop Invite| H[Encode VIP drop secret URL + Customer Name]
+    G -->|Order Tracking| I[Encode Courier Name + AWB Tracking Link]
+    G -->|Sizing Consult| J[Encode Derived Sizing Preference]
+    G -->|Gift Voucher| K[Encode Personal Voucher Code]
+    
+    H --> L[Generate 1-Click WhatsApp api.whatsapp.com URL]
+    I --> L
+    J --> L
+    K --> L
+    L --> M[Staff Launches WhatsApp Outreach with 1 Tap]
+```
+
+---
+
+## 6. 📈 Studio Inventory Delta & Reason Auditing State Machine
+
+How every stock adjustment is audited without silent decrements.
+
+```mermaid
+stateDiagram-v2
+    [*] --> CurrentStock : Read Physical Inventory
+    
+    state CurrentStock {
+        [*] --> InStock : units > 5
+        [*] --> LowStock : 1 <= units <= 5
+        [*] --> OutOfStock : units == 0
+    }
+    
+    CurrentStock --> StockAdjustmentModal : Admin Clicks 'Adjust'
+    
+    state StockAdjustmentModal {
+        [*] --> SelectMode : Add (+) / Deduct (-) / Set Exact
+        SelectMode --> EnterQuantity : Compute Resulting Delta
+        EnterQuantity --> SelectAuditReason : Restock / Damaged / Sample / Count Correction
+    }
+    
+    StockAdjustmentModal --> ExecuteRPC : adjust_variant_stock_rpc()
+    ExecuteRPC --> UpdateVariantsTable : Atomic DB Write
+    ExecuteRPC --> InsertInventoryLog : Write Immutable Audit Entry
+    InsertInventoryLog --> RealtimeBroadcast : Sync UI across open tabs
+    RealtimeBroadcast --> [*]
+```
+
+---
+
+### Developed with ❤️ by Tanmay (`by-tanmay`)

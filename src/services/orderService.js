@@ -20,8 +20,44 @@ const FALLBACK_VARIANTS_MAP = STATIC_PRODUCTS.reduce((acc, p) => {
 }, {});
 
 /**
+ * Formats any raw order number string to clean LZR-0001 format
+ * Examples:
+ *   #LZR-20260929-0008 -> LZR-0008
+ *   LZR-20260928-1302  -> LZR-1302
+ *   #ORD-20260927-0001 -> LZR-0001
+ *   LZR-0009           -> LZR-0009
+ */
+export const formatOrderNumber = (rawNum) => {
+  if (!rawNum) return 'LZR-0001';
+  const clean = String(rawNum).trim().replace(/^#/, '');
 
- * Retrieves all orders saved in persistent local storage
+  if (/^LZR-\d{4}$/i.test(clean)) {
+    return clean.toUpperCase();
+  }
+
+  const dateMatch = clean.match(/(?:LZR|ORD)-\d{8}-(\d{4})/i);
+  if (dateMatch && dateMatch[1]) {
+    return `LZR-${dateMatch[1]}`;
+  }
+
+  const simpleMatch = clean.match(/LZR-(\d+)/i);
+  if (simpleMatch && simpleMatch[1]) {
+    return `LZR-${String(simpleMatch[1]).padStart(4, '0')}`;
+  }
+
+  const digitsMatch = clean.match(/\d+/g);
+  if (digitsMatch) {
+    const lastDigits = digitsMatch[digitsMatch.length - 1].slice(-4);
+    return `LZR-${lastDigits.padStart(4, '0')}`;
+  }
+
+  return clean.toUpperCase();
+};
+
+export const DEFAULT_INITIAL_ORDERS = [];
+
+/**
+ * Retrieves all orders saved in persistent local storage with clean LZR-0001 numbering
  */
 export const getStoredOrders = () => {
   if (typeof window === 'undefined') return [];
@@ -29,7 +65,25 @@ export const getStoredOrders = () => {
     const raw = localStorage.getItem('loozars_store_orders_v1');
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+
+    // Filter out any legacy synthetic seed orders
+    const validOrders = parsed.filter(o => {
+      if (!o || typeof o !== 'object') return false;
+      const id = String(o.id || '');
+      if (id.startsWith('ord_lzr_000') || id.startsWith('ord_lzr_00')) return false;
+      return true;
+    });
+
+    return validOrders.map(o => {
+      const cleanNum = formatOrderNumber(o.order_number || o.orderNumber || o.orderId);
+      return {
+        ...o,
+        order_number: cleanNum,
+        orderNumber: cleanNum,
+        orderId: cleanNum
+      };
+    });
   } catch (e) {
     console.warn('[orderService] Error parsing stored orders:', e);
     return [];
@@ -37,20 +91,21 @@ export const getStoredOrders = () => {
 };
 
 /**
- * Persists an order snapshot to localStorage and broadcasts update event
+ * Persists an authoritative order snapshot to localStorage and broadcasts update event
  */
 export const saveStoredOrder = (order) => {
   if (typeof window === 'undefined' || !order) return;
   try {
     const orders = getStoredOrders();
-    const orderNum = order.order_number || order.orderNumber || order.orderId;
-    if (!orderNum) return;
+    const rawNum = order.order_number || order.orderNumber || order.orderId;
+    if (!rawNum) return;
 
-    const existingIdx = orders.findIndex(o => (o.order_number || o.orderNumber || o.orderId) === orderNum);
+    const cleanOrderNum = formatOrderNumber(rawNum);
+    const existingIdx = orders.findIndex(o => (o.order_number || o.orderNumber || o.orderId) === cleanOrderNum);
 
     const normalizedOrder = {
       id: order.id || order.order_id || order.dbOrderId || (typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : `ord_${Date.now()}`),
-      order_number: orderNum,
+      order_number: cleanOrderNum,
       customer_name: order.customer_name || order.customerName || `${order.shippingAddress?.firstName || ''} ${order.shippingAddress?.lastName || ''}`.trim() || 'Customer',
       customer_email: order.customer_email || order.customerEmail || order.shippingAddress?.email || '',
       customer_phone: order.customer_phone || order.customerPhone || order.shippingAddress?.phone || '',
@@ -87,32 +142,16 @@ export const saveStoredOrder = (order) => {
 };
 
 /**
-
- * Deterministic date formatter for order numbers
+ * Clean, sequential order number generator for local fallback: LZR-0001, LZR-0002...
  */
 const generateFallbackOrderNumber = () => {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const rand = String(Math.floor(1000 + Math.random() * 9000));
-  return `#LZR-${year}${month}${day}-${rand}`;
+  const orders = getStoredOrders();
+  const nextNum = orders.length + 1;
+  return `LZR-${String(nextNum).padStart(4, '0')}`;
 };
 
 /**
- * Creates an authoritative order via Supabase Edge Function or RPC (with fallback simulation)
- * 
- * @param {object} payload
- * @param {string} payload.customerName
- * @param {string} payload.customerEmail
- * @param {string} payload.customerPhone
- * @param {object} payload.shippingAddress
- * @param {Array<{ productId: string, variantId: string, quantity: number }>} payload.items
- * @param {string} [payload.couponCode]
- * @param {string} [payload.paymentMethod='upi']
- * @param {string} [payload.notes]
- * @param {string} [payload.idempotencyKey]
- * @returns {Promise<{ data: object|null, error: string|null, source: string }>}
+ * Creates an authoritative order via Vercel Serverless API (/api/create-order) or Supabase (with fallback)
  */
 export const createOrder = async (payload) => {
   const {
@@ -127,98 +166,134 @@ export const createOrder = async (payload) => {
     idempotencyKey = `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
   } = payload;
 
-  // Basic client pre-check
   if (!items || items.length === 0) {
     return { data: null, error: 'Your shopping bag is empty.', source: 'client_validation' };
   }
 
-  // 1. Live Supabase Flow
-  if (isSupabaseConfigured) {
-    try {
-      // First attempt: Supabase Edge Function
-      const { data: edgeData, error: edgeError } = await supabase.functions.invoke('create-order', {
-        body: {
-          customerName,
-          customerEmail,
-          customerPhone,
-          shippingAddress,
-          items: items.map(i => ({
-            productId: i.productId,
-            variantId: i.variantId,
-            quantity: i.quantity
-          })),
-          couponCode,
-          paymentMethod,
-          notes,
-          idempotencyKey
-        }
-      });
+  // 1. Priority Authoritative Backend: /api/create-order
+  try {
+    const apiRes = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName,
+        customerEmail,
+        customerPhone,
+        shippingAddress,
+        items,
+        couponCode: couponCode || null,
+        paymentMethod,
+        notes,
+        idempotencyKey
+      })
+    });
 
-      if (!edgeError && edgeData?.success && edgeData.order) {
+    if (apiRes.ok) {
+      const apiData = await apiRes.json();
+      if (apiData?.success && apiData.order) {
+        const fullOrder = {
+          ...apiData.order,
+          order_number: formatOrderNumber(apiData.order.order_number),
+          _syncedToDb: true
+        };
+        saveStoredOrder(fullOrder);
         return {
-          data: edgeData.order,
+          data: fullOrder,
           error: null,
-          source: 'supabase_edge_function'
+          source: 'vercel_serverless_api'
         };
       }
+    }
+  } catch (apiErr) {
+    console.warn('[orderService] /api/create-order call notice:', apiErr.message);
+  }
 
-      // If Edge Function is not deployed yet, try direct RPC fallback if available
-      if (edgeError || !edgeData?.success) {
-        console.warn('[orderService] Edge Function unavailable, attempting direct Supabase RPC:', edgeError?.message || edgeData?.error);
-        
-        const isUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-        const hasValidUUIDs = items.every(i => isUUID(i.productId) && isUUID(i.variantId));
+  // 2. Direct Supabase Table Insert Flow
+  if (isSupabaseConfigured) {
+    try {
+      const nextNum = generateFallbackOrderNumber();
+      let subtotal = 0;
+      const snapshotItems = [];
 
-        if (hasValidUUIDs) {
-          // Format for direct RPC call
-          const formattedItems = items.map(i => ({
-            product_id: i.productId,
-            variant_id: i.variantId,
-            quantity: parseInt(i.quantity, 10)
-          }));
+      for (const item of items) {
+        const unitPrice = Number(item.price || item.unitPrice || 899);
+        const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+        const lineTotal = unitPrice * qty;
+        subtotal += lineTotal;
 
-          const { data: rpcData, error: rpcError } = await supabase.rpc('create_order_transaction', {
-            p_customer_name: customerName,
-            p_customer_email: customerEmail,
-            p_customer_phone: customerPhone,
-            p_shipping_address: shippingAddress,
-            p_items: formattedItems,
-            p_coupon_code: couponCode || null,
-            p_payment_method: paymentMethod,
-            p_notes: notes || null,
-            p_idempotency_key: idempotencyKey,
-            p_free_shipping_threshold: 2000,
-            p_standard_shipping_fee: 99
-          });
+        snapshotItems.push({
+          product_id: item.productId || '00000000-0000-0000-0000-000000000001',
+          product_slug: item.productSlug || 'lzr-velo-07',
+          variant_id: item.variantId || 'cabc5e4a-5347-47ca-845c-a44103124761',
+          sku: item.sku || `LZR-D01-${item.size || 'M'}`,
+          product_name: item.name || 'LOOZARS Silhouette',
+          size: item.size || 'M',
+          quantity: qty,
+          unit_price: unitPrice,
+          line_total: lineTotal,
+          image: item.image || ''
+        });
+      }
 
-          if (!rpcError && rpcData?.success) {
-            return {
-              data: rpcData,
-              error: null,
-              source: 'supabase_rpc_direct'
-            };
-          }
-          console.warn('[orderService] Direct RPC failed:', rpcError?.message);
-        } else {
-          console.info('[orderService] Items contain local catalog keys; using local authoritative order calculation.');
-        }
+      let discount = 0;
+      if (couponCode) {
+        const clean = String(couponCode).toUpperCase().trim();
+        if (clean === 'DROP01' || clean === 'LOOZAR10') discount = Math.round(subtotal * 0.1);
+        else if (clean === 'LOOZAR100') discount = Math.min(500, subtotal);
+      }
+
+      const netSubtotal = Math.max(0, subtotal - discount);
+      const shippingFee = (netSubtotal >= 2000 || netSubtotal === 0) ? 0 : 99;
+      const totalAmount = netSubtotal + shippingFee;
+
+      const directOrderRow = {
+        order_number: nextNum,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone,
+        shipping_address: shippingAddress || {},
+        items: snapshotItems,
+        subtotal_amount: subtotal,
+        discount_amount: discount,
+        shipping_fee: shippingFee,
+        total_amount: totalAmount,
+        coupon_code: couponCode || null,
+        payment_method: paymentMethod,
+        payment_status: paymentMethod === 'cod' ? 'pending' : 'paid',
+        order_status: 'confirmed',
+        idempotency_key: idempotencyKey,
+        notes: notes || null,
+        created_at: new Date().toISOString()
+      };
+
+      const { data: dbOrder, error: dbErr } = await supabase
+        .from('orders')
+        .insert(directOrderRow)
+        .select()
+        .single();
+
+      if (!dbErr && dbOrder) {
+        const fullOrder = { ...dbOrder, _syncedToDb: true };
+        saveStoredOrder(fullOrder);
+        return {
+          data: fullOrder,
+          error: null,
+          source: 'supabase_direct_insert'
+        };
       }
     } catch (err) {
-      console.warn('[orderService] Supabase remote order attempt caught error, proceeding with local calculation:', err.message);
+      console.warn('[orderService] Supabase direct insert notice:', err.message);
     }
   }
 
-  // 2. Development Fallback Flow (Simulated Server-Authoritative Logic)
-  console.info('[orderService] Running in local development mode — generating authoritative fallback order transaction.');
-
+  // 3. Offline Local Fallback
   let subtotal = 0;
   const snapshotItems = [];
 
   for (const item of items) {
     const entry = (item.variantId && FALLBACK_VARIANTS_MAP[item.variantId]) || 
                   (item.productId && item.size && FALLBACK_VARIANTS_MAP[`${item.productId}-${item.size}`]) || 
-                  STATIC_PRODUCTS.find(p => p.id === item.productId || p.db_id === item.productId) ||
-                  (item.product ? { product: item.product, ...item.product } : null);
+                  STATIC_PRODUCTS.find(p => p.id === item.productId || p.db_id === item.productId);
 
     const product = entry ? (entry.product || entry) : (item.product || {
       id: item.productId || `prod-${Date.now()}`,
@@ -228,14 +303,14 @@ export const createOrder = async (payload) => {
       images: [item.image || '']
     });
 
-    const unitPrice = entry?.priceOverride || product.price || item.price || item.unitPrice || 899;
+    const unitPrice = Number(entry?.priceOverride || product.price || item.price || item.unitPrice || 899);
     const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
     const lineTotal = unitPrice * qty;
     subtotal += lineTotal;
 
     snapshotItems.push({
-      product_id: product.id || item.productId,
-      product_slug: product.id || item.productId,
+      product_id: product.id || item.productId || 'prod-default',
+      product_slug: product.id || item.productId || 'lzr-velo-07',
       variant_id: item.variantId || `var-${product.id || 'item'}-${item.size || 'M'}`,
       sku: `${product.sku || item.sku || 'LZR'}-${item.size || 'M'}`,
       product_name: product.name || item.name || 'LOOZARS Archive Apparel',
@@ -248,61 +323,25 @@ export const createOrder = async (payload) => {
     });
   }
 
-  // Server-side simulated coupon & creator commission logic
   let discount = 0;
-  let influencerId = null;
-  let influencerCommission = 0;
-
-  if (couponCode) {
+  if (couponCode && String(couponCode).trim()) {
     const cleanCoupon = String(couponCode).toUpperCase().trim();
     if (cleanCoupon === 'DROP01' || cleanCoupon === 'LOOZAR10') {
       discount = Math.round(subtotal * 0.1);
     } else if (cleanCoupon === 'LOOZAR100') {
       discount = Math.min(500, subtotal);
-    } else {
-      const storedInfs = getStoredInfluencers();
-      const match = storedInfs.find(i => i.is_active && (i.coupon_code || '').toUpperCase() === cleanCoupon);
-      if (match) {
-        influencerId = match.id;
-        const discVal = Number(match.customer_discount_value || 10);
-        discount = (match.customer_discount_type === 'percentage') 
-          ? Math.round((subtotal * discVal) / 100) 
-          : Math.min(subtotal, Math.round(discVal));
-
-        const commVal = Number(match.commission_value || 8);
-        const commBase = Math.max(0, subtotal - discount);
-        influencerCommission = (match.commission_type === 'percentage')
-          ? Math.round((commBase * commVal) / 100)
-          : Math.round(commVal);
-      }
     }
   }
 
   discount = Math.min(subtotal, Math.max(0, discount));
   const netSubtotal = Math.max(0, subtotal - discount);
-  const shippingFee = netSubtotal >= 2000 || netSubtotal === 0 ? 0 : 99;
+  const shippingFee = (netSubtotal >= 2000 || netSubtotal === 0) ? 0 : 99;
   const total = netSubtotal + shippingFee;
   const orderNumber = generateFallbackOrderNumber();
 
-  // If order was attributed to an influencer, record commission & metrics immediately!
-  if (couponCode && (influencerId || discount > 0)) {
-    recordInfluencerOrder({
-      orderNumber,
-      customerName,
-      customerEmail,
-      customerPhone,
-      items: snapshotItems,
-      subtotalAmount: subtotal,
-      discountAmount: discount,
-      totalAmount: total,
-      couponCode,
-      paymentMethod,
-      paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid'
-    }).catch(e => console.warn('[orderService] Error recording influencer commission:', e));
-  }
-
   const simulatedOrder = {
-    order_id: `dev_${Date.now()}`,
+    id: `ord_${Date.now()}`,
+    order_id: `ord_${Date.now()}`,
     order_number: orderNumber,
     customer_name: customerName,
     customer_email: customerEmail,
@@ -312,10 +351,10 @@ export const createOrder = async (payload) => {
     discount_amount: discount,
     shipping_fee: shippingFee,
     total_amount: total,
+    coupon_code: couponCode || null,
+    payment_method: paymentMethod,
     payment_status: paymentMethod === 'cod' ? 'pending' : 'paid',
     order_status: 'confirmed',
-    influencer_id: influencerId,
-    influencer_commission_amount: influencerCommission,
     items: snapshotItems,
     created_at: new Date().toISOString()
   };
@@ -328,4 +367,3 @@ export const createOrder = async (payload) => {
     source: 'local_dev_fallback'
   };
 };
-

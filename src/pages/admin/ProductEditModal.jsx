@@ -10,18 +10,13 @@ import {
   AlertCircle, 
   RefreshCw,
   Package,
-  Layers,
   Star,
   Eye,
   EyeOff,
-  Clock,
-  Database,
-  Link as LinkIcon,
   AlertTriangle
 } from 'lucide-react';
 
 export const ProductEditModal = ({ product, onClose, onProductUpdated, onProductDeleted }) => {
-  // Product Basics
   const [name, setName] = useState(product.name || '');
   const [subtitle, setSubtitle] = useState(product.subtitle || '');
   const [basePrice, setBasePrice] = useState(product.base_price?.toString() || '899');
@@ -29,11 +24,10 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
   const [isActive, setIsActive] = useState(product.is_active !== false);
   const [isFeatured, setIsFeatured] = useState(Boolean(product.is_featured));
   const [category, setCategory] = useState(product.category || 'tees');
-  const [drop, setDrop] = useState(product.drop || 'DROP 01 // RACING DIVISION');
+  const [drop, setDrop] = useState(product.drop || 'Drop 01');
   const [description, setDescription] = useState(product.description || '');
-  const [fit, setFit] = useState(product.fit || 'Boxy oversized silhouette with dropped shoulders');
+  const [fit, setFit] = useState(product.fit || 'Boxy oversized fit');
   
-  // Specifications
   const initialDetails = Array.isArray(product.details) 
     ? product.details.join('\n') 
     : typeof product.details === 'string' 
@@ -41,14 +35,12 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
       : '';
   const [detailsText, setDetailsText] = useState(initialDetails);
 
-  // Photos State
   const initialImages = Array.isArray(product.images) ? product.images : (product.images ? [product.images] : []);
   const [images, setImages] = useState(initialImages);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Variants State
   const initialVariants = (product.product_variants || product.variants || []).map(v => ({
     id: v.id,
     size: v.size,
@@ -58,20 +50,16 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
   }));
   const [variants, setVariants] = useState(initialVariants);
 
-  // Deletion Confirmation State
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Save / Execution Context
   const { executeAction } = useAdminFeedback();
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  const [lastDuration, setLastDuration] = useState(null);
 
   if (!product) return null;
 
-  // Handle Image Upload from PC
   const handleFileUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (files.length === 0) return;
@@ -85,15 +73,13 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
         const res = await uploadProductImage(file, product.sku || 'lzr');
         if (res.url) {
           uploadedUrls.push(res.url);
-        } else if (res.error) {
-          console.warn('[ProductEditModal] Upload error:', res.error);
         }
       }
 
       if (uploadedUrls.length > 0) {
         setImages(prev => [...prev, ...uploadedUrls]);
       } else {
-        setErrorMessage('Failed to upload image(s). You can also paste direct URLs.');
+        setErrorMessage('Failed to upload image(s). You can paste direct URLs below.');
       }
     } catch (err) {
       setErrorMessage(err.message || 'Image upload failed.');
@@ -103,7 +89,6 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
     }
   };
 
-  // Handle Adding Image by URL
   const handleAddImageUrl = (e) => {
     e.preventDefault();
     if (!imageUrlInput.trim()) return;
@@ -111,350 +96,301 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
     setImageUrlInput('');
   };
 
-  // Remove Image
   const handleRemoveImage = (index) => {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Make Image Primary Cover
   const handleSetPrimaryImage = (index) => {
     if (index === 0) return;
     setImages(prev => {
-      const next = [...prev];
-      const [chosen] = next.splice(index, 1);
-      next.unshift(chosen);
-      return next;
+      const copy = [...prev];
+      const selected = copy.splice(index, 1)[0];
+      return [selected, ...copy];
     });
   };
 
-  // Variant Stock Change
-  const handleVariantStockChange = (size, newStock) => {
-    setVariants(prev => prev.map(v => v.size === size ? { ...v, stock: Math.max(0, parseInt(newStock, 10) || 0) } : v));
+  const handleVariantStockChange = (size, newStockVal) => {
+    const parsed = parseInt(newStockVal, 10);
+    const validStock = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+    setVariants(prev => prev.map(v => v.size === size ? { ...v, stock: validStock } : v));
   };
 
-  // Save Product Updates
   const handleSave = async (e) => {
-    e?.preventDefault();
+    e.preventDefault();
     setErrorMessage(null);
     setSuccessMessage(null);
-    setLastDuration(null);
 
-    const parsedBase = parseInt(basePrice, 10);
-    const parsedSale = salePrice.trim() !== '' ? parseInt(salePrice, 10) : null;
+    const parsedBasePrice = parseFloat(basePrice);
+    if (isNaN(parsedBasePrice) || parsedBasePrice <= 0) {
+      setErrorMessage('Please enter a valid base price.');
+      return;
+    }
 
-    if (isNaN(parsedBase) || parsedBase < 0) {
-      setErrorMessage('Please enter a valid non-negative base price.');
+    const parsedSalePrice = salePrice.trim() !== '' ? parseFloat(salePrice) : null;
+    if (parsedSalePrice !== null && (isNaN(parsedSalePrice) || parsedSalePrice < 0)) {
+      setErrorMessage('Sale price must be a valid positive number or empty.');
       return;
     }
 
     const detailsArray = detailsText
       .split('\n')
-      .map(l => l.trim())
-      .filter(Boolean);
+      .map(d => d.trim())
+      .filter(d => d.length > 0);
+
+    const payload = {
+      productId: product.id,
+      name: name.trim(),
+      subtitle: subtitle.trim() || null,
+      basePrice: parsedBasePrice,
+      salePrice: parsedSalePrice,
+      isActive,
+      isFeatured,
+      category,
+      drop: drop.trim(),
+      description: description.trim(),
+      fit: fit.trim(),
+      details: detailsArray,
+      images,
+      variants: variants.map(v => ({
+        size: v.size,
+        stock: v.stock
+      }))
+    };
 
     setIsSaving(true);
 
     const outcome = await executeAction(
-      'product_update',
+      `product_edit_${product.id}`,
       async () => {
-        // 1. Update main product
-        const res = await updateAdminProduct({
-          productId: product.id,
-          name: name.trim(),
-          subtitle: subtitle.trim(),
-          basePrice: parsedBase,
-          salePrice: parsedSale,
-          isActive,
-          isFeatured,
-          category: category.trim(),
-          drop: drop.trim(),
-          description: description.trim(),
-          fit: fit.trim(),
-          details: detailsArray,
-          images: images
-        });
-
+        const res = await updateAdminProduct(payload);
         if (!res.success) {
-          throw new Error(res.error || 'Failed to update product in database.');
+          throw new Error(res.error || 'Failed to update product');
         }
 
-        // 2. Update changed variant stocks if any
-        const updatedVariants = [];
         for (const v of variants) {
           if (v.id && v.stock !== v.originalStock) {
-            const delta = v.stock - v.originalStock;
+            const diff = v.stock - v.originalStock;
             await adjustVariantStock({
               variantId: v.id,
-              delta,
-              reason: `Admin product edit modal stock adjustment for ${v.sku || v.size}`
+              delta: diff,
+              reason: 'Admin product editor manual stock override',
+              updatedBy: 'Admin'
             });
-            updatedVariants.push({ ...v, stock_quantity: v.stock, originalStock: v.stock });
-          } else {
-            updatedVariants.push({ ...v, stock_quantity: v.stock });
           }
         }
 
-        return {
-          ...res,
-          updatedVariants
-        };
+        return res;
       },
       {
-        label: 'Updating product...',
+        label: 'Saving product details...',
         successTitle: 'Product updated successfully',
-        errorTitle: 'Product could not be updated',
+        errorTitle: 'Product update failed',
         entityType: 'product',
-        entityId: product.id,
-        detail: `Title: ${name.trim()} • Base: ₹${parsedBase} • Status: ${isActive ? 'Active' : 'Draft'}`
+        entityId: product.sku || product.id,
+        detail: name
       }
     );
 
     setIsSaving(false);
 
     if (outcome.success) {
-      setSuccessMessage('Product updated successfully and catalog refreshed.');
-      setLastDuration(outcome.duration);
-
-      const finalVariants = outcome.data?.updatedVariants?.length > 0
-        ? outcome.data.updatedVariants
-        : (product.product_variants || []);
-
+      setSuccessMessage('Product changes saved successfully.');
       if (onProductUpdated) {
         onProductUpdated({
           ...product,
-          name: name.trim(),
-          subtitle: subtitle.trim(),
-          base_price: parsedBase,
-          sale_price: parsedSale,
-          is_active: isActive,
-          is_featured: isFeatured,
-          category: category.trim(),
-          drop: drop.trim(),
-          description: description.trim(),
-          fit: fit.trim(),
-          details: detailsArray,
-          images: images,
-          product_variants: finalVariants
+          ...payload,
+          product_variants: variants.map(v => ({
+            ...v,
+            stock_quantity: v.stock
+          }))
         });
       }
-
       setTimeout(() => {
         onClose();
-      }, 800);
+      }, 500);
     } else {
       setErrorMessage(outcome.error);
-      setLastDuration(outcome.duration);
     }
   };
 
-  // Permanently Delete Product
   const handleDelete = async () => {
     setIsDeleting(true);
     setErrorMessage(null);
-    setLastDuration(null);
 
     const outcome = await executeAction(
-      'product_delete',
-      () => deleteAdminProduct(product.id),
+      `product_delete_${product.id}`,
+      async () => {
+        const res = await deleteAdminProduct(product.id);
+        if (!res.success) {
+          throw new Error(res.error || 'Failed to delete product.');
+        }
+        return res;
+      },
       {
         label: 'Deleting product...',
         successTitle: 'Product deleted successfully',
         errorTitle: 'Product could not be deleted',
         entityType: 'product',
-        entityId: product.id,
-        detail: `SKU: ${product.sku} ("${product.name}")`
+        entityId: product.sku || product.id,
+        detail: product.name
       }
     );
 
     setIsDeleting(false);
 
     if (outcome.success) {
-      if (onProductDeleted) {
-        onProductDeleted(product.id);
-      }
+      if (onProductDeleted) onProductDeleted(product.id);
       onClose();
     } else {
       setErrorMessage(outcome.error);
-      setLastDuration(outcome.duration);
       setShowDeleteConfirm(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="bg-[#121212] border border-[#242424] w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl shadow-2xl"
+        className="bg-[#16161A] border border-[#24242A] w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col font-sans text-zinc-100"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="sticky top-0 bg-[#121212]/95 backdrop-blur border-b border-[#202020] px-6 py-4 flex items-center justify-between z-10">
+        {/* Modal Header */}
+        <div className="sticky top-0 bg-[#121215]/95 backdrop-blur border-b border-[#24242A] p-4 px-6 flex items-center justify-between z-10">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-[#1a1a1a] text-zinc-300 border border-[#262626]">
+              <span className="text-xs font-bold text-zinc-100 font-mono tracking-tight">
                 {product.sku}
               </span>
-              <span className="text-xs text-zinc-400 font-medium">Edit Catalog Product</span>
+              <span className="text-[10px] bg-[#1F1F24] text-zinc-300 px-2.5 py-0.5 rounded-full font-semibold border border-[#2B2B32]">
+                Edit Product
+              </span>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-white mt-1">
-              {product.name}
-            </h3>
+            <h3 className="text-sm font-bold text-zinc-200 mt-0.5 truncate">{product.name}</h3>
           </div>
+
           <button
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-white hover:bg-[#1a1a1a] rounded-full transition-colors"
+            className="p-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-[#222228] rounded-lg transition-colors"
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
 
-        {/* Content & Form */}
-        <form onSubmit={handleSave} className="p-6 space-y-6 text-xs">
-
-          {/* Feedback Messages */}
+        {/* Modal Form Content */}
+        <form onSubmit={handleSave} className="p-6 space-y-6 text-xs text-zinc-300">
+          {/* Feedback messages */}
           {errorMessage && (
-            <div className="p-3.5 bg-rose-500/10 border border-rose-500/20 text-rose-300 rounded-xl space-y-1.5">
-              <div className="flex items-center gap-2.5">
-                <AlertCircle size={15} className="shrink-0 text-rose-400" />
-                <span className="font-semibold text-xs">Update Failed</span>
-              </div>
-              <p className="text-[11px] text-rose-300/90 pl-6">{errorMessage}</p>
-              {lastDuration && (
-                <div className="pl-6 pt-1 flex items-center gap-2 text-[10px] font-mono text-zinc-400">
-                  <span className="px-2 py-0.5 bg-[#181818] rounded border border-[#2a2a2a]">⏱ {lastDuration}</span>
-                  <span className="text-zinc-500">Database: Unchanged</span>
-                </div>
-              )}
+            <div className="p-3.5 bg-rose-950/50 border border-rose-800/60 text-rose-300 rounded-xl flex items-center gap-2">
+              <AlertCircle size={15} className="text-rose-400 shrink-0" />
+              <span>{errorMessage}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 rounded-xl space-y-1.5">
-              <div className="flex items-center gap-2.5">
-                <CheckCircle2 size={15} className="shrink-0 text-emerald-400" />
-                <span className="font-semibold text-xs">{successMessage}</span>
-              </div>
-              {lastDuration && (
-                <div className="pl-6 pt-1 flex items-center gap-2 text-[10px] font-mono">
-                  <span className="px-2 py-0.5 bg-[#181818] text-zinc-300 rounded border border-[#2a2a2a]">⏱ {lastDuration}</span>
-                  <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded border border-emerald-500/30">Database: Updated</span>
-                  <span className="px-2 py-0.5 bg-sky-500/20 text-sky-300 rounded border border-sky-500/30">Sync: Complete</span>
-                </div>
-              )}
+            <div className="p-3.5 bg-emerald-950/50 border border-emerald-800/60 text-emerald-300 rounded-xl flex items-center gap-2">
+              <CheckCircle2 size={15} className="text-emerald-400 shrink-0" />
+              <span>{successMessage}</span>
             </div>
           )}
 
           {/* Section 1: Basic Information */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider border-b border-[#202020] pb-2">
-              1. Title & Classification
+          <div className="space-y-3.5">
+            <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider border-b border-[#24242A] pb-1.5">
+              1. Title & Details
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Product Title *
-                </label>
+              <div className="sm:col-span-2">
+                <label className="text-zinc-300 font-medium block mb-1">Product Title *</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3.5 py-2 rounded-xl outline-none transition-colors"
                   required
                 />
               </div>
 
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Subtitle / Material Headline
-                </label>
+              <div className="sm:col-span-2">
+                <label className="text-zinc-300 font-medium block mb-1">Subtitle / Headline</label>
                 <input
                   type="text"
                   value={subtitle}
                   onChange={(e) => setSubtitle(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3.5 py-2 rounded-xl outline-none transition-colors"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Category
-                </label>
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Category</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3 py-2.5 rounded-xl text-xs outline-none cursor-pointer"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3 py-2 rounded-xl outline-none cursor-pointer"
                 >
-                  <option value="tees">Tees & Graphic Jerseys</option>
+                  <option value="tees">Tees</option>
                   <option value="hoodies">Hoodies & Sweatshirts</option>
-                  <option value="waffle">Waffle Knits & Thermals</option>
+                  <option value="waffle">Waffle Knits</option>
                   <option value="pants">Pants & Bottoms</option>
-                  <option value="accessories">Caps & Accessories</option>
+                  <option value="accessories">Accessories</option>
                 </select>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Drop / Collection
-                </label>
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Collection / Drop</label>
                 <input
                   type="text"
                   value={drop}
                   onChange={(e) => setDrop(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3.5 py-2 rounded-xl outline-none transition-colors"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Pricing */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider border-b border-[#202020] pb-2">
-              2. Pricing Tiers
+          <div className="space-y-3.5">
+            <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider border-b border-[#24242A] pb-1.5">
+              2. Pricing
             </h4>
 
             <div className="grid grid-cols-2 gap-3.5">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Base Price (₹ INR) *
-                </label>
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Base Price (₹) *</label>
                 <input
                   type="number"
                   min="0"
                   value={basePrice}
                   onChange={(e) => setBasePrice(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 font-mono font-bold px-3.5 py-2 rounded-xl outline-none"
                   required
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Sale Price (₹ INR, Optional)
-                </label>
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Sale Price (₹, Optional)</label>
                 <input
                   type="number"
                   min="0"
-                  placeholder="Leave empty for regular price"
+                  placeholder="Leave empty if none"
                   value={salePrice}
                   onChange={(e) => setSalePrice(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white font-mono px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 font-mono font-bold px-3.5 py-2 rounded-xl outline-none placeholder-zinc-600"
                 />
               </div>
             </div>
           </div>
 
-          {/* Section 3: Photos Management */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between border-b border-[#202020] pb-2">
-              <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">
-                3. Photos & Media ({images.length})
+          {/* Section 3: Photos */}
+          <div className="space-y-3.5">
+            <div className="flex items-center justify-between border-b border-[#24242A] pb-1.5">
+              <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider">
+                3. Photos ({images.length})
               </h4>
-              <span className="text-[10px] text-zinc-500">First image is Primary cover</span>
+              <span className="text-[11px] text-zinc-500">First image is primary</span>
             </div>
 
-            <div className="space-y-3">
-              {/* Upload Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2.5">
+            <div className="space-y-2.5">
+              <div className="flex gap-2">
                 <input
                   type="file"
                   multiple
@@ -467,76 +403,58 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
                   type="button"
                   disabled={isUploadingImage}
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 py-2.5 px-4 bg-[#181818] hover:bg-[#202020] border border-dashed border-[#333333] hover:border-zinc-400 rounded-xl text-xs text-zinc-300 hover:text-white flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                  className="flex-1 py-2.5 px-3 bg-[#121215] hover:bg-[#18181D] border border-dashed border-[#2B2B32] rounded-xl text-zinc-300 text-xs flex items-center justify-center gap-1.5 transition-colors"
                 >
-                  {isUploadingImage ? (
-                    <RefreshCw size={14} className="animate-spin text-white" />
-                  ) : (
-                    <Upload size={14} className="text-zinc-400" />
-                  )}
-                  <span>{isUploadingImage ? 'Uploading image...' : 'Upload Photos from Computer'}</span>
+                  {isUploadingImage ? <RefreshCw size={13} className="animate-spin" /> : <Upload size={13} className="text-zinc-400" />}
+                  <span>{isUploadingImage ? 'Uploading...' : 'Upload Photos'}</span>
                 </button>
               </div>
 
-              {/* Direct URL input */}
               <div className="flex gap-2">
                 <input
                   type="url"
-                  placeholder="Or paste direct image URL (https://...)"
+                  placeholder="Or paste image URL (https://...)"
                   value={imageUrlInput}
                   onChange={(e) => setImageUrlInput(e.target.value)}
-                  className="flex-1 bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2 rounded-xl text-xs outline-none"
+                  className="flex-1 bg-[#121215] border border-[#24242A] px-3 py-2 rounded-xl text-xs text-zinc-100 outline-none focus:border-zinc-500 placeholder-zinc-600"
                 />
                 <button
                   type="button"
                   onClick={handleAddImageUrl}
                   disabled={!imageUrlInput.trim()}
-                  className="px-4 py-2 bg-[#222222] hover:bg-[#333333] text-zinc-200 text-xs font-medium rounded-xl border border-[#303030] disabled:opacity-40 transition-colors"
+                  className="px-3.5 py-2 bg-[#1E1E24] hover:bg-[#26262E] text-zinc-200 border border-[#2B2B33] rounded-xl text-xs font-medium disabled:opacity-40"
                 >
                   Add URL
                 </button>
               </div>
 
-              {/* Photos Gallery */}
               {images.length > 0 && (
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 pt-2">
+                <div className="grid grid-cols-4 sm:grid-cols-5 gap-2.5 pt-1">
                   {images.map((imgUrl, idx) => (
-                    <div 
-                      key={idx} 
-                      className="relative group aspect-[3/4] bg-[#0c0c0c] border border-[#242424] rounded-xl overflow-hidden shadow-sm"
-                    >
-                      <img 
-                        src={imgUrl} 
-                        alt={`Photo ${idx + 1}`} 
-                        className="w-full h-full object-cover" 
-                      />
-
-                      {/* Primary Badge */}
+                    <div key={idx} className="relative group aspect-[3/4] bg-[#121215] border border-[#24242A] rounded-xl overflow-hidden">
+                      <img src={imgUrl} alt="Product" className="w-full h-full object-cover" />
                       {idx === 0 && (
-                        <span className="absolute top-1.5 left-1.5 bg-black/85 text-emerald-400 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded border border-emerald-500/30">
+                        <span className="absolute top-1 left-1 bg-black/80 text-white text-[9px] px-1.5 py-0.5 rounded font-mono">
                           PRIMARY
                         </span>
                       )}
-
-                      {/* Actions Overlay */}
-                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1.5">
                         <div className="flex justify-end">
                           <button
                             type="button"
                             onClick={() => handleRemoveImage(idx)}
-                            className="p-1 bg-rose-500 text-white rounded-md hover:bg-rose-600 transition-colors"
-                            title="Remove photo"
+                            className="p-1 bg-rose-600 text-white rounded-md hover:bg-rose-700"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={11} />
                           </button>
                         </div>
                         {idx !== 0 && (
                           <button
                             type="button"
                             onClick={() => handleSetPrimaryImage(idx)}
-                            className="w-full py-1 bg-white/90 text-black text-[10px] font-bold rounded hover:bg-white transition-colors"
+                            className="w-full py-1 bg-white text-zinc-900 text-[10px] font-bold rounded-md"
                           >
-                            Make Primary
+                            Set Primary
                           </button>
                         )}
                       </div>
@@ -547,174 +465,158 @@ export const ProductEditModal = ({ product, onClose, onProductUpdated, onProduct
             </div>
           </div>
 
-          {/* Section 4: Size Inventory Matrix */}
+          {/* Section 4: Variants */}
           {variants.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-[#202020] pb-2">
-                <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Package size={14} className="text-zinc-400" />
-                  <span>4. Variant Stock Matrix</span>
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between border-b border-[#24242A] pb-1.5">
+                <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider flex items-center gap-1.5">
+                  <Package size={13} className="text-zinc-400" />
+                  <span>4. Size Stock Matrix</span>
                 </h4>
-                <span className="text-[10px] text-zinc-400">
-                  Total Stock: {variants.reduce((s, v) => s + (v.stock || 0), 0)}
+                <span className="text-xs text-zinc-400">
+                  Total: {variants.reduce((s, v) => s + (v.stock || 0), 0)} units
                 </span>
               </div>
 
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
                 {variants.map((v) => (
-                  <div key={v.size} className="bg-[#181818] border border-[#262626] p-2.5 rounded-xl text-center space-y-1">
-                    <span className="text-xs font-bold text-white block">{v.size}</span>
+                  <div key={v.size} className="bg-[#121215] border border-[#24242A] p-2.5 rounded-xl text-center space-y-1">
+                    <span className="text-xs font-bold text-zinc-100 block">{v.size}</span>
                     <input
                       type="number"
                       min="0"
                       value={v.stock}
                       onChange={(e) => handleVariantStockChange(v.size, e.target.value)}
-                      className="w-full bg-[#121212] border border-[#2a2a2a] text-center text-white font-mono py-1 rounded-lg text-xs outline-none focus:border-zinc-400"
+                      className="w-full bg-[#18181D] border border-[#24242A] text-center text-zinc-100 font-mono font-semibold py-1 rounded-lg text-xs outline-none focus:border-zinc-500"
                     />
-                    <span className="text-[9px] text-zinc-500 block">units</span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Section 5: Description & Specs */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-semibold text-zinc-300 uppercase tracking-wider border-b border-[#202020] pb-2">
-              5. Details & Specifications
+          {/* Section 5: Description */}
+          <div className="space-y-3.5">
+            <h4 className="text-xs font-semibold text-zinc-200 uppercase tracking-wider border-b border-[#24242A] pb-1.5">
+              5. Descriptions & Bullets
             </h4>
 
-            <div className="space-y-3">
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Product Description
-                </label>
+            <div className="space-y-2.5">
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Description</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none resize-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3.5 py-2 rounded-xl outline-none resize-none"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Fit & Cut
-                </label>
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Fit & Cut</label>
                 <input
                   type="text"
                   value={fit}
                   onChange={(e) => setFit(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none transition-colors"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3.5 py-2 rounded-xl outline-none"
                 />
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-medium text-zinc-300 block">
-                  Bullet Point Specifications (One per line)
-                </label>
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Specification Bullets (one per line)</label>
                 <textarea
                   rows={3}
                   value={detailsText}
                   onChange={(e) => setDetailsText(e.target.value)}
-                  className="w-full bg-[#181818] border border-[#262626] focus:border-zinc-500 text-white px-3.5 py-2.5 rounded-xl text-xs outline-none resize-none transition-colors font-mono"
+                  className="w-full bg-[#121215] border border-[#24242A] focus:border-zinc-500 text-zinc-100 px-3.5 py-2 rounded-xl outline-none resize-none font-mono text-xs"
                 />
               </div>
             </div>
           </div>
 
-          {/* Section 6: Visibility & Publishing */}
-          <div className="grid grid-cols-2 gap-3 pt-2">
-            <label className="flex items-center gap-3 p-3.5 bg-[#181818] border border-[#262626] rounded-2xl cursor-pointer select-none hover:border-[#333333] transition-colors">
+          {/* Section 6: Visibility */}
+          <div className="grid grid-cols-2 gap-3 pt-1">
+            <label className="flex items-center gap-2.5 p-3.5 bg-[#121215] border border-[#24242A] rounded-xl cursor-pointer select-none hover:bg-[#18181D] transition-colors">
               <input
                 type="checkbox"
                 checked={isActive}
                 onChange={(e) => setIsActive(e.target.checked)}
-                className="accent-white w-4 h-4 rounded"
+                className="w-4 h-4 rounded accent-white bg-[#16161A] border-[#24242A]"
               />
               <div>
-                <span className="text-xs text-white font-medium block">Active in Store</span>
-                <span className="text-[11px] text-zinc-400">Visible to customers</span>
+                <span className="text-xs font-semibold text-zinc-100 block">Active in Store</span>
+                <span className="text-[11px] text-zinc-500">Visible to customers</span>
               </div>
             </label>
 
-            <label className="flex items-center gap-3 p-3.5 bg-[#181818] border border-[#262626] rounded-2xl cursor-pointer select-none hover:border-[#333333] transition-colors">
+            <label className="flex items-center gap-2.5 p-3.5 bg-[#121215] border border-[#24242A] rounded-xl cursor-pointer select-none hover:bg-[#18181D] transition-colors">
               <input
                 type="checkbox"
                 checked={isFeatured}
                 onChange={(e) => setIsFeatured(e.target.checked)}
-                className="accent-white w-4 h-4 rounded"
+                className="w-4 h-4 rounded accent-white bg-[#16161A] border-[#24242A]"
               />
               <div>
-                <span className="text-xs text-white font-medium block">Featured Product</span>
-                <span className="text-[11px] text-zinc-400">Highlighted on homepage</span>
+                <span className="text-xs font-semibold text-zinc-100 block">Featured</span>
+                <span className="text-[11px] text-zinc-500">Highlight on homepage</span>
               </div>
             </label>
           </div>
 
-          {/* Danger Zone: Delete Product */}
-          <div className="p-4 bg-rose-500/5 border border-rose-500/20 rounded-2xl space-y-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <h5 className="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
-                  <AlertTriangle size={14} />
-                  <span>Danger Zone: Delete Product</span>
-                </h5>
-                <p className="text-[11px] text-zinc-400 mt-0.5">
-                  Permanently deletes this item, its size variants, and associated inventory records.
-                </p>
-              </div>
+          {/* Delete Danger Zone */}
+          <div className="p-4 bg-rose-950/30 border border-rose-800/50 rounded-2xl flex items-center justify-between">
+            <div>
+              <span className="font-semibold text-rose-300 block">Delete Product</span>
+              <span className="text-[11px] text-rose-400/80">Permanently delete this product and all size variants.</span>
+            </div>
 
-              {!showDeleteConfirm ? (
+            {!showDeleteConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-3.5 py-1.5 bg-[#1E1E24] text-rose-300 border border-rose-800/60 hover:bg-rose-950/60 rounded-xl font-medium transition-colors cursor-pointer"
+              >
+                Delete
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  className="px-3.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded-lg text-xs font-medium transition-colors"
+                  onClick={() => setShowDeleteConfirm(false)}
+                  className="px-2.5 py-1 bg-[#1E1E24] border border-[#2B2B33] rounded-lg text-zinc-400 text-xs cursor-pointer"
                 >
-                  Delete Product
+                  Cancel
                 </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="px-3 py-1.5 bg-[#181818] hover:bg-[#202020] text-zinc-400 text-xs rounded-lg border border-[#2e2e2e]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isDeleting}
-                    onClick={handleDelete}
-                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
-                  >
-                    {isDeleting ? <RefreshCw size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                    <span>{isDeleting ? 'Deleting...' : 'Confirm Delete'}</span>
-                  </button>
-                </div>
-              )}
-            </div>
+                <button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleDelete}
+                  className="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-lg text-xs cursor-pointer"
+                >
+                  {isDeleting ? 'Deleting...' : 'Confirm'}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#202020]">
+          <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[#24242A]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 bg-[#181818] hover:bg-[#202020] text-zinc-400 hover:text-white text-xs font-medium rounded-xl border border-[#282828] transition-colors"
+              className="px-4 py-2 bg-[#1E1E24] hover:bg-[#26262E] text-zinc-300 text-xs font-medium rounded-xl border border-[#2B2B33] transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-2.5 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-bold rounded-xl transition-colors flex items-center gap-2 shadow-sm"
+              className="px-5 py-2 bg-white hover:bg-zinc-200 disabled:opacity-50 text-black text-xs font-semibold rounded-xl transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer"
             >
-              {isSaving ? <RefreshCw size={13} className="animate-spin text-black" /> : null}
-              <span>{isSaving ? 'Saving changes...' : 'Save Product Changes'}</span>
+              {isSaving ? <RefreshCw size={13} className="animate-spin text-zinc-900" /> : null}
+              <span>Save Product Changes</span>
             </button>
           </div>
-
         </form>
       </div>
     </div>

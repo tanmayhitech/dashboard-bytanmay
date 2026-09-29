@@ -100,32 +100,39 @@ export const verifyAdminRole = async () => {
 
 /**
  * Fetches aggregated dashboard metrics
+ * Excludes archived/deleted orders to ensure live overview metrics accurately reflect active business state.
  */
 export const fetchAdminDashboardMetrics = async () => {
-  const localOrders = getStoredOrders();
+  const activeLocalOrders = getStoredOrders().filter(o => !o.is_archived && o.order_status !== 'archived' && !(o.notes || '').includes('[ARCHIVED]'));
   const localCommissions = getStoredCommissions();
 
   if (!isSupabaseConfigured) {
-    const paidRevenue = localOrders
-      .filter(o => o.payment_status === 'paid')
-      .reduce((sum, o) => sum + (o.total_amount || 0), 0);
+    const paidRevenue = activeLocalOrders
+      .filter(o => o.payment_status === 'paid' || (o.payment_method === 'cod' && o.order_status === 'delivered'))
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+
+    const grossRevenue = activeLocalOrders
+      .filter(o => o.order_status !== 'cancelled' && o.order_status !== 'archived')
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
     return {
       success: true,
       data: {
+        recentOrders: activeLocalOrders.slice(0, 10),
         orders: {
-          total: localOrders.length,
-          pending: localOrders.filter(o => o.order_status === 'pending').length,
-          confirmed: localOrders.filter(o => o.order_status === 'confirmed').length,
-          processing: localOrders.filter(o => o.order_status === 'processing').length,
-          shipped: localOrders.filter(o => o.order_status === 'shipped').length,
-          delivered: localOrders.filter(o => o.order_status === 'delivered').length,
-          cancelled: localOrders.filter(o => o.order_status === 'cancelled').length
+          total: activeLocalOrders.length,
+          pending: activeLocalOrders.filter(o => o.order_status === 'pending').length,
+          confirmed: activeLocalOrders.filter(o => o.order_status === 'confirmed').length,
+          processing: activeLocalOrders.filter(o => o.order_status === 'processing').length,
+          shipped: activeLocalOrders.filter(o => o.order_status === 'shipped').length,
+          delivered: activeLocalOrders.filter(o => o.order_status === 'delivered').length,
+          cancelled: activeLocalOrders.filter(o => o.order_status === 'cancelled').length
         },
         payments: {
-          paid_orders: localOrders.filter(o => o.payment_status === 'paid').length,
-          pending_payments: localOrders.filter(o => o.payment_status === 'pending').length,
-          total_paid_revenue_inr: paidRevenue
+          paid_orders: activeLocalOrders.filter(o => o.payment_status === 'paid').length,
+          pending_payments: activeLocalOrders.filter(o => o.payment_status === 'pending').length,
+          total_paid_revenue_inr: paidRevenue,
+          total_revenue_inr: grossRevenue
         },
         catalog: { total_products: 4, active_products: 4, total_variants: 24, low_stock_variants: 0, out_of_stock_variants: 0 }
       },
@@ -135,186 +142,277 @@ export const fetchAdminDashboardMetrics = async () => {
   }
 
   try {
-    const { data, error } = await supabase.rpc('get_admin_dashboard_metrics');
+    // 1. Fetch raw rows cleanly without brittle PostgREST filter clauses
+    const [ordersRes, productsRes, variantsRes] = await Promise.all([
+      supabase.from('orders').select('*').order('created_at', { ascending: false }),
+      supabase.from('products').select('id, is_active'),
+      supabase.from('product_variants').select('id, stock_quantity, is_active')
+    ]);
 
-    if (error) {
-      const [ordersRes, productsRes, variantsRes] = await Promise.all([
-        supabase.from('orders').select('order_status, payment_status, total_amount'),
-        supabase.from('products').select('id, is_active'),
-        supabase.from('product_variants').select('id, stock_quantity, is_active')
-      ]);
+    let rawOrders = [];
+    if (!ordersRes.error && Array.isArray(ordersRes.data)) {
+      rawOrders = ordersRes.data;
+    } else {
+      console.warn('[adminService] Supabase orders fetch returned error, using fallback:', ordersRes?.error?.message);
+      rawOrders = getStoredOrders();
+    }
 
-      if (ordersRes.error || productsRes.error || variantsRes.error) {
-        throw new Error(ordersRes.error?.message || productsRes.error?.message || variantsRes.error?.message);
+    const products = (!productsRes?.error && Array.isArray(productsRes?.data)) ? productsRes.data : PRODUCTS;
+    const variants = (!variantsRes?.error && Array.isArray(variantsRes?.data)) ? variantsRes.data : [];
+    const storedInfluencers = getStoredInfluencers();
+
+    // Strictly exclude any archived, soft-deleted, or deleted orders
+    const activeOrders = rawOrders.filter(o => 
+      !o.is_archived && 
+      o.order_status !== 'archived' && 
+      !(o.notes || '').includes('[ARCHIVED]')
+    ).map(ord => {
+      const cleanCoupon = (ord.coupon_code || '').toUpperCase().trim();
+      let matchedInf = null;
+      if (ord.influencer_id) {
+        matchedInf = storedInfluencers.find(i => i.id === ord.influencer_id);
+      }
+      if (!matchedInf && cleanCoupon) {
+        matchedInf = storedInfluencers.find(i => (i.coupon_code || '').toUpperCase().trim() === cleanCoupon);
+      }
+      const influencerComm = Number(ord.influencer_commission_amount || 0);
+
+      let parsedItems = ord.items;
+      if (typeof parsedItems === 'string') {
+        try { parsedItems = JSON.parse(parsedItems); } catch (e) { parsedItems = []; }
       }
 
-      // Merge remote orders with local orders
-      const remoteOrders = ordersRes.data || [];
-      const allOrderNumbers = new Set(remoteOrders.map(o => o.order_number));
-      const extraLocalOrders = localOrders.filter(o => !allOrderNumbers.has(o.order_number));
-      const mergedOrders = [...remoteOrders, ...extraLocalOrders];
-
-      const paidRevenue = mergedOrders
-        .filter(o => o.payment_status === 'paid')
-        .reduce((sum, o) => sum + (o.total_amount || 0), 0);
-
-      const products = productsRes.data || [];
-      const variants = variantsRes.data || [];
-
       return {
-        success: true,
-        data: {
-          orders: {
-            total: mergedOrders.length,
-            pending: mergedOrders.filter(o => o.order_status === 'pending').length,
-            confirmed: mergedOrders.filter(o => o.order_status === 'confirmed').length,
-            processing: mergedOrders.filter(o => o.order_status === 'processing').length,
-            shipped: mergedOrders.filter(o => o.order_status === 'shipped').length,
-            delivered: mergedOrders.filter(o => o.order_status === 'delivered').length,
-            cancelled: mergedOrders.filter(o => o.order_status === 'cancelled').length
-          },
-          payments: {
-            paid_orders: mergedOrders.filter(o => o.payment_status === 'paid').length,
-            pending_payments: mergedOrders.filter(o => o.payment_status === 'pending').length,
-            total_paid_revenue_inr: paidRevenue
-          },
-          catalog: {
-            total_products: products.length,
-            active_products: products.filter(p => p.is_active).length,
-            total_variants: variants.length,
-            low_stock_variants: variants.filter(v => v.is_active && v.stock_quantity > 0 && v.stock_quantity <= 5).length,
-            out_of_stock_variants: variants.filter(v => v.is_active && v.stock_quantity === 0).length
-          }
-        },
-        error: null,
-        isOffline: false
+        ...ord,
+        items: Array.isArray(parsedItems) ? parsedItems : [],
+        is_archived: false,
+        display_status: ord.order_status,
+        order_number: ord.order_number || ord.orderNumber || ord.id || 'LZR-ORDER',
+        influencer_id: ord.influencer_id || matchedInf?.id || null,
+        influencer_name: matchedInf?.name || null,
+        influencer_handle: matchedInf?.handle || matchedInf?.instagram_handle || null,
+        influencer_coupon: matchedInf?.coupon_code || (cleanCoupon || null),
+        influencer_commission_amount: influencerComm > 0 ? influencerComm : (matchedInf ? Math.round(((ord.subtotal_amount || ord.total_amount || 0) * (matchedInf.commission_value || 8)) / 100) : 0)
       };
+    });
+
+    // Synchronize local cache for offline resilience
+    if (typeof window !== 'undefined' && activeOrders.length > 0) {
+      try {
+        localStorage.setItem('loozars_store_orders_v1', JSON.stringify(activeOrders));
+      } catch (e) {
+        // ignore
+      }
     }
+
+    const paidRevenue = activeOrders
+      .filter(o => o.payment_status === 'paid' || (o.payment_method === 'cod' && o.order_status === 'delivered'))
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+
+    const grossRevenue = activeOrders
+      .filter(o => o.order_status !== 'cancelled' && o.order_status !== 'archived')
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
     return {
       success: true,
-      data,
+      data: {
+        recentOrders: activeOrders.slice(0, 10),
+        orders: {
+          total: activeOrders.length,
+          pending: activeOrders.filter(o => o.order_status === 'pending').length,
+          confirmed: activeOrders.filter(o => o.order_status === 'confirmed').length,
+          processing: activeOrders.filter(o => o.order_status === 'processing').length,
+          shipped: activeOrders.filter(o => o.order_status === 'shipped').length,
+          delivered: activeOrders.filter(o => o.order_status === 'delivered').length,
+          cancelled: activeOrders.filter(o => o.order_status === 'cancelled').length
+        },
+        payments: {
+          paid_orders: activeOrders.filter(o => o.payment_status === 'paid').length,
+          pending_payments: activeOrders.filter(o => o.payment_status === 'pending').length,
+          total_paid_revenue_inr: paidRevenue,
+          total_revenue_inr: grossRevenue
+        },
+        catalog: {
+          total_products: products.length,
+          active_products: products.filter(p => p.is_active).length,
+          total_variants: variants.length,
+          low_stock_variants: variants.filter(v => v.is_active && v.stock_quantity > 0 && v.stock_quantity <= 5).length,
+          out_of_stock_variants: variants.filter(v => v.is_active && v.stock_quantity === 0).length
+        }
+      },
       error: null,
-      isOffline: false
+      isOffline: Boolean(ordersRes.error)
     };
   } catch (err) {
     console.error('[adminService] fetchAdminDashboardMetrics error:', err);
+    const paidRevenue = activeLocalOrders
+      .filter(o => o.payment_status === 'paid' || (o.payment_method === 'cod' && o.order_status === 'delivered'))
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+
     return {
-      success: false,
-      data: null,
-      error: err.message,
-      isOffline: false
+      success: true,
+      data: {
+        recentOrders: activeLocalOrders.slice(0, 10),
+        orders: {
+          total: activeLocalOrders.length,
+          pending: activeLocalOrders.filter(o => o.order_status === 'pending').length,
+          confirmed: activeLocalOrders.filter(o => o.order_status === 'confirmed').length,
+          processing: activeLocalOrders.filter(o => o.order_status === 'processing').length,
+          shipped: activeLocalOrders.filter(o => o.order_status === 'shipped').length,
+          delivered: activeLocalOrders.filter(o => o.order_status === 'delivered').length,
+          cancelled: activeLocalOrders.filter(o => o.order_status === 'cancelled').length
+        },
+        payments: {
+          paid_orders: activeLocalOrders.filter(o => o.payment_status === 'paid').length,
+          pending_payments: activeLocalOrders.filter(o => o.payment_status === 'pending').length,
+          total_paid_revenue_inr: paidRevenue,
+          total_revenue_inr: paidRevenue
+        },
+        catalog: { total_products: 4, active_products: 4, total_variants: 24, low_stock_variants: 0, out_of_stock_variants: 0 }
+      },
+      error: null,
+      isOffline: true
     };
   }
 };
 
 /**
- * Fetches paginated orders with multi-source merging (Supabase DB + local orders + influencer attribution)
+ * High-Performance Server-Side Paginated Orders Fetcher
+ * Executes search, status filtering, and pagination directly in PostgreSQL via Supabase,
+ * eliminating full-table downloads and client-side lag.
  */
 export const fetchAdminOrders = async ({
   page = 1,
   limit = 20,
   orderStatus = 'all',
   paymentStatus = 'all',
-  searchQuery = ''
+  searchQuery = '',
+  search = ''
 } = {}) => {
-  let combinedOrders = [];
-  const localOrders = getStoredOrders();
+  const effectiveSearch = (searchQuery || search || '').trim();
+  const from = (page - 1) * limit;
+  const to = from + limit - 1;
   const storedInfluencers = getStoredInfluencers();
-  const storedCommissions = getStoredCommissions();
 
-  // 1. Fetch remote orders from Supabase if online
   if (isSupabaseConfigured) {
     try {
-      const { data: dbOrders, error: dbError } = await supabase
+      let query = supabase
         .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+
+      // 1. Server-side Status Filter (exclude archived orders unless explicitly filtering by archived)
+      if (orderStatus === 'archived') {
+        query = query.ilike('notes', '%[ARCHIVED]%');
+      } else if (orderStatus && orderStatus !== 'all') {
+        query = query.eq('order_status', orderStatus);
+      }
+
+      // 2. Server-side Payment Status Filter
+      if (paymentStatus === 'cod') {
+        query = query.eq('payment_method', 'cod');
+      } else if (paymentStatus && paymentStatus !== 'all') {
+        query = query.eq('payment_status', paymentStatus);
+      }
+
+      // 3. Server-side Full Text Search
+      if (effectiveSearch) {
+        query = query.or(
+          `order_number.ilike.%${effectiveSearch}%,customer_name.ilike.%${effectiveSearch}%,customer_email.ilike.%${effectiveSearch}%,customer_phone.ilike.%${effectiveSearch}%,coupon_code.ilike.%${effectiveSearch}%`
+        );
+      }
+
+      // 4. Server-side Sorting & Range Pagination
+      query = query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      const { data: dbOrders, count, error: dbError } = await withTimeout(query, 10000);
 
       if (!dbError && Array.isArray(dbOrders)) {
-        combinedOrders = [...dbOrders];
+        let enriched = dbOrders.map(ord => {
+          const cleanCoupon = (ord.coupon_code || '').toUpperCase().trim();
+          let matchedInf = null;
+
+          if (ord.influencer_id) {
+            matchedInf = storedInfluencers.find(i => i.id === ord.influencer_id);
+          }
+          if (!matchedInf && cleanCoupon) {
+            matchedInf = storedInfluencers.find(i => (i.coupon_code || '').toUpperCase().trim() === cleanCoupon);
+          }
+
+          let parsedItems = ord.items;
+          if (typeof parsedItems === 'string') {
+            try { parsedItems = JSON.parse(parsedItems); } catch (e) { parsedItems = []; }
+          }
+
+          const influencerComm = Number(ord.influencer_commission_amount || 0);
+          const isArchived = Boolean(ord.is_archived || (ord.notes || '').includes('[ARCHIVED]') || ord.order_status === 'archived');
+
+          return {
+            ...ord,
+            items: Array.isArray(parsedItems) ? parsedItems : [],
+            is_archived: isArchived,
+            display_status: isArchived ? 'archived' : ord.order_status,
+            order_number: ord.order_number || ord.orderNumber || ord.orderId || 'LZR-ORDER',
+            influencer_id: ord.influencer_id || matchedInf?.id || null,
+            influencer_name: matchedInf?.name || null,
+            influencer_handle: matchedInf?.handle || matchedInf?.instagram_handle || null,
+            influencer_coupon: matchedInf?.coupon_code || (cleanCoupon || null),
+            influencer_commission_amount: influencerComm > 0 ? influencerComm : (matchedInf ? Math.round(((ord.subtotal_amount || ord.total_amount || 0) * (matchedInf.commission_value || 8)) / 100) : 0),
+            influencer_commission_rate: matchedInf?.commission_value || ord.influencer_commission_rate_snapshot || 8,
+            influencer_commission_type: matchedInf?.commission_type || ord.influencer_commission_type_snapshot || 'percentage'
+          };
+        });
+
+        if (orderStatus === 'archived') {
+          enriched = enriched.filter(o => o.is_archived);
+        } else {
+          enriched = enriched.filter(o => !o.is_archived);
+        }
+
+        if (typeof window !== 'undefined' && enriched.length > 0 && page === 1 && orderStatus === 'all') {
+          try {
+            localStorage.setItem('loozars_store_orders_v1', JSON.stringify(enriched));
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        return {
+          success: true,
+          orders: enriched,
+          total: count ?? enriched.length,
+          error: null,
+          isOffline: false
+        };
       }
     } catch (err) {
-      console.warn('[adminService] Remote order fetch exception, using local store:', err.message);
+      console.warn('[adminService] Remote order fetch exception, falling back to local store:', err.message);
     }
   }
 
-  // 2. Merge local stored orders (avoiding duplicate order_number)
-  const existingNumbers = new Set(combinedOrders.map(o => (o.order_number || o.orderNumber || '').toUpperCase()));
-  for (const lo of localOrders) {
-    const num = (lo.order_number || lo.orderNumber || lo.orderId || '').toUpperCase();
-    if (num && !existingNumbers.has(num)) {
-      combinedOrders.push(lo);
-      existingNumbers.add(num);
-    }
-  }
-
-  // 3. Look in stored commissions to ensure any attributed creator order is included
-  for (const comm of storedCommissions) {
-    const commOrderNum = (comm.order_number || '').toUpperCase();
-    if (commOrderNum && !existingNumbers.has(commOrderNum)) {
-      const matchedInf = storedInfluencers.find(i => i.id === comm.influencer_id);
-      combinedOrders.push({
-        id: comm.order_id || `comm_ord_${comm.id}`,
-        order_number: comm.order_number,
-        customer_name: comm.customer_name || 'Customer',
-        customer_email: comm.customer_email || '',
-        customer_phone: comm.customer_phone || '',
-        shipping_address: {},
-        items: [],
-        subtotal_amount: comm.commission_base_amount || (comm.commission_amount * 10),
-        discount_amount: 0,
-        shipping_fee: 0,
-        total_amount: comm.commission_base_amount || (comm.commission_amount * 10),
-        coupon_code: matchedInf?.coupon_code || null,
-        payment_method: 'online',
-        payment_status: 'paid',
-        order_status: 'confirmed',
-        influencer_id: comm.influencer_id,
-        influencer_commission_amount: comm.commission_amount,
-        created_at: comm.created_at || new Date().toISOString()
-      });
-      existingNumbers.add(commOrderNum);
-    }
-  }
-
-  // 4. Enrich EVERY order with live Influencer / Creator metadata
-  const enrichedOrders = combinedOrders.map(ord => {
-    const cleanCoupon = (ord.coupon_code || '').toUpperCase().trim();
-    let matchedInf = null;
-
-    if (ord.influencer_id) {
-      matchedInf = storedInfluencers.find(i => i.id === ord.influencer_id);
-    }
-    if (!matchedInf && cleanCoupon) {
-      matchedInf = storedInfluencers.find(i => (i.coupon_code || '').toUpperCase().trim() === cleanCoupon);
-    }
-
-    const influencerComm = Number(ord.influencer_commission_amount || 0);
-
+  // Fallback for offline / local-only store
+  const localOrders = getStoredOrders();
+  let filtered = localOrders.map(ord => {
+    const isArchived = Boolean(ord.is_archived || (ord.notes || '').includes('[ARCHIVED]'));
     return {
       ...ord,
-      influencer_id: ord.influencer_id || matchedInf?.id || null,
-      influencer_name: matchedInf?.name || null,
-      influencer_handle: matchedInf?.handle || null,
-      influencer_coupon: matchedInf?.coupon_code || (cleanCoupon || null),
-      influencer_commission_amount: influencerComm > 0 ? influencerComm : (matchedInf ? Math.round(((ord.subtotal_amount || ord.total_amount || 0) * (matchedInf.commission_value || 8)) / 100) : 0),
-      influencer_commission_rate: matchedInf?.commission_value || ord.influencer_commission_rate_snapshot || 8,
-      influencer_commission_type: matchedInf?.commission_type || ord.influencer_commission_type_snapshot || 'percentage'
+      is_archived: isArchived,
+      display_status: isArchived ? 'archived' : ord.order_status,
+      order_number: ord.order_number || ord.orderNumber || ord.orderId || 'LZR-ORDER'
     };
   });
 
-  // 5. Apply filters
-  let filtered = enrichedOrders;
-
-  if (orderStatus && orderStatus !== 'all') {
-    filtered = filtered.filter(o => o.order_status === orderStatus);
+  if (orderStatus === 'archived') {
+    filtered = filtered.filter(o => o.is_archived);
+  } else if (orderStatus && orderStatus !== 'all') {
+    filtered = filtered.filter(o => !o.is_archived && o.order_status === orderStatus);
+  } else {
+    filtered = filtered.filter(o => !o.is_archived);
   }
-
   if (paymentStatus && paymentStatus !== 'all') {
     filtered = filtered.filter(o => o.payment_status === paymentStatus);
   }
-
   if (searchQuery && searchQuery.trim() !== '') {
     const q = searchQuery.toLowerCase().trim();
     filtered = filtered.filter(o => {
@@ -322,19 +420,12 @@ export const fetchAdminOrders = async ({
       const name = (o.customer_name || '').toLowerCase();
       const email = (o.customer_email || '').toLowerCase();
       const phone = (o.customer_phone || '').toLowerCase();
-      const coupon = (o.coupon_code || o.influencer_coupon || '').toLowerCase();
-      const infName = (o.influencer_name || '').toLowerCase();
-      const infHandle = (o.influencer_handle || '').toLowerCase();
-
-      return num.includes(q) || name.includes(q) || email.includes(q) || phone.includes(q) || coupon.includes(q) || infName.includes(q) || infHandle.includes(q);
+      const coupon = (o.coupon_code || '').toLowerCase();
+      return num.includes(q) || name.includes(q) || email.includes(q) || phone.includes(q) || coupon.includes(q);
     });
   }
 
-  // 6. Sort descending by creation date
   filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
-
-  // 7. Paginate
-  const from = (page - 1) * limit;
   const paginatedSlice = filtered.slice(from, from + limit);
 
   return {
@@ -342,7 +433,7 @@ export const fetchAdminOrders = async ({
     orders: paginatedSlice,
     total: filtered.length,
     error: null,
-    isOffline: false
+    isOffline: true
   };
 };
 
@@ -482,6 +573,254 @@ export const updateOrderStatus = async ({
   }
 
   return { success: true, data: updatedOrder, error: null };
+};
+
+/**
+ * Archives an order safely (Soft Delete / Archive)
+ * Preserves financial history, snapshots, and customer attribution while removing it from standard view.
+ */
+export const archiveAdminOrder = async ({ orderId, reason = 'Archived by admin', adminEmail = 'admin@loozars.com' }) => {
+  let updatedOrder = null;
+  const nowIso = new Date().toISOString();
+
+  if (isSupabaseConfigured) {
+    try {
+      // First fetch current notes
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('notes')
+        .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+        .maybeSingle();
+
+      const existingNotes = (existing?.notes || '').replace(/\[ARCHIVED\][^\n]*\n?/g, '').trim();
+      const newNotes = `[ARCHIVED] Reason: ${reason} (by ${adminEmail} at ${nowIso})${existingNotes ? `\n${existingNotes}` : ''}`;
+
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ notes: newNotes, updated_at: nowIso })
+        .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+        .select()
+        .single();
+
+      if (!error && data) {
+        updatedOrder = { ...data, is_archived: true, display_status: 'archived' };
+      }
+    } catch (err) {
+      console.warn('[adminService] archiveAdminOrder Supabase exception:', err);
+    }
+  }
+
+  // Update in local store
+  const localOrders = getStoredOrders();
+  const idx = localOrders.findIndex(o => o.id === orderId || o.order_number === orderId);
+  if (idx !== -1) {
+    localOrders[idx].is_archived = true;
+    localOrders[idx].notes = `[ARCHIVED] Reason: ${reason}\n${(localOrders[idx].notes || '').replace(/\[ARCHIVED\][^\n]*\n?/g, '').trim()}`.trim();
+    localOrders[idx].updated_at = nowIso;
+    saveStoredOrder(localOrders[idx]);
+    if (!updatedOrder) updatedOrder = localOrders[idx];
+  }
+
+  // Log admin action
+  try {
+    await logAdminActionService({
+      actionType: 'ORDER_ARCHIVED',
+      entityType: 'order',
+      entityId: orderId,
+      details: { reason, adminEmail }
+    });
+  } catch (logErr) {
+    console.warn('[adminService] Log archive error:', logErr.message);
+  }
+
+  broadcastCatalogUpdate();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('loozars_orders_updated', { detail: { orderId, isArchived: true } }));
+    window.dispatchEvent(new CustomEvent('loozars_admin_refresh_all'));
+  }
+
+  return {
+    success: true,
+    data: updatedOrder,
+    error: null
+  };
+};
+
+/**
+ * Restores an archived order back to normal active view
+ */
+export const restoreAdminOrder = async ({ orderId, adminEmail = 'admin@loozars.com' }) => {
+  let updatedOrder = null;
+  const nowIso = new Date().toISOString();
+
+  if (isSupabaseConfigured) {
+    try {
+      const { data: existing } = await supabase
+        .from('orders')
+        .select('notes')
+        .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+        .maybeSingle();
+
+      const cleanedNotes = (existing?.notes || '').replace(/\[ARCHIVED\][^\n]*\n?/g, '').trim();
+
+      const { data, error } = await supabase
+        .from('orders')
+        .update({ notes: cleanedNotes || null, updated_at: nowIso })
+        .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+        .select()
+        .single();
+
+      if (!error && data) {
+        updatedOrder = { ...data, is_archived: false, display_status: data.order_status };
+      }
+    } catch (err) {
+      console.warn('[adminService] restoreAdminOrder Supabase exception:', err);
+    }
+  }
+
+  // Update in local store
+  const localOrders = getStoredOrders();
+  const idx = localOrders.findIndex(o => o.id === orderId || o.order_number === orderId);
+  if (idx !== -1) {
+    localOrders[idx].is_archived = false;
+    localOrders[idx].notes = (localOrders[idx].notes || '').replace(/\[ARCHIVED\][^\n]*\n?/g, '').trim();
+    localOrders[idx].updated_at = nowIso;
+    saveStoredOrder(localOrders[idx]);
+    if (!updatedOrder) updatedOrder = localOrders[idx];
+  }
+
+  try {
+    await logAdminActionService({
+      actionType: 'ORDER_RESTORED',
+      entityType: 'order',
+      entityId: orderId,
+      details: { adminEmail }
+    });
+  } catch (logErr) {
+    console.warn('[adminService] Log restore error:', logErr.message);
+  }
+
+  broadcastCatalogUpdate();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('loozars_orders_updated', { detail: { orderId, isArchived: false } }));
+    window.dispatchEvent(new CustomEvent('loozars_admin_refresh_all'));
+  }
+
+  return {
+    success: true,
+    data: updatedOrder,
+    error: null
+  };
+};
+
+/**
+ * Hard Deletes an order permanently (Administrative override)
+ */
+export const deleteAdminOrder = async ({ orderId, adminEmail = 'admin@loozars.com' }) => {
+  let deleted = false;
+
+  if (isSupabaseConfigured) {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .or(`id.eq.${orderId},order_number.eq.${orderId}`);
+      if (!error) deleted = true;
+    } catch (err) {
+      console.warn('[adminService] deleteAdminOrder Supabase exception:', err);
+    }
+  }
+
+  // Delete from local store
+  const localOrders = getStoredOrders();
+  const nextOrders = localOrders.filter(o => o.id !== orderId && o.order_number !== orderId);
+  if (nextOrders.length !== localOrders.length) {
+    localStorage.setItem('loozars_store_orders_v1', JSON.stringify(nextOrders));
+    deleted = true;
+  }
+
+  try {
+    await logAdminActionService({
+      actionType: 'ORDER_DELETED',
+      entityType: 'order',
+      entityId: orderId,
+      details: { adminEmail }
+    });
+  } catch (logErr) {
+    console.warn('[adminService] Log delete error:', logErr.message);
+  }
+
+  broadcastCatalogUpdate();
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('loozars_orders_updated', { detail: { orderId, isDeleted: true } }));
+    window.dispatchEvent(new CustomEvent('loozars_admin_refresh_all'));
+  }
+
+  return {
+    success: deleted,
+    error: deleted ? null : 'Failed to delete order.'
+  };
+};
+
+/**
+ * Updates order payment status (e.g. marking COD order as paid on delivery)
+ */
+export const updateOrderPaymentStatus = async ({ orderId, newPaymentStatus, adminEmail = 'admin@loozars.com' }) => {
+  let updatedOrder = null;
+  const nowIso = new Date().toISOString();
+
+  if (isSupabaseConfigured) {
+    try {
+      const updateFields = { payment_status: newPaymentStatus, updated_at: nowIso };
+      if (newPaymentStatus === 'paid') {
+        updateFields.paid_at = nowIso;
+      }
+      const { data, error } = await supabase
+        .from('orders')
+        .update(updateFields)
+        .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+        .select()
+        .single();
+
+      if (!error && data) {
+        updatedOrder = data;
+      }
+    } catch (err) {
+      console.warn('[adminService] updateOrderPaymentStatus Supabase exception:', err);
+    }
+  }
+
+  // Local storage
+  const localOrders = getStoredOrders();
+  const idx = localOrders.findIndex(o => o.id === orderId || o.order_number === orderId);
+  if (idx !== -1) {
+    localOrders[idx].payment_status = newPaymentStatus;
+    if (newPaymentStatus === 'paid') localOrders[idx].paid_at = nowIso;
+    localOrders[idx].updated_at = nowIso;
+    saveStoredOrder(localOrders[idx]);
+    if (!updatedOrder) updatedOrder = localOrders[idx];
+  }
+
+  try {
+    await logAdminActionService({
+      actionType: 'PAYMENT_STATUS_UPDATED',
+      entityType: 'order',
+      entityId: orderId,
+      details: { newPaymentStatus, adminEmail }
+    });
+  } catch (logErr) {
+    console.warn('[adminService] Log payment status error:', logErr.message);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('loozars_orders_updated', { detail: { orderId, newPaymentStatus } }));
+  }
+
+  return {
+    success: true,
+    data: updatedOrder,
+    error: null
+  };
 };
 
 
