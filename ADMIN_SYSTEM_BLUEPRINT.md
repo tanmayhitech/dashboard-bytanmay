@@ -9,7 +9,7 @@
 ## 📌 1. Executive Summary & Purpose
 
 This repository provides a **modular, brand-agnostic E-Commerce Operating System, Customer CRM Dossier Suite, and Creator Affiliate Engine**. It delivers:
-1. **Atelier Command Center (`/admin`)**: Metric KPI cards, order state machine, variant stock matrix, and thermal slip printing.
+1. **Atelier Command Center (`/admin`)**: Metric KPI cards, order state machine, variant stock matrix, `⌘K` command palette, and 4x6" thermal slip printing.
 2. **Customer CRM & VIP Dossier (`/crm`)**: LTV calculations, automated sizing preference profiling, 1-click WhatsApp concierge outreach, and staff notes.
 3. **Creator & Ambassador Portal (`/influencer`)**: Dedicated affiliate login, live referred revenue tracking, and commission settlement ledgers.
 4. **Commercial Invoicing Engine**: Isolated iframe A4 tax invoice generator with automatic Indian Rupee currency words conversion.
@@ -32,7 +32,7 @@ To maintain absolute system stability, all developers and AI agents must follow 
   - `paymentService.js`: Razorpay / UPI gateway integration and verification.
 
 ### Rule 2: Database Schema is Immutable Law
-- In any new Supabase / PostgreSQL database, table names and essential column names must strictly match `supabase/schema.sql`.
+- In any new Supabase / PostgreSQL database, table names and essential column names must strictly match `supabase/complete_schema_and_seed.sql`.
 - Core tables: `orders`, `products`, `product_variants`, `customers`, `influencers`, `influencer_commissions`, `coupons`, `email_events`, `influencer_users`, `admin_roles`.
 
 ### Rule 3: Strict Data Privacy & Zero PII in Repositories
@@ -104,29 +104,51 @@ erDiagram
 
 ## 🚀 5. 5-Minute Setup Guide (Any New Project)
 
-### Step 1: Copy Core Directories
-Copy these folders into your project:
-- `src/services/`
-- `src/context/`
-- `src/pages/admin/`
-- `src/pages/influencer/`
-- `src/pages/auth/`
-- `src/components/admin/`
-- `src/config/`
+### Step 1: Install Required Dependencies
+In your new React + Vite project:
+```bash
+npm install @supabase/supabase-js lucide-react qrcode
+```
 
-### Step 2: Configure Environment Variables
-Create `.env` using `.env.example`:
+### Step 2: Copy Core Dashboard Files
+Copy these folders and files into your new project's `src/`:
+- `src/pages/admin/` *(All 18 admin views and modals)*
+- `src/components/admin/` *(ThermalPackingSlipModal.jsx)*
+- `src/services/` *(adminService.js, crmService.js, etc.)*
+- `src/config/` *(brandConfig.js)*
+
+### Step 3: Mount Admin Route in `App.jsx`
+```jsx
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import AdminPortal from './pages/admin/AdminPortal';
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/admin" element={<AdminPortal />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+```
+
+### Step 4: Configure Environment Variables
+Create `.env` in root:
 ```env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
-VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
 ```
+*(Note: If left empty, the dashboard automatically boots in Offline Demo Mode with mock data).*
 
-### Step 3: Run Database Schema
-1. Open Supabase Dashboard $\rightarrow$ **SQL Editor**.
-2. Run `supabase/complete_schema_and_seed.sql` to initialize all tables, RLS policies, and stored procedures.
+### Step 5: Initialize Database Schema
+1. Open your Supabase Dashboard $\rightarrow$ **SQL Editor**.
+2. Paste and run `supabase/complete_schema_and_seed.sql`.
+3. Default Admin credentials for testing:
+   - **Email**: `admin@theloozars.com`
+   - **Password**: `Admin@123456`
 
-### Step 4: Customize Brand Information
+### Step 6: 1-Click Brand Customization
 Edit `src/config/brandConfig.js`:
 ```javascript
 export const BRAND_CONFIG = {
@@ -140,12 +162,6 @@ export const BRAND_CONFIG = {
 };
 ```
 
-### Step 5: Start Studio
-```bash
-npm install
-npm run dev
-```
-
 ---
 
 ## 🧪 6. Verification & Quality Assurance Protocol
@@ -156,14 +172,12 @@ Before deploying or committing changes, verify:
 npm run build
 
 # 2. Key functionality checklist:
-# - Place an order on storefront -> Appears in /admin Orders in real time.
-# - Apply creator coupon -> Commission recorded in /influencer dashboard.
-# - Open customer in CRM -> Automatic sizing preference & WhatsApp link generated.
-# - Open order in Admin -> Print thermal packing slip & A4 retail invoice.
-# - Adjust variant stock -> Audit reason logged in inventory logs.
+# - Press ⌘K (or Ctrl+K) -> Global search & instant module switcher opens.
+# - Open CRM -> Customer Sizing Affinity and LTV metrics calculated automatically.
+# - Open Orders -> 1-click Thermal Packing Slip & Invoice generated.
+# - Adjust variant stock -> Mandatory audit reason logged in immutable audit trail.
 ```
 
 ---
 
 ### Developed with ❤️ by Tanmay (`by-tanmay`)
-
