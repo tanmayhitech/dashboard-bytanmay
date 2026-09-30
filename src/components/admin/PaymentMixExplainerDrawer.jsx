@@ -118,13 +118,13 @@ export const PaymentMixExplainerDrawer = ({
               />
             </div>
 
-            <div className="flex items-center justify-between text-xs pt-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs pt-1 gap-1.5 sm:gap-0">
               <span className="flex items-center gap-1.5 text-zinc-300">
-                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
                 <span>Prepaid Online: <strong className="text-white font-semibold">₹{prepaidRevenue.toLocaleString('en-IN')}</strong> ({prepaidCount})</span>
               </span>
               <span className="flex items-center gap-1.5 text-zinc-300">
-                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                <span className="w-2 h-2 rounded-full bg-sky-400 shrink-0" />
                 <span>COD: <strong className="text-white font-semibold">₹{codRevenue.toLocaleString('en-IN')}</strong> ({codCount})</span>
               </span>
             </div>

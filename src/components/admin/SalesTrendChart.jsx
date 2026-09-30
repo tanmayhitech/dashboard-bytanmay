@@ -247,97 +247,97 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
     <div className="space-y-6">
       
       {/* 1. Header KPI Highlight Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* KPI 1: Paid Gross */}
-        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
-          <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">Period Paid Gross</span>
+        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-zinc-400 gap-1 sm:gap-0">
+            <span className="font-medium text-zinc-300 text-[11px] sm:text-xs">Period Paid Gross</span>
             {growthPercent !== 0 && (
-              <span className={`inline-flex items-center gap-1 text-[11px] font-mono font-semibold px-2 py-0.5 rounded-md ${
+              <span className={`inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-mono font-semibold px-1.5 sm:px-2 py-0.5 rounded-md w-fit ${
                 growthPercent > 0 ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60' : 'bg-rose-950/60 text-rose-300 border border-rose-800/60'
               }`}>
-                {growthPercent > 0 ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
+                {growthPercent > 0 ? <ArrowUpRight size={11} /> : <ArrowDownRight size={11} />}
                 {growthPercent > 0 ? `+${growthPercent}%` : `${growthPercent}%`}
               </span>
             )}
           </div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-400 mt-2 tabular-nums">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-emerald-400 mt-1.5 sm:mt-2 tabular-nums">
             ₹{totalRevenue.toLocaleString('en-IN')}
           </div>
-          <div className="flex items-center justify-between text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28] font-mono">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[10px] sm:text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28] font-mono gap-0.5">
             <span>Online: ₹{prepaidRevenue.toLocaleString('en-IN')}</span>
             <span>COD: ₹{codRevenue.toLocaleString('en-IN')}</span>
           </div>
         </div>
 
         {/* KPI 2: Average Order Value */}
-        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
+        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
           <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">Average Order Value</span>
-            <span className="text-[10px] font-mono text-amber-300 bg-amber-950/50 px-2 py-0.5 rounded-md border border-amber-800/50">
+            <span className="font-medium text-zinc-300 text-[11px] sm:text-xs">Average Order Value</span>
+            <span className="text-[9px] sm:text-[10px] font-mono text-amber-300 bg-amber-950/50 px-1.5 sm:px-2 py-0.5 rounded-md border border-amber-800/50">
               Basket GMV
             </span>
           </div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono text-[#EDEDF0] mt-2 tabular-nums">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-[#EDEDF0] mt-1.5 sm:mt-2 tabular-nums">
             ₹{aov.toLocaleString('en-IN')}
           </div>
-          <p className="text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28]">
-            Computed across {totalOrdersCount} drop orders
+          <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28] truncate">
+            Computed across {totalOrdersCount} orders
           </p>
         </div>
 
         {/* KPI 3: Peak Performance Day */}
-        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
+        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
           <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">Peak Performance Day</span>
+            <span className="font-medium text-zinc-300 text-[11px] sm:text-xs">Peak Performance</span>
             <Sparkles size={13} className="text-emerald-400" />
           </div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono text-emerald-300 mt-2 tabular-nums">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-emerald-300 mt-1.5 sm:mt-2 tabular-nums">
             ₹{(peakDay?.revenue || 0).toLocaleString('en-IN')}
           </div>
-          <p className="text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28]">
-            <strong className="text-zinc-200">{peakDay?.fullDate || peakDay?.date || '—'}</strong> ({peakDay?.orders || 0} orders)
+          <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28] truncate">
+            <strong className="text-zinc-200">{peakDay?.fullDate || peakDay?.date || '—'}</strong> ({peakDay?.orders || 0} drop orders)
           </p>
         </div>
 
         {/* KPI 4: Daily Revenue Run Rate */}
-        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
+        <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs relative overflow-hidden group hover:border-[#333344] transition-all">
           <div className="flex items-center justify-between text-xs text-zinc-400">
-            <span className="font-medium text-zinc-300">Daily Run-Rate</span>
+            <span className="font-medium text-zinc-300 text-[11px] sm:text-xs">Daily Run-Rate</span>
             <Zap size={13} className="text-sky-400" />
           </div>
-          <div className="text-2xl sm:text-3xl font-bold font-mono text-sky-400 mt-2 tabular-nums">
+          <div className="text-xl sm:text-2xl lg:text-3xl font-bold font-mono text-sky-400 mt-1.5 sm:mt-2 tabular-nums">
             ₹{activeDataset.length > 0 ? Math.round(totalRevenue / activeDataset.length).toLocaleString('en-IN') : '0'}
           </div>
-          <p className="text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28]">
+          <p className="text-[10px] sm:text-[11px] text-zinc-400 mt-2 pt-2 border-t border-[#1E1E28] truncate">
             Average daily pace for {timeRange.toUpperCase()}
           </p>
         </div>
       </div>
 
       {/* 2. Main Luxury Vector Chart Card */}
-      <div className="bg-[#16161A] border border-[#262632] rounded-2xl shadow-xs p-5 sm:p-6 space-y-5">
+      <div className="bg-[#16161A] border border-[#262632] rounded-2xl shadow-xs p-4 sm:p-6 space-y-4 sm:space-y-5">
         
         {/* Chart Header Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-[#24242E]">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-4 pb-3.5 sm:pb-4 border-b border-[#24242E]">
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-[#EDEDF0] tracking-tight">
+              <h2 className="text-sm sm:text-base font-bold text-[#EDEDF0] tracking-tight">
                 Sales Trajectory & Revenue Curve
               </h2>
               <span className="px-2 py-0.5 rounded-full bg-emerald-950/50 text-emerald-400 text-[10px] font-mono font-medium border border-emerald-800/40">
-                Monotone Accurate
+                Monotone
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mt-1">
+            <p className="text-xs text-zinc-400 mt-0.5 sm:mt-1">
               Exact mathematical curve without artificial overshoots or duplicate scale ticks.
             </p>
           </div>
 
-          {/* Metric & Display Controls */}
-          <div className="flex flex-wrap items-center gap-2.5">
+          {/* Metric & Display Controls - Swipable on mobile */}
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 w-full lg:w-auto max-w-full">
             {/* Metric Buttons */}
-            <div className="flex items-center bg-[#101014] p-1 rounded-xl border border-[#22222C] text-xs">
+            <div className="flex items-center bg-[#101014] p-1 rounded-xl border border-[#22222C] text-xs shrink-0">
               {[
                 { id: 'revenue', label: 'Revenue (₹)', icon: DollarSign },
                 { id: 'orders', label: 'Orders (#)', icon: ShoppingBag },
@@ -350,7 +350,7 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
                   <button
                     key={tab.id}
                     onClick={() => setSelectedMetric(tab.id)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                    className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap min-h-[32px] ${
                       isSelected
                         ? 'bg-[#22222E] text-white shadow-xs border border-[#3A3A4C] font-semibold'
                         : 'text-zinc-400 hover:text-zinc-200'
@@ -365,11 +365,11 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
 
             {/* Chart Style Toggle (Area Curve vs Bars) */}
             {selectedMetric !== 'split' && (
-              <div className="flex items-center bg-[#101014] p-1 rounded-xl border border-[#22222C] text-xs">
+              <div className="flex items-center bg-[#101014] p-1 rounded-xl border border-[#22222C] text-xs shrink-0">
                 <button
                   onClick={() => setChartType('area')}
                   title="Smooth Vector Curve"
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center ${
                     chartType === 'area'
                       ? 'bg-[#22222E] text-white border border-[#3A3A4C]'
                       : 'text-zinc-500 hover:text-zinc-300'
@@ -380,7 +380,7 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
                 <button
                   onClick={() => setChartType('bar')}
                   title="Column Bars"
-                  className={`p-1.5 rounded-lg transition-all cursor-pointer ${
+                  className={`p-1.5 rounded-lg transition-all cursor-pointer min-h-[32px] min-w-[32px] flex items-center justify-center ${
                     chartType === 'bar'
                       ? 'bg-[#22222E] text-white border border-[#3A3A4C]'
                       : 'text-zinc-500 hover:text-zinc-300'
@@ -392,7 +392,7 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
             )}
 
             {/* Granularity Selector */}
-            <div className="flex items-center bg-[#101014] p-1 rounded-xl border border-[#22222C] text-xs">
+            <div className="flex items-center bg-[#101014] p-1 rounded-xl border border-[#22222C] text-xs shrink-0">
               {[
                 { id: 'daily', label: 'Daily' },
                 { id: 'weekly', label: 'Weekly' },
@@ -401,7 +401,7 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
                 <button
                   key={g.id}
                   onClick={() => setGranularity(g.id)}
-                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap min-h-[32px] ${
                     granularity === g.id
                       ? 'bg-[#22222E] text-white border border-[#3A3A4C] font-semibold'
                       : 'text-zinc-400 hover:text-zinc-200'
@@ -710,11 +710,11 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
 
         {/* 4. Rich Diagnostic Summary Card for Active / Hovered Point */}
         {activePt && (
-          <div className="bg-[#111115] border border-[#262634] rounded-xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="bg-[#111115] border border-[#262634] rounded-xl p-3.5 sm:p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3.5 sm:gap-4 text-xs">
             <div className="flex items-center gap-3">
-              <div className="w-3 h-3 rounded-full shadow-xs" style={{ backgroundColor: currentCfg.strokeColor }} />
+              <div className="w-3 h-3 rounded-full shadow-xs shrink-0" style={{ backgroundColor: currentCfg.strokeColor }} />
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-bold text-zinc-100 text-sm">
                     {activePt.data.fullDate || activePt.data.date || activePt.data.weekLabel || activePt.data.monthLabel}
                   </span>
@@ -727,34 +727,34 @@ export const SalesTrendChart = ({ salesData, timeRange = '7d' }) => {
                     </span>
                   )}
                 </div>
-                <span className="text-zinc-500 text-[11px]">
+                <span className="text-zinc-500 text-[10px] sm:text-[11px] block mt-0.5">
                   {activePt.val === 0 ? 'No orders captured on this date' : 'Authoritative drop settlement data'}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-6 font-mono">
+            <div className="grid grid-cols-2 sm:flex sm:items-center gap-3 sm:gap-6 font-mono pt-3 sm:pt-0 border-t sm:border-t-0 border-[#22222E]">
               <div>
                 <span className="text-zinc-500 block text-[10px]">PAID REVENUE</span>
-                <span className="font-bold text-emerald-400 text-sm">
+                <span className="font-bold text-emerald-400 text-xs sm:text-sm">
                   ₹{Number(activePt.data.revenue || 0).toLocaleString('en-IN')}
                 </span>
               </div>
               <div>
                 <span className="text-zinc-500 block text-[10px]">DROP ORDERS</span>
-                <span className="font-bold text-sky-400 text-sm">
+                <span className="font-bold text-sky-400 text-xs sm:text-sm">
                   {activePt.data.orders || 0} pcs
                 </span>
               </div>
               <div>
                 <span className="text-zinc-500 block text-[10px]">AVG BASKET (AOV)</span>
-                <span className="font-bold text-amber-400 text-sm">
+                <span className="font-bold text-amber-400 text-xs sm:text-sm">
                   {activePt.data.orders > 0 ? `₹${Number(activePt.data.aov || 0).toLocaleString('en-IN')}` : '—'}
                 </span>
               </div>
               <div>
                 <span className="text-zinc-500 block text-[10px]">PREPAID / COD</span>
-                <span className="font-semibold text-zinc-300">
+                <span className="font-semibold text-zinc-300 text-xs sm:text-sm truncate block">
                   ₹{(activePt.data.prepaidRevenue || 0).toLocaleString('en-IN')} / ₹{(activePt.data.codRevenue || 0).toLocaleString('en-IN')}
                 </span>
               </div>

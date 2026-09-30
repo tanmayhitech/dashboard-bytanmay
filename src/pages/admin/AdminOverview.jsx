@@ -154,9 +154,9 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
     <div className="space-y-6 font-sans">
       
       {/* Overview Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pb-1">
         <div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 flex-wrap">
             <h1 className="text-xl sm:text-2xl font-bold text-[#EDEDF0] tracking-tight">
               {getGreeting()}, Tanmay
             </h1>
@@ -171,22 +171,22 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
         </div>
 
         {/* Header Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 w-full sm:w-auto">
           <button
             onClick={() => loadData(true)}
             disabled={isRefreshing}
-            className="px-3.5 py-2 bg-[#16161A] hover:bg-[#202028] text-zinc-200 border border-[#262632] rounded-xl text-xs font-medium transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-xs"
+            className="flex-1 sm:flex-none px-3.5 py-2 bg-[#16161A] hover:bg-[#202028] text-zinc-200 border border-[#262632] rounded-xl text-xs font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 shadow-xs min-h-[38px]"
             title="Refresh dashboard metrics"
           >
             <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-zinc-300' : 'text-zinc-400'} />
             <span>{isRefreshing ? 'Updating...' : 'Refresh'}</span>
           </button>
 
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <select
               value={timeRange}
               onChange={(e) => setTimeRange(e.target.value)}
-              className="appearance-none pl-3.5 pr-8 py-2 bg-[#16161A] border border-[#262632] text-xs font-medium text-zinc-200 rounded-xl shadow-xs focus:outline-none focus:border-zinc-500 cursor-pointer"
+              className="w-full sm:w-auto appearance-none pl-3.5 pr-8 py-2 bg-[#16161A] border border-[#262632] text-xs font-medium text-zinc-200 rounded-xl shadow-xs focus:outline-none focus:border-zinc-500 cursor-pointer min-h-[38px]"
             >
               <option value="7d">Last 7 days</option>
               <option value="14d">Last 14 days</option>
@@ -200,7 +200,7 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
       </div>
 
       {/* Analytics View Switcher Tabs */}
-      <div className="flex items-center gap-1.5 p-1 bg-[#121216] border border-[#22222C] rounded-2xl w-fit shadow-xs overflow-x-auto">
+      <div className="flex items-center gap-1.5 p-1 bg-[#121216] border border-[#22222C] rounded-2xl w-full sm:w-fit shadow-xs overflow-x-auto scrollbar-none">
         {[
           { id: 'summary', label: 'Executive Summary', icon: Activity },
           { id: 'sales', label: 'Sales Trends', icon: TrendingUp },
@@ -214,7 +214,7 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
             <button
               key={tab.id}
               onClick={() => setActiveAnalyticsView(tab.id)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                 isActiveTab
                   ? 'bg-[#22222C] text-white border border-[#3A3A4C] shadow-xs font-semibold'
                   : 'text-zinc-400 hover:text-zinc-200'
@@ -608,12 +608,49 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
       {activeAnalyticsView === 'products' && (
         <div className="space-y-6">
           <div className="bg-[#16161A] border border-[#262632] rounded-2xl shadow-xs overflow-hidden">
-            <div className="p-5 border-b border-[#24242E]">
+            <div className="p-4 sm:p-5 border-b border-[#24242E]">
               <h3 className="text-sm font-semibold text-[#EDEDF0]">Product Silhouette Velocity</h3>
               <p className="text-xs text-zinc-400 mt-0.5">Performance, size run distribution, and total gross revenue generated per silhouette.</p>
             </div>
 
-            <div className="overflow-x-auto">
+            {/* Mobile Product Velocity Cards (< md) */}
+            <div className="md:hidden divide-y divide-[#202028]">
+              {(advancedData?.products?.topProducts || topProducts).map((p, idx) => (
+                <div key={idx} className="p-4 space-y-2.5 hover:bg-[#1A1A22] transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="font-mono text-zinc-400 font-bold text-xs w-6 h-6 rounded-lg bg-[#1C1C24] border border-[#2C2C38] flex items-center justify-center shrink-0">
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <div className="font-semibold text-[#EDEDF0] text-xs">{p.name}</div>
+                        <div className="text-[11px] text-zinc-500 font-mono mt-0.5">{p.unitsSold || p.ordersCount || 0} units sold</div>
+                      </div>
+                    </div>
+
+                    <span className="font-bold font-mono text-[#EDEDF0] text-xs">
+                      ₹{Number(p.revenue || 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  {p.sizeBreakdown && Object.entries(p.sizeBreakdown).length > 0 ? (
+                    <div className="bg-[#121216] border border-[#202028] p-2.5 rounded-xl space-y-1">
+                      <span className="text-[10px] text-zinc-500 block">Sizes Sold:</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {Object.entries(p.sizeBreakdown).map(([sz, qty], sIdx) => (
+                          <span key={sIdx} className="px-2 py-0.5 rounded-md bg-[#1C1C24] text-zinc-300 border border-[#2B2B38] text-[10px] font-mono">
+                            {sz}: <strong>{qty}</strong>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#121216] text-zinc-400 font-semibold border-b border-[#24242E]">
                   <tr>
@@ -661,32 +698,32 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
       {/* VIEW 4: CUSTOMER RETENTION */}
       {activeAnalyticsView === 'retention' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
               <span className="text-xs font-medium text-zinc-400">Total Patrons</span>
-              <div className="text-2xl font-bold font-mono text-[#EDEDF0]">{advancedData?.customers?.totalCustomers ?? 0}</div>
-              <p className="text-[11px] text-zinc-500">Unique customer identities</p>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-[#EDEDF0]">{advancedData?.customers?.totalCustomers ?? 0}</div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Unique customer profiles</p>
             </div>
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-1.5">
+            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
               <span className="text-xs font-medium text-zinc-400">Repeat Collectors</span>
-              <div className="text-2xl font-bold font-mono text-violet-400">{advancedData?.customers?.repeatCustomers ?? 0}</div>
-              <p className="text-[11px] text-zinc-500">Patrons with ≥ 2 orders</p>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-violet-400">{advancedData?.customers?.repeatCustomers ?? 0}</div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Patrons with ≥ 2 orders</p>
             </div>
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-1.5">
+            <div className="col-span-2 sm:col-span-1 bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
               <span className="text-xs font-medium text-zinc-400">Repeat Rate</span>
-              <div className="text-2xl font-bold font-mono text-emerald-400">{advancedData?.customers?.repeatRate ?? 0}%</div>
-              <p className="text-[11px] text-zinc-500">Atelier loyalty benchmark</p>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">{advancedData?.customers?.repeatRate ?? 0}%</div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Atelier loyalty benchmark</p>
             </div>
           </div>
 
-          <div className="bg-[#16161A] border border-[#262632] rounded-2xl p-5 shadow-xs flex items-center justify-between">
+          <div className="bg-[#16161A] border border-[#262632] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
             <div>
               <h4 className="text-sm font-semibold text-[#EDEDF0]">Customer Dossier Integration</h4>
               <p className="text-xs text-zinc-400 mt-0.5">Explore comprehensive customer 360 dossiers, size preferences, and 1-click WhatsApp concierge in the CRM portal.</p>
             </div>
             <button
               onClick={() => onNavigateTab('crm')}
-              className="px-4 py-2 rounded-xl bg-[#20202C] hover:bg-[#2A2A3A] text-zinc-200 border border-[#323244] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#20202C] hover:bg-[#2A2A3A] text-zinc-200 border border-[#323244] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px] shrink-0"
             >
               <span>Open CRM Ledger</span>
               <ArrowRight size={13} />
@@ -698,32 +735,32 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
       {/* VIEW 5: RETURNS & REFUNDS HEALTH */}
       {activeAnalyticsView === 'returns' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-1.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
               <span className="text-xs font-medium text-zinc-400">Total Return Requests</span>
-              <div className="text-2xl font-bold font-mono text-amber-300">{advancedData?.returns?.totalReturns || 0}</div>
-              <p className="text-[11px] text-zinc-500">Lifecycle requests logged</p>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-amber-300">{advancedData?.returns?.totalReturns || 0}</div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Lifecycle requests logged</p>
             </div>
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-1.5">
+            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
               <span className="text-xs font-medium text-zinc-400">Total Refunded Amount</span>
-              <div className="text-2xl font-bold font-mono text-rose-400">₹{(advancedData?.returns?.totalRefundedINR || 0).toLocaleString('en-IN')}</div>
-              <p className="text-[11px] text-zinc-500">Executed via Razorpay API</p>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-rose-400">₹{(advancedData?.returns?.totalRefundedINR || 0).toLocaleString('en-IN')}</div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Executed via Razorpay API</p>
             </div>
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-1.5">
+            <div className="col-span-2 sm:col-span-1 bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
               <span className="text-xs font-medium text-zinc-400">Return Rate</span>
-              <div className="text-2xl font-bold font-mono text-zinc-200">{advancedData?.returns?.returnRatePercent || '0.0'}%</div>
-              <p className="text-[11px] text-zinc-500">Well within 5% luxury tolerance</p>
+              <div className="text-xl sm:text-2xl font-bold font-mono text-zinc-200">{advancedData?.returns?.returnRatePercent || '0.0'}%</div>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Well within 5% luxury tolerance</p>
             </div>
           </div>
 
-          <div className="bg-[#16161A] border border-[#262632] rounded-2xl p-5 shadow-xs flex items-center justify-between">
+          <div className="bg-[#16161A] border border-[#262632] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
             <div>
               <h4 className="text-sm font-semibold text-[#EDEDF0]">Manage Returns & Refunds in Order Queue</h4>
               <p className="text-xs text-zinc-400 mt-0.5">Review, approve, reject, mark items received, and execute serverless refunds directly in the Orders tab.</p>
             </div>
             <button
               onClick={() => onNavigateTab('orders')}
-              className="px-4 py-2 rounded-xl bg-[#20202C] hover:bg-[#2A2A3A] text-zinc-200 border border-[#323244] text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#20202C] hover:bg-[#2A2A3A] text-zinc-200 border border-[#323244] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px] shrink-0"
             >
               <span>Go to Orders Ledger</span>
               <ArrowRight size={13} />
