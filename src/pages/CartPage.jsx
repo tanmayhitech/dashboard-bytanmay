@@ -15,7 +15,6 @@ import {
   MapPin,
   CheckCircle2,
   Lock,
-  ChevronRight,
   Sparkles
 } from 'lucide-react';
 
@@ -90,76 +89,75 @@ export const CartPage = () => {
 
   if (cart.length === 0) {
     return (
-      <div className="w-full min-h-[80vh] bg-[#0B0B0E] text-zinc-100 pt-32 pb-24 px-6 flex flex-col items-center justify-center text-center select-none font-sans">
-        <div className="w-20 h-20 rounded-3xl bg-[#14141C] border border-[#22222E] flex items-center justify-center text-zinc-400 mb-6 shadow-xl">
-          <ShoppingBag size={32} className="text-zinc-400" />
+      <div className="w-full min-h-[80vh] bg-[#08080A] text-[#EDE7DC] pt-36 pb-28 px-6 flex flex-col items-center justify-center text-center select-none font-sans">
+        <div className="w-20 h-20 rounded-3xl bg-[#121218] border border-[#262634] flex items-center justify-center text-[#8E8D8A] mb-6 shadow-xl">
+          <ShoppingBag size={32} className="text-[#8E8D8A]" />
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
-          Your Shopping Bag is Empty
+        <h1 className="font-editorial text-3xl sm:text-4xl font-bold uppercase tracking-wide text-[#EDE7DC] mb-2">
+          Your Bag is Empty
         </h1>
-        <p className="text-sm text-zinc-400 max-w-sm mb-8 leading-relaxed">
-          Looks like you haven't added any streetwear pieces to your bag yet.
+        <p className="font-mono text-xs text-[#8E8D8A] tracking-wider uppercase max-w-sm mb-8 leading-relaxed">
+          Explore heavyweight tees, drop 01 silhouettes and signature releases.
         </p>
         <button
           onClick={() => navigateTo('shop')}
-          className="bg-white text-black hover:bg-zinc-200 px-8 py-3.5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          className="bg-[#EDE7DC] hover:bg-[#8E1717] text-[#080808] hover:text-white px-8 py-3.5 text-xs font-mono font-bold tracking-[0.25em] uppercase rounded-xl transition-all shadow-lg hover:shadow-[0_0_24px_rgba(142,23,23,0.4)] hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
         >
-          Explore Collection
+          Explore Drop 01 →
         </button>
       </div>
     );
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#0B0B0E] text-zinc-100 pt-24 sm:pt-32 pb-24 px-4 sm:px-8 lg:px-12 select-none font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="w-full min-h-screen bg-[#08080A] text-[#EDE7DC] pt-28 sm:pt-36 pb-28 px-4 sm:px-8 lg:px-14 select-none font-sans">
+      <div className="max-w-6xl mx-auto space-y-8 sm:space-y-10">
         
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
-                Shopping Bag
-              </h1>
-              <span className="px-3 py-0.5 rounded-full bg-[#181822] text-zinc-300 border border-[#282836] text-xs font-semibold">
-                {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}
-              </span>
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-[#202028]">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 font-mono text-[11px] text-[#8E8D8A] uppercase tracking-[0.25em]">
+              <span>SHOPPING BAG</span>
+              <span>/</span>
+              <span className="text-[#8E1717] font-bold">[{totalItemsCount} {totalItemsCount === 1 ? 'PIECE' : 'PIECES'}]</span>
             </div>
-            <p className="text-xs sm:text-sm text-zinc-400 mt-1">
-              Review your selected pieces and estimate doorstep delivery.
-            </p>
+            <h1 className="font-editorial text-3xl sm:text-5xl font-bold uppercase tracking-tight text-[#EDE7DC]">
+              Your Selection
+            </h1>
           </div>
 
           <button
             onClick={() => navigateTo('shop')}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer self-start sm:self-auto px-3.5 py-2 rounded-xl bg-[#14141A] border border-[#22222E] hover:border-[#30303E]"
+            className="inline-flex items-center gap-2 text-xs font-mono font-bold tracking-widest text-[#EDE7DC]/80 hover:text-white transition-colors cursor-pointer self-start sm:self-auto px-4 py-2.5 rounded-xl bg-[#121218] border border-[#242430] hover:border-[#8E1717]/50"
           >
-            <ArrowLeft size={14} />
-            <span>Continue Shopping</span>
+            <ArrowLeft size={14} className="text-[#8E1717]" />
+            <span>CONTINUE BROWSING</span>
           </button>
         </div>
 
         {/* Free Delivery Progress Banner */}
-        <div className="bg-[#121218] border border-[#20202A] rounded-2xl p-4 sm:p-5 space-y-2.5 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs">
+        <div className="bg-[#101015] border border-[#202028] rounded-2xl p-4 sm:p-5 space-y-2.5 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 font-mono text-xs tracking-wider uppercase">
             {amountToFreeShipping === 0 ? (
-              <span className="text-emerald-400 flex items-center gap-2 font-semibold">
-                <CheckCircle2 size={15} className="text-emerald-400" />
-                <span>You've unlocked Free Express Delivery across India!</span>
+              <span className="text-[#EDE7DC] flex items-center gap-2 font-bold">
+                <span className="w-2 h-2 rounded-full bg-[#8E1717] animate-pulse"></span>
+                <span>Free Express Delivery Unlocked Across India!</span>
               </span>
             ) : (
-              <span className="text-zinc-300">
-                Add <strong className="text-white font-bold">₹{amountToFreeShipping.toLocaleString('en-IN')}</strong> more to your bag to get <span className="text-emerald-400 font-semibold">Free Delivery</span>
+              <span className="text-[#8E8D8A]">
+                Add <strong className="text-[#EDE7DC]">₹{amountToFreeShipping.toLocaleString('en-IN')}</strong> more for <span className="text-[#8E1717] font-bold">Free Delivery</span>
               </span>
             )}
-            <span className="text-zinc-400 font-mono text-xs">
-              Free over ₹{freeShippingThreshold.toLocaleString('en-IN')} ({shippingProgress}%)
+            <span className="text-[#8E8D8A] font-mono text-[11px]">
+              THRESHOLD: ₹{freeShippingThreshold.toLocaleString('en-IN')} ({shippingProgress}%)
             </span>
           </div>
-          <div className="w-full h-2 bg-[#1C1C26] rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-[#1C1C26] rounded-full overflow-hidden">
             <div 
               className={`h-full rounded-full transition-all duration-500 ${
-                amountToFreeShipping === 0 ? 'bg-emerald-400 shadow-sm' : 'bg-white'
+                amountToFreeShipping === 0 
+                  ? 'bg-gradient-to-r from-[#8E1717] to-[#EDE7DC] shadow-sm' 
+                  : 'bg-[#EDE7DC]'
               }`}
               style={{ width: `${shippingProgress}%` }}
             />
@@ -174,7 +172,7 @@ export const CartPage = () => {
             {cart.map((item, idx) => {
               const itemImg = item.product?.images?.[0] || item.image || '';
               const itemName = item.product?.name || item.name || 'LOOZARS Apparel';
-              const itemSubtitle = item.product?.subtitle || 'Heavyweight 100% Combed Cotton';
+              const itemSubtitle = item.product?.subtitle || '320 GSM 100% Combed Cotton';
               const itemPrice = item.product?.price || item.unitPrice || 899;
               const lineTotal = itemPrice * item.quantity;
               const itemId = item.variantId || item.product?.id || item.productId;
@@ -182,21 +180,21 @@ export const CartPage = () => {
               return (
                 <div 
                   key={item.variantId || `${item.productId}-${item.size}-${idx}`}
-                  className="bg-[#121218] border border-[#20202A] rounded-2xl p-4 sm:p-5 flex gap-4 sm:gap-5 transition-all hover:border-[#2C2C3A] group shadow-sm"
+                  className="bg-[#101015] border border-[#202028] hover:border-[#8E1717]/40 rounded-2xl p-4 sm:p-5 flex gap-4 sm:gap-6 transition-all group shadow-sm"
                 >
                   {/* Thumbnail */}
                   <div 
                     onClick={() => navigateTo('product', item.product?.id || item.productId)}
-                    className="w-24 sm:w-28 aspect-[3/4] bg-[#1A1A24] overflow-hidden shrink-0 rounded-xl border border-[#262634] cursor-pointer relative group-hover:border-zinc-500 transition-colors"
+                    className="w-24 sm:w-28 aspect-[3/4] bg-[#16161E] overflow-hidden shrink-0 rounded-xl border border-[#242432] group-hover:border-[#8E1717] cursor-pointer relative transition-colors"
                   >
                     {itemImg ? (
                       <img 
                         src={itemImg} 
                         alt={itemName} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 filter contrast-[1.02]"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-zinc-500 text-xs font-bold">
+                      <div className="w-full h-full flex items-center justify-center text-[#8E8D8A] text-xs font-mono font-bold">
                         LZR
                       </div>
                     )}
@@ -208,48 +206,48 @@ export const CartPage = () => {
                       <div className="flex justify-between items-start gap-2">
                         <h2 
                           onClick={() => navigateTo('product', item.product?.id || item.productId)}
-                          className="text-base sm:text-lg font-bold text-white hover:text-zinc-300 transition-colors cursor-pointer truncate"
+                          className="font-editorial text-base sm:text-lg font-bold uppercase tracking-wider text-[#EDE7DC] hover:text-[#8E1717] transition-colors cursor-pointer truncate"
                         >
                           {itemName}
                         </h2>
                         
                         <div className="text-right shrink-0">
-                          <span className="font-mono text-base sm:text-lg font-bold text-white">
+                          <span className="font-mono text-base sm:text-lg font-bold text-[#EDE7DC]">
                             ₹{lineTotal.toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>
 
-                      <p className="text-xs text-zinc-400 line-clamp-1">
+                      <p className="font-mono text-xs text-[#8E8D8A] line-clamp-1 tracking-wide">
                         {itemSubtitle}
                       </p>
 
-                      <div className="flex items-center gap-2 pt-0.5 text-xs">
-                        <span className="px-2.5 py-0.5 rounded-md bg-[#1C1C26] text-zinc-300 border border-[#282836] font-medium text-xs">
-                          Size: <strong className="text-white">{item.size || 'M'}</strong>
+                      <div className="flex items-center gap-2 pt-1 font-mono text-xs">
+                        <span className="px-2.5 py-0.5 rounded-md bg-[#161620] text-[#EDE7DC] border border-[#282836] font-medium text-xs tracking-wider uppercase">
+                          SIZE: <strong className="text-white">{item.size || 'M'}</strong>
                         </span>
-                        <span className="text-zinc-400 font-mono text-xs">
-                          ₹{itemPrice.toLocaleString('en-IN')} each
+                        <span className="text-[#8E8D8A]">
+                          (₹{itemPrice.toLocaleString('en-IN')} each)
                         </span>
                       </div>
                     </div>
 
                     {/* Quantity & Delete Controls */}
-                    <div className="flex items-center justify-between pt-3 border-t border-[#1E1E28] mt-3">
-                      <div className="flex items-center border border-[#282836] bg-[#181822] rounded-xl overflow-hidden p-0.5">
+                    <div className="flex items-center justify-between pt-3 border-t border-[#1C1C24] mt-3">
+                      <div className="flex items-center border border-[#282836] bg-[#161620] rounded-xl overflow-hidden p-0.5 font-mono">
                         <button 
                           onClick={() => updateQuantity(itemId, item.size, -1)}
-                          className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-[#222230] rounded-lg transition-colors cursor-pointer"
+                          className="w-7 h-7 flex items-center justify-center text-[#8E8D8A] hover:text-white hover:bg-[#20202C] rounded-lg transition-colors cursor-pointer"
                           aria-label="Decrease quantity"
                         >
                           <Minus size={12} />
                         </button>
-                        <span className="w-8 text-center text-xs font-semibold text-white tabular-nums">
+                        <span className="w-8 text-center text-xs font-bold text-[#EDE7DC] tabular-nums">
                           {item.quantity}
                         </span>
                         <button 
                           onClick={() => updateQuantity(itemId, item.size, 1)}
-                          className="w-7 h-7 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-[#222230] rounded-lg transition-colors cursor-pointer"
+                          className="w-7 h-7 flex items-center justify-center text-[#8E8D8A] hover:text-white hover:bg-[#20202C] rounded-lg transition-colors cursor-pointer"
                           aria-label="Increase quantity"
                         >
                           <Plus size={12} />
@@ -258,11 +256,11 @@ export const CartPage = () => {
 
                       <button
                         onClick={() => removeFromCart(itemId, item.size)}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-500 hover:text-rose-400 px-2.5 py-1 rounded-lg hover:bg-[#1E1E28] transition-colors cursor-pointer"
-                        title="Remove item from bag"
+                        className="inline-flex items-center gap-1.5 font-mono text-xs font-bold text-[#8E8D8A] hover:text-[#8E1717] px-2.5 py-1 rounded-lg hover:bg-[#1C1C26] tracking-wider uppercase transition-colors cursor-pointer"
+                        title="Remove piece from bag"
                       >
-                        <Trash2 size={14} />
-                        <span className="hidden sm:inline">Remove</span>
+                        <Trash2 size={13} />
+                        <span className="hidden sm:inline">REMOVE</span>
                       </button>
                     </div>
 
@@ -275,66 +273,66 @@ export const CartPage = () => {
           {/* Right Column: Order Summary (5 cols) */}
           <div className="lg:col-span-5 space-y-5">
             
-            <div className="bg-[#121218] border border-[#20202A] rounded-2xl p-5 sm:p-6 space-y-5 shadow-sm">
-              <h2 className="text-base font-bold text-white border-b border-[#20202A] pb-3.5 flex items-center justify-between">
+            <div className="bg-[#101015] border border-[#202028] rounded-2xl p-6 space-y-6 shadow-sm">
+              <h2 className="font-editorial text-base sm:text-lg font-bold uppercase tracking-wider text-[#EDE7DC] border-b border-[#202028] pb-4 flex items-center justify-between">
                 <span>Order Summary</span>
-                <span className="text-xs font-mono font-normal text-zinc-400">
-                  {totalItemsCount} {totalItemsCount === 1 ? 'item' : 'items'}
+                <span className="font-mono text-xs font-bold text-[#8E1717]">
+                  [{totalItemsCount} {totalItemsCount === 1 ? 'PIECE' : 'PIECES'}]
                 </span>
               </h2>
 
               {/* Delivery Estimator */}
-              <div className="bg-[#171720] border border-[#222230] rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-zinc-200 font-semibold">
-                    <MapPin size={14} className="text-emerald-400" />
+              <div className="bg-[#15151C] border border-[#22222E] rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between font-mono text-xs tracking-wider uppercase">
+                  <div className="flex items-center gap-1.5 text-[#EDE7DC] font-bold">
+                    <MapPin size={14} className="text-[#8E1717]" />
                     <span>Estimate Delivery Time</span>
                   </div>
 
                   {deliveryInfo?.valid && (
                     <button
                       onClick={clearDeliveryInfo}
-                      className="text-xs text-zinc-400 hover:text-white underline cursor-pointer"
+                      className="text-[11px] text-[#8E8D8A] hover:text-[#EDE7DC] underline cursor-pointer"
                     >
-                      Change
+                      CHANGE
                     </button>
                   )}
                 </div>
 
                 {deliveryInfo?.valid ? (
-                  <div className="bg-[#121218] border border-[#262636] rounded-xl p-3 flex items-center justify-between text-xs">
-                    <div className="text-zinc-200">
-                      <span className="font-semibold">{deliveryInfo.city}, {deliveryInfo.state}</span>
-                      <span className="text-zinc-400 font-mono ml-1.5">({deliveryInfo.pincode})</span>
+                  <div className="bg-[#101015] border border-[#262634] rounded-xl p-3.5 flex items-center justify-between text-xs">
+                    <div className="text-[#EDE7DC] font-mono">
+                      <span className="font-bold">{deliveryInfo.city}, {deliveryInfo.state}</span>
+                      <span className="text-[#8E1717] font-bold ml-1.5">({deliveryInfo.pincode})</span>
                     </div>
-                    <div className="flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
-                      <Truck size={14} />
+                    <div className="flex items-center gap-1.5 text-xs text-[#EDE7DC] font-mono font-bold">
+                      <Truck size={14} className="text-[#8E1717]" />
                       <span>{deliveryInfo.estimatedDays}</span>
                     </div>
                   </div>
                 ) : (
                   <form onSubmit={handleCheckPincode} className="space-y-2">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 font-mono">
                       <input
                         type="text"
                         maxLength={6}
-                        placeholder="Enter 6-digit PIN code"
+                        placeholder="ENTER 6-DIGIT PIN"
                         value={pincodeInput}
                         onChange={(e) => setPincodeInput(e.target.value.replace(/\D/g, ''))}
-                        className="flex-1 bg-[#121218] border border-[#282836] rounded-xl px-3.5 py-2 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 font-mono"
+                        className="flex-1 bg-[#0D0D12] border border-[#282836] rounded-xl px-3.5 py-2 text-xs text-[#EDE7DC] placeholder-[#666670] focus:outline-none focus:border-[#8E1717] uppercase"
                       />
                       <button
                         type="submit"
                         disabled={isCheckingPincode || pincodeInput.length !== 6}
-                        className="bg-zinc-200 hover:bg-white text-black px-4 py-2 text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                        className="bg-[#EDE7DC] hover:bg-[#8E1717] text-[#080808] hover:text-white px-4 py-2 text-xs font-bold tracking-wider uppercase rounded-xl transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
                       >
                         {isCheckingPincode ? <RefreshCw size={12} className="animate-spin" /> : null}
-                        <span>Check</span>
+                        <span>CHECK</span>
                       </button>
                     </div>
 
                     {pincodeError && (
-                      <p className="text-xs text-rose-400">
+                      <p className="text-xs font-mono text-[#8E1717]">
                         {pincodeError}
                       </p>
                     )}
@@ -344,45 +342,45 @@ export const CartPage = () => {
 
               {/* Promo / Coupon Section */}
               {appliedCoupon ? (
-                <div className="p-3.5 bg-[#141B18] border border-emerald-900/50 rounded-xl flex items-center justify-between text-xs">
+                <div className="p-3.5 bg-[#141A17] border border-[#1E3A2B] rounded-xl flex items-center justify-between font-mono text-xs tracking-wider uppercase">
                   <div className="flex items-center gap-2.5">
                     <Tag size={15} className="text-emerald-400" />
                     <div>
-                      <span className="text-white font-semibold">{appliedCoupon.code}</span>
-                      <span className="text-emerald-400 text-[11px] block font-medium">
-                        -₹{couponDiscount.toLocaleString('en-IN')} coupon discount applied
+                      <span className="text-[#EDE7DC] font-bold">{appliedCoupon.code}</span>
+                      <span className="text-emerald-400 text-[10px] block font-bold">
+                        -₹{couponDiscount.toLocaleString('en-IN')} COUPON APPLIED
                       </span>
                     </div>
                   </div>
                   <button
                     onClick={removeCoupon}
-                    className="text-zinc-400 hover:text-rose-400 text-xs font-medium underline cursor-pointer"
+                    className="text-[#8E8D8A] hover:text-[#8E1717] text-xs underline cursor-pointer"
                   >
-                    Remove
+                    REMOVE
                   </button>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  <form onSubmit={handleApplyPromo} className="flex gap-2">
+                  <form onSubmit={handleApplyPromo} className="flex gap-2 font-mono">
                     <input
                       type="text"
-                      placeholder="Have a promo code?"
+                      placeholder="PROMO CODE"
                       value={promoCodeInput}
                       onChange={(e) => setPromoCodeInput(e.target.value.toUpperCase())}
-                      className="flex-1 bg-[#171720] border border-[#282836] rounded-xl px-3.5 py-2 text-xs font-mono text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-400 uppercase"
+                      className="flex-1 bg-[#15151C] border border-[#282836] rounded-xl px-3.5 py-2 text-xs text-[#EDE7DC] placeholder-[#666670] focus:outline-none focus:border-[#8E1717] uppercase"
                     />
                     <button
                       type="submit"
                       disabled={isValidatingPromo || !promoCodeInput.trim()}
-                      className="bg-[#20202C] hover:bg-[#282838] text-zinc-200 hover:text-white border border-[#2E2E40] px-4 py-2 text-xs font-semibold rounded-xl transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                      className="bg-[#1E1E28] hover:bg-[#8E1717] text-[#EDE7DC] hover:text-white border border-[#2E2E3E] px-4 py-2 text-xs font-bold tracking-wider uppercase rounded-xl transition-colors disabled:opacity-40 flex items-center gap-1 cursor-pointer"
                     >
                       {isValidatingPromo ? <RefreshCw size={12} className="animate-spin" /> : null}
-                      <span>Apply</span>
+                      <span>APPLY</span>
                     </button>
                   </form>
 
                   {promoError && (
-                    <p className="text-xs text-rose-400">
+                    <p className="text-xs font-mono text-[#8E1717]">
                       {promoError}
                     </p>
                   )}
@@ -390,32 +388,32 @@ export const CartPage = () => {
               )}
 
               {/* Pricing breakdown */}
-              <div className="space-y-2.5 pt-3 border-t border-[#20202A] text-xs">
-                <div className="flex justify-between text-zinc-400">
+              <div className="space-y-2.5 pt-3 border-t border-[#202028] font-mono text-xs tracking-wider uppercase">
+                <div className="flex justify-between text-[#8E8D8A]">
                   <span>Subtotal</span>
-                  <span className="text-zinc-200 font-mono font-medium">₹{cartSubtotal.toLocaleString('en-IN')}</span>
+                  <span className="text-[#EDE7DC] font-bold">₹{cartSubtotal.toLocaleString('en-IN')}</span>
                 </div>
 
                 {appliedCoupon && couponDiscount > 0 && (
-                  <div className="flex justify-between text-emerald-400 font-medium">
-                    <span>Discount ({appliedCoupon.code})</span>
-                    <span className="font-mono">-₹{couponDiscount.toLocaleString('en-IN')}</span>
+                  <div className="flex justify-between text-emerald-400 font-bold">
+                    <span>Coupon Discount</span>
+                    <span>-₹{couponDiscount.toLocaleString('en-IN')}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between text-zinc-400">
+                <div className="flex justify-between text-[#8E8D8A]">
                   <span>Express Shipping</span>
-                  <span className={shippingCost === 0 ? 'text-emerald-400 font-medium' : 'text-zinc-200 font-mono'}>
-                    {shippingCost === 0 ? 'Free' : `₹${shippingCost}`}
+                  <span className={shippingCost === 0 ? 'text-[#EDE7DC] font-bold' : 'text-[#EDE7DC]'}>
+                    {shippingCost === 0 ? 'FREE' : `₹${shippingCost}`}
                   </span>
                 </div>
 
-                <div className="flex justify-between text-base font-bold text-white pt-3 border-t border-[#20202A]">
+                <div className="flex justify-between font-editorial text-lg sm:text-xl font-bold text-[#EDE7DC] pt-3 border-t border-[#202028] tracking-wider">
                   <span>Total</span>
-                  <span className="font-mono text-lg">₹{cartTotal.toLocaleString('en-IN')}</span>
+                  <span className="font-mono">₹{cartTotal.toLocaleString('en-IN')}</span>
                 </div>
-                <p className="text-[11px] text-zinc-500">
-                  Inclusive of all taxes and shipping costs.
+                <p className="text-[10px] text-[#8E8D8A] tracking-wider uppercase">
+                  Inclusive of all taxes across India.
                 </p>
               </div>
 
@@ -423,7 +421,7 @@ export const CartPage = () => {
               <div className="pt-2">
                 <button
                   onClick={() => navigateTo('checkout')}
-                  className="w-full bg-white hover:bg-zinc-200 text-black py-4 px-5 text-xs font-bold uppercase tracking-wider rounded-xl transition-all flex items-center justify-center gap-2 shadow-xl hover:shadow-2xl active:scale-[0.99] cursor-pointer"
+                  className="w-full bg-[#EDE7DC] hover:bg-[#8E1717] text-[#080808] hover:text-white py-4 px-5 font-mono text-xs font-bold tracking-[0.25em] uppercase rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-xl hover:shadow-[0_0_24px_rgba(142,23,23,0.45)] active:scale-[0.99] cursor-pointer"
                 >
                   <span>Proceed to Checkout</span>
                   <ArrowRight size={15} />
@@ -433,21 +431,21 @@ export const CartPage = () => {
             </div>
 
             {/* Reassurance Trust Badges */}
-            <div className="grid grid-cols-3 gap-3 text-center text-[11px] text-zinc-400">
-              <div className="p-3.5 bg-[#121218] border border-[#20202A] rounded-2xl flex flex-col items-center gap-1.5 shadow-sm">
-                <Truck size={16} className="text-emerald-400" />
-                <span className="font-medium text-zinc-300">Free Delivery</span>
-                <span className="text-[10px] text-zinc-500">On orders over ₹2k</span>
+            <div className="grid grid-cols-3 gap-3 text-center font-mono text-[10px] tracking-wider uppercase text-[#8E8D8A]">
+              <div className="p-3.5 bg-[#101015] border border-[#202028] rounded-2xl flex flex-col items-center gap-1.5 shadow-sm">
+                <Truck size={16} className="text-[#8E1717]" />
+                <span className="font-bold text-[#EDE7DC]">PAN-INDIA</span>
+                <span className="text-[9px] text-[#8E8D8A]">Free over ₹2k</span>
               </div>
-              <div className="p-3.5 bg-[#121218] border border-[#20202A] rounded-2xl flex flex-col items-center gap-1.5 shadow-sm">
-                <ShieldCheck size={16} className="text-sky-400" />
-                <span className="font-medium text-zinc-300">Secure Payment</span>
-                <span className="text-[10px] text-zinc-500">Cards & UPI</span>
+              <div className="p-3.5 bg-[#101015] border border-[#202028] rounded-2xl flex flex-col items-center gap-1.5 shadow-sm">
+                <ShieldCheck size={16} className="text-[#8E1717]" />
+                <span className="font-bold text-[#EDE7DC]">ENCRYPTED</span>
+                <span className="text-[9px] text-[#8E8D8A]">Cards & UPI</span>
               </div>
-              <div className="p-3.5 bg-[#121218] border border-[#20202A] rounded-2xl flex flex-col items-center gap-1.5 shadow-sm">
-                <RotateCcw size={16} className="text-amber-400" />
-                <span className="font-medium text-zinc-300">Easy Exchange</span>
-                <span className="text-[10px] text-zinc-500">7-Day window</span>
+              <div className="p-3.5 bg-[#101015] border border-[#202028] rounded-2xl flex flex-col items-center gap-1.5 shadow-sm">
+                <RotateCcw size={16} className="text-[#8E1717]" />
+                <span className="font-bold text-[#EDE7DC]">7-DAY EXCHANGES</span>
+                <span className="text-[9px] text-[#8E8D8A]">Hassle-free</span>
               </div>
             </div>
 
