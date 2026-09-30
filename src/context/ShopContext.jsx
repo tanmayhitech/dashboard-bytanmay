@@ -22,7 +22,9 @@ export const ShopProvider = ({ children }) => {
     if (typeof window !== 'undefined') {
       const path = window.location.pathname.toLowerCase();
       const search = new URLSearchParams(window.location.search);
-      if (path === '/admin' || path.startsWith('/admin') || search.get('view') === 'admin' || window.location.hash === '#admin') {
+      const hash = window.location.hash.toLowerCase();
+
+      if (path === '/admin' || path.startsWith('/admin') || search.get('view') === 'admin' || hash === '#admin') {
         return 'admin';
       }
       if (
@@ -32,8 +34,8 @@ export const ShopProvider = ({ children }) => {
         path.startsWith('/creator') || 
         search.get('view') === 'influencer' || 
         search.get('view') === 'creator' || 
-        window.location.hash === '#influencer' || 
-        window.location.hash === '#creator'
+        hash === '#influencer' || 
+        hash === '#creator'
       ) {
         return 'influencer';
       }
@@ -45,11 +47,37 @@ export const ShopProvider = ({ children }) => {
         path === '/auth' || 
         search.get('view') === 'login' || 
         search.get('view') === 'auth' || 
-        window.location.hash === '#login' || 
-        window.location.hash === '#auth'
+        hash === '#login' || 
+        hash === '#auth'
       ) {
         return 'login';
       }
+      if (path === '/checkout' || search.get('view') === 'checkout' || hash === '#checkout') {
+        return 'checkout';
+      }
+      if (path === '/cart' || search.get('view') === 'cart' || hash === '#cart') {
+        return 'cart';
+      }
+      if (path === '/shop' || search.get('view') === 'shop' || hash === '#shop') {
+        return 'shop';
+      }
+      if (path === '/drops' || path === '/lookbook' || search.get('view') === 'drops' || hash === '#drops' || hash === '#lookbook') {
+        return 'drops';
+      }
+      if (path === '/about' || path === '/story' || search.get('view') === 'about' || hash === '#about' || hash === '#story') {
+        return 'about';
+      }
+      if (path === '/confirmation' || search.get('view') === 'confirmation' || hash === '#confirmation') {
+        return 'confirmation';
+      }
+      if (path === '/product' || path.startsWith('/product/') || search.get('view') === 'product') {
+        return 'product';
+      }
+      if (path === '/' || path === '' || path === '/index.html') {
+        return 'home';
+      }
+      // If none matched and path is unrecognized:
+      return '404';
     }
     return 'home';
   });
@@ -282,8 +310,31 @@ export const ShopProvider = ({ children }) => {
         setCurrentView('admin');
         return;
       }
-      if (path === '/influencer' || path.startsWith('/influencer') || path === '/creator' || path.startsWith('/creator') || search.get('view') === 'influencer' || hash === '#influencer') {
+      if (
+        path === '/influencer' || 
+        path.startsWith('/influencer') || 
+        path === '/creator' || 
+        path.startsWith('/creator') || 
+        search.get('view') === 'influencer' || 
+        search.get('view') === 'creator' || 
+        hash === '#influencer' || 
+        hash === '#creator'
+      ) {
         setCurrentView('influencer');
+        return;
+      }
+      if (
+        path === '/login' || 
+        path.startsWith('/login') || 
+        path === '/signin' || 
+        path.startsWith('/signin') || 
+        path === '/auth' || 
+        search.get('view') === 'login' || 
+        search.get('view') === 'auth' || 
+        hash === '#login' || 
+        hash === '#auth'
+      ) {
+        setCurrentView('login');
         return;
       }
       if (path === '/checkout' || search.get('view') === 'checkout' || hash === '#checkout') {
@@ -298,17 +349,27 @@ export const ShopProvider = ({ children }) => {
         setCurrentView('shop');
         return;
       }
+      if (path === '/drops' || path === '/lookbook' || search.get('view') === 'drops' || hash === '#drops' || hash === '#lookbook') {
+        setCurrentView('drops');
+        return;
+      }
+      if (path === '/about' || path === '/story' || search.get('view') === 'about' || hash === '#about' || hash === '#story') {
+        setCurrentView('about');
+        return;
+      }
       if (path === '/confirmation' || search.get('view') === 'confirmation' || hash === '#confirmation') {
         setCurrentView('confirmation');
         return;
       }
-      if (path === '/login' || search.get('view') === 'login' || hash === '#login') {
-        setCurrentView('login');
+      if (path === '/product' || path.startsWith('/product/') || search.get('view') === 'product') {
+        setCurrentView('product');
         return;
       }
-      if (path === '/' || path === '') {
+      if (path === '/' || path === '' || path === '/index.html') {
         setCurrentView('home');
+        return;
       }
+      setCurrentView('404');
     };
 
     window.addEventListener('popstate', handleUrlChange);
