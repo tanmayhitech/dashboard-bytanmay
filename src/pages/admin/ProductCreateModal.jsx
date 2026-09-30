@@ -193,9 +193,9 @@ export const ProductCreateModal = ({ onClose, onProductCreated }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/75 backdrop-blur-xs animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/75 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="bg-[#16161A] border border-[#24242A] w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-2xl shadow-2xl flex flex-col font-sans text-zinc-100"
+        className="bg-[#16161A] border border-[#24242A] w-full max-w-3xl max-h-[94vh] sm:max-h-[92vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col font-sans text-zinc-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}

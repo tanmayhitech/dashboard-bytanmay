@@ -339,7 +339,7 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
       )}
 
       {/* Status Filter Tabs */}
-      <div className="flex items-center gap-1 bg-[#121216] p-1.5 rounded-2xl border border-[#22222C] text-xs overflow-x-auto">
+      <div className="flex items-center gap-1.5 p-1 bg-[#121216] border border-[#22222C] rounded-2xl w-full sm:w-fit shadow-xs overflow-x-auto no-scrollbar scroll-smooth text-xs">
         {[
           { id: 'all', label: 'All Orders' },
           { id: 'pending', label: 'Pending' },
@@ -357,7 +357,7 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
               setOrderStatus(tab.id);
               setPage(1);
             }}
-            className={`px-3.5 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all cursor-pointer ${
+            className={`px-3 sm:px-3.5 py-1.5 rounded-xl font-medium whitespace-nowrap transition-all cursor-pointer text-xs ${
               orderStatus === tab.id
                 ? 'bg-[#22222C] text-white border border-[#3A3A4C] shadow-xs font-semibold'
                 : 'text-zinc-400 hover:text-zinc-200'
@@ -402,9 +402,118 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
         </div>
       </div>
 
-      {/* Orders Table */}
+      {/* Orders Container: Mobile Cards (<md) & Desktop Table (>=md) */}
       <div className="bg-[#16161A] border border-[#262632] rounded-2xl shadow-xs overflow-hidden">
-        <div className="overflow-x-auto">
+        
+        {/* Mobile Cards List (<md) */}
+        <div className="md:hidden divide-y divide-[#202028]">
+          {isLoading ? (
+            <div className="py-16 text-center text-zinc-500 flex flex-col items-center justify-center gap-2">
+              <RefreshCw size={20} className="animate-spin text-zinc-500" />
+              <span className="text-xs">Loading orders...</span>
+            </div>
+          ) : orders.length === 0 ? (
+            <div className="py-16 text-center text-zinc-500 space-y-1 p-6">
+              <p className="font-semibold text-zinc-300 text-sm">No Orders Found</p>
+              <p className="text-xs text-zinc-500">No orders match the selected filters or search terms.</p>
+            </div>
+          ) : (
+            orders.map((order) => {
+              const itemCount = getItemsCount(order.items);
+              const { date: dateStr, time: timeStr } = formatDateTime(order.created_at);
+              const isArchived = order.is_archived || order.order_status === 'archived';
+
+              return (
+                <div
+                  key={order.id}
+                  onClick={() => setSelectedOrder(order)}
+                  className={`p-4 space-y-3 hover:bg-[#1A1A22] active:bg-[#1E1E28] transition-colors cursor-pointer ${isArchived ? 'bg-[#121216]/60 opacity-65' : ''}`}
+                >
+                  {/* Top Bar: Order # & Status Badges */}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const formatted = formatOrderNumber(order.order_number);
+                          navigator.clipboard?.writeText(formatted);
+                          showToast('Copied', formatted, 'info');
+                        }}
+                        className="font-mono font-bold text-sm text-white hover:text-zinc-300"
+                        title="Click to copy order #"
+                      >
+                        {formatOrderNumber(order.order_number)}
+                      </span>
+                      {order.coupon_code && (
+                        <span className="text-[9px] font-mono text-zinc-400 bg-[#1C1C24] px-1.5 py-0.5 rounded border border-[#2B2B38]">
+                          {order.coupon_code}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      {getPaymentBadge(order)}
+                      {getOrderStatusBadge(order.display_status || order.order_status)}
+                    </div>
+                  </div>
+
+                  {/* Customer & Item Overview */}
+                  <div className="flex items-start justify-between gap-2 text-xs">
+                    <div>
+                      <p className="font-semibold text-zinc-100">{order.customer_name || 'Customer'}</p>
+                      <p className="text-[11px] text-zinc-400 mt-0.5 truncate max-w-[220px]">
+                        {order.customer_phone || order.customer_email || 'No contact recorded'}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <p className="font-mono font-bold text-sm text-[#EDEDF0]">
+                        ₹{Number(order.total_amount || 0).toLocaleString('en-IN')}
+                      </p>
+                      <p className="text-[10px] text-zinc-500 font-mono mt-0.5">{itemCount} items · {dateStr}</p>
+                    </div>
+                  </div>
+
+                  {/* Tracking & Bottom Actions */}
+                  <div className="flex items-center justify-between pt-1 border-t border-[#202028] text-xs">
+                    <div className="text-[10px] text-zinc-400 font-mono flex items-center gap-1">
+                      {order.tracking_number ? (
+                        <span className="text-zinc-300 flex items-center gap-1">
+                          <Truck size={11} className="text-sky-400" />
+                          <span>{order.tracking_number}</span>
+                        </span>
+                      ) : (
+                        <span className="text-zinc-500">{timeStr || 'Atelier Drop'}</span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={() => setPackingSlipOrder(order)}
+                        className="px-2.5 py-1 text-[11px] font-medium text-zinc-300 hover:text-white bg-[#1C1C24] hover:bg-[#252530] border border-[#2A2A38] rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                        title="Print Packing Slip"
+                      >
+                        <Printer size={11} />
+                        <span>Slip</span>
+                      </button>
+
+                      <button
+                        onClick={() => setSelectedOrder(order)}
+                        className="px-2.5 py-1 text-[11px] font-medium text-zinc-100 bg-[#252532] hover:bg-[#303040] border border-[#3A3A4C] rounded-lg transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Eye size={11} />
+                        <span>Details</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table (>=md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-xs text-left">
             <thead className="bg-[#121216] text-[10px] font-mono tracking-widest text-zinc-500 uppercase font-semibold border-b border-[#24242E]">
               <tr>

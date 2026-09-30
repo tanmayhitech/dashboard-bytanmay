@@ -109,9 +109,9 @@ export const AdminCustomerDossierModal = ({ customer, onClose, onRefresh, onSele
   const whatsAppUrl = generateWhatsAppUrl(customer, selectedWaTemplate);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="relative w-full max-w-4xl max-h-[92vh] bg-[#141418] border border-[#242430] rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#EDEDF0] font-sans"
+        className="relative w-full max-w-4xl max-h-[94vh] sm:max-h-[92vh] bg-[#141418] border border-[#242430] rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden text-[#EDEDF0] font-sans"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

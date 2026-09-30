@@ -231,9 +231,9 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
       {activeAnalyticsView === 'summary' && (
         <>
           {/* 4 Clean Atmospheric Metric Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {/* Metric 1: Revenue */}
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors">
+            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="font-medium text-zinc-300">Revenue</span>
                 {revenueGrowth !== 0 ? (
@@ -243,7 +243,7 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
                       e.stopPropagation();
                       setIsExplainerOpen(true);
                     }}
-                    className={`text-xs flex items-center gap-1 font-medium px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
+                    className={`text-[10px] sm:text-xs flex items-center gap-1 font-medium px-1.5 sm:px-2 py-0.5 rounded-md transition-colors cursor-pointer ${
                       revenueGrowth > 0 
                         ? 'text-emerald-400 bg-emerald-950/40 border border-emerald-800/40 hover:bg-emerald-900/40' 
                         : 'text-rose-400 bg-rose-950/40 border border-rose-800/40 hover:bg-rose-900/40'
@@ -260,7 +260,7 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
                       e.stopPropagation();
                       setIsExplainerOpen(true);
                     }}
-                    className="text-[11px] text-zinc-400 bg-[#1A1A22] hover:bg-[#22222C] hover:text-zinc-200 px-2 py-0.5 rounded-md border border-[#262630] transition-colors cursor-pointer flex items-center gap-1"
+                    className="text-[10px] sm:text-[11px] text-zinc-400 bg-[#1A1A22] hover:bg-[#22222C] hover:text-zinc-200 px-1.5 sm:px-2 py-0.5 rounded-md border border-[#262630] transition-colors cursor-pointer flex items-center gap-1"
                     title="View baseline details"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
@@ -268,80 +268,80 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
                   </button>
                 )}
               </div>
-              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#EDEDF0] tabular-nums font-mono">
+              <div className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[#EDEDF0] tabular-nums font-mono truncate">
                 ₹{(Number(revenue) || 0).toLocaleString('en-IN')}
               </div>
-              <p className="text-[11px] text-zinc-500">Total collected revenue</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Total collected revenue</p>
             </div>
 
             {/* Metric 2: Total Sales */}
             <div 
               onClick={() => setIsOrdersExplainerOpen(true)}
-              className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors cursor-pointer"
+              className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="font-medium text-zinc-300">Total Sales</span>
-                <span className="text-[11px] text-zinc-400 bg-[#1A1A22] group-hover:bg-[#22222C] group-hover:text-zinc-200 px-2 py-0.5 rounded-md border border-[#262630] flex items-center gap-1 transition-colors">
+                <span className="text-[10px] sm:text-[11px] text-zinc-400 bg-[#1A1A22] group-hover:bg-[#22222C] group-hover:text-zinc-200 px-1.5 sm:px-2 py-0.5 rounded-md border border-[#262630] flex items-center gap-1 transition-colors">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400 inline-block" />
                   <span>Settled</span>
                 </span>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#EDEDF0] tabular-nums font-mono">
+              <div className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[#EDEDF0] tabular-nums font-mono">
                 {Number(totalOrders) || 0}
               </div>
-              <p className="text-[11px] text-zinc-500">Total customer drop orders</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Customer drop orders</p>
             </div>
 
             {/* Metric 3: Low Stock */}
             <div 
               onClick={() => setIsStockExplainerOpen(true)}
-              className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors cursor-pointer"
+              className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors cursor-pointer"
             >
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="font-medium text-zinc-300">Stock Status</span>
                 {lowStockCount > 0 ? (
-                  <span className="text-xs font-medium text-rose-300 bg-rose-950/40 px-2 py-0.5 rounded-md border border-rose-800/40">
-                    {lowStockCount} Critical
+                  <span className="text-[10px] sm:text-xs font-medium text-rose-300 bg-rose-950/40 px-1.5 sm:px-2 py-0.5 rounded-md border border-rose-800/40">
+                    {lowStockCount} Low
                   </span>
                 ) : (
-                  <span className="text-[11px] font-medium text-zinc-400 bg-[#1A1A22] group-hover:bg-[#22222C] group-hover:text-zinc-200 px-2 py-0.5 rounded-md border border-[#262630] transition-colors">
+                  <span className="text-[10px] sm:text-[11px] font-medium text-zinc-400 bg-[#1A1A22] group-hover:bg-[#22222C] group-hover:text-zinc-200 px-1.5 sm:px-2 py-0.5 rounded-md border border-[#262630] transition-colors">
                     Healthy
                   </span>
                 )}
               </div>
-              <div className={`text-2xl sm:text-3xl font-bold tracking-tight tabular-nums font-mono ${lowStockCount > 0 ? 'text-rose-300' : 'text-[#EDEDF0]'}`}>
+              <div className={`text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight tabular-nums font-mono ${lowStockCount > 0 ? 'text-rose-300' : 'text-[#EDEDF0]'}`}>
                 {lowStockCount}
               </div>
-              <p className="text-[11px] text-zinc-500">
-                {lowStockCount > 0 ? 'Sizes with ≤ 5 units left' : 'All sizes well stocked'}
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">
+                {lowStockCount > 0 ? 'Sizes with ≤ 5 units' : 'All sizes in stock'}
               </p>
             </div>
 
             {/* Metric 4: Products */}
-            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors">
+            <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-3.5 sm:p-5 shadow-xs space-y-2 relative overflow-hidden group hover:border-[#333342] transition-colors">
               <div className="flex items-center justify-between text-xs text-zinc-400">
                 <span className="font-medium text-zinc-300">Active Catalog</span>
-                <span className="text-[10px] font-medium text-zinc-400 bg-[#1C1C24] px-2 py-0.5 rounded-md border border-[#2B2B38]">
+                <span className="text-[9px] sm:text-[10px] font-medium text-zinc-400 bg-[#1C1C24] px-1.5 sm:px-2 py-0.5 rounded-md border border-[#2B2B38]">
                   Live
                 </span>
               </div>
-              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-[#EDEDF0] tabular-nums font-mono">
+              <div className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-[#EDEDF0] tabular-nums font-mono">
                 {productCount}
               </div>
-              <p className="text-[11px] text-zinc-500">{variantCount} size variants tracked</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">{variantCount} size variants</p>
             </div>
           </div>
 
           {/* Payment Channels & Studio Health Bar */}
           <div 
             onClick={() => setIsPaymentExplainerOpen(true)}
-            className="bg-[#16161A] hover:bg-[#1A1A20] border border-[#262632] hover:border-[#333344] rounded-2xl p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 transition-colors cursor-pointer group"
+            className="bg-[#16161A] hover:bg-[#1A1A20] border border-[#262632] hover:border-[#333344] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-5 transition-colors cursor-pointer group"
           >
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <CreditCard size={14} className="text-zinc-400 group-hover:text-zinc-200 transition-colors" />
                 <span className="text-xs font-semibold text-zinc-200">Payment Method Distribution</span>
-                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300 transition-colors ml-1">Click for breakdown →</span>
+                <span className="text-[10px] text-zinc-500 group-hover:text-zinc-300 transition-colors ml-1">Breakdown →</span>
               </div>
               <p className="text-[11px] text-zinc-400">Prepaid Online vs. Cash on Delivery (COD) volume</p>
             </div>
@@ -360,14 +360,14 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
                 />
               </div>
 
-              <div className="flex items-center justify-between text-[11px]">
+              <div className="flex items-center justify-between text-[11px] flex-wrap gap-1">
                 <span className="text-zinc-300 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-xs" />
-                  <span>Prepaid Online ({prepaidPercent}% · {prepaidCount})</span>
+                  <span>Prepaid ({prepaidPercent}% · {prepaidCount})</span>
                 </span>
                 <span className="text-zinc-300 flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-sky-400 inline-block shadow-xs" />
-                  <span>Cash on Delivery ({codPercent}% · {codCount})</span>
+                  <span>COD ({codPercent}% · {codCount})</span>
                 </span>
               </div>
             </div>
@@ -387,12 +387,59 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
                     onClick={() => onNavigateTab('orders')}
                     className="text-xs font-semibold text-zinc-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    <span>View all orders</span>
+                    <span>View all</span>
                     <ArrowRight size={12} />
                   </button>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Mobile Cards (Visible on mobile screens) */}
+                <div className="md:hidden divide-y divide-[#202028]">
+                  {recentOrders.length === 0 ? (
+                    <div className="py-12 text-center text-zinc-500 text-xs">
+                      No customer orders found yet.
+                    </div>
+                  ) : (
+                    recentOrders.slice(0, 6).map((order) => {
+                      const itemCount = Array.isArray(order.items) ? order.items.reduce((s, i) => s + (i.quantity || 1), 0) : 1;
+                      return (
+                        <div
+                          key={order.id}
+                          onClick={() => onSelectOrder && onSelectOrder(order)}
+                          className="p-4 hover:bg-[#1A1A22] active:bg-[#1E1E28] transition-colors cursor-pointer space-y-2.5"
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-mono font-bold text-sm text-white">
+                              {formatOrderNumber(order.order_number)}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-mono font-semibold ${
+                              order.payment_status === 'paid' ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800/60' : 'bg-sky-950/60 text-sky-300 border border-sky-800/60'
+                            }`}>
+                              {order.payment_method === 'cod' ? 'COD' : 'ONLINE'}
+                            </span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-xs text-zinc-300">
+                            <span className="font-medium truncate max-w-[200px]">{order.customer_name || 'Customer'}</span>
+                            <span className="font-mono font-bold text-sm text-white">₹{Number(order.total_amount || 0).toLocaleString('en-IN')}</span>
+                          </div>
+
+                          <div className="flex items-center justify-between text-[11px] text-zinc-500 pt-0.5">
+                            <span className="capitalize text-zinc-400 font-medium">
+                              {order.display_status || order.order_status} · {itemCount} pcs
+                            </span>
+                            <span className="text-zinc-400 flex items-center gap-1">
+                              <span>Details</span>
+                              <ChevronRight size={12} />
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Desktop Table (Hidden on mobile screens) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-xs border-collapse">
                     <thead>
                       <tr className="bg-[#121216] border-b border-[#24242E] text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">

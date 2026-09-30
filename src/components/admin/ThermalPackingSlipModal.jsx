@@ -269,11 +269,11 @@ export const ThermalPackingSlipModal = ({ order, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/85 backdrop-blur-sm animate-fadeIn font-sans loozars-modal-overlay">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/85 backdrop-blur-sm animate-fadeIn font-sans loozars-modal-overlay">
       
       {/* Modal Card */}
       <div 
-        className="bg-[#121212] border border-[#262626] w-full max-w-4xl max-h-[94vh] rounded-2xl shadow-2xl flex flex-col overflow-hidden text-zinc-200 loozars-modal-card"
+        className="bg-[#121212] border border-[#262626] w-full max-w-4xl max-h-[96vh] sm:max-h-[94vh] rounded-t-3xl sm:rounded-2xl shadow-2xl flex flex-col overflow-hidden text-zinc-200 loozars-modal-card"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Screen Header Toolbar (Hidden in Print) */}

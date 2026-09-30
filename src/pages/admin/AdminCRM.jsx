@@ -687,9 +687,103 @@ export const AdminCRM = ({ onSelectOrder }) => {
               })}
             </div>
           ) : (
-            /* Table View */
+            /* Table / Card View */
             <div className="bg-[#16161A] border border-[#24242E] rounded-2xl shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
+              {/* Mobile Customer Cards (< md) */}
+              <div className="md:hidden divide-y divide-[#202028]">
+                {filteredCustomers.map((c) => {
+                  const isVip = c.is_vip || c.tier === 'vip';
+                  const waUrl = generateWhatsAppUrl(c, 'vip_drop_invite');
+
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => setSelectedCustomer(c)}
+                      className="p-4 space-y-3 hover:bg-[#1A1A22] transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-full bg-[#1C1C24] text-white border border-[#2E2E3C] flex items-center justify-center font-bold text-xs shadow-xs tracking-wider shrink-0">
+                            {c.initials}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-[#EDEDF0] flex items-center gap-1.5 text-xs">
+                              <span>{c.name}</span>
+                              {isVip && <Crown size={12} className="text-zinc-300 fill-zinc-300/30" />}
+                            </div>
+                            <div className="text-[11px] text-zinc-500 truncate max-w-[180px]">{c.email || c.phone || 'No contact'}</div>
+                          </div>
+                        </div>
+
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border shrink-0 ${
+                          isVip
+                            ? 'bg-[#1E1E28] text-zinc-200 border-[#323244]'
+                            : c.orderCount >= 2
+                            ? 'bg-violet-950/50 text-violet-300 border-violet-800/60'
+                            : 'bg-[#121216] text-zinc-400 border-[#24242E]'
+                        }`}>
+                          {isVip ? 'VIP' : c.orderCount >= 2 ? 'Repeat' : 'First-Time'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 bg-[#121216] border border-[#202028] p-2.5 rounded-xl text-center text-[11px]">
+                        <div>
+                          <div className="text-zinc-500 text-[10px]">Spend</div>
+                          <div className="font-bold text-[#EDEDF0] font-mono mt-0.5">₹{c.totalSpend.toLocaleString('en-IN')}</div>
+                        </div>
+                        <div>
+                          <div className="text-zinc-500 text-[10px]">Orders</div>
+                          <div className="font-bold text-zinc-200 font-mono mt-0.5">{c.orderCount}</div>
+                        </div>
+                        <div>
+                          <div className="text-zinc-500 text-[10px]">City</div>
+                          <div className="font-medium text-zinc-300 truncate mt-0.5">{c.city || 'Kanpur'}</div>
+                        </div>
+                      </div>
+
+                      {c.sizesList && c.sizesList.length > 0 && (
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-[10px] text-zinc-500">Sizes:</span>
+                          {c.sizesList.map((sz, idx) => (
+                            <span key={idx} className="px-1.5 py-0.5 rounded bg-[#1E1E28] text-zinc-300 border border-[#2B2B36] text-[10px] font-mono font-bold">
+                              {sz}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-2 border-t border-[#202028]" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[10px] text-zinc-500 font-mono">
+                          Last: {new Date(c.lastOrderDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={waUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-400 border border-emerald-800/50 transition-colors"
+                            title="WhatsApp Concierge"
+                          >
+                            <MessageSquare size={13} />
+                          </a>
+
+                          <button
+                            onClick={() => setSelectedCustomer(c)}
+                            className="px-3 py-1.5 rounded-xl bg-[#1C1C24] hover:bg-[#252532] text-zinc-200 border border-[#2C2C38] text-xs font-medium flex items-center gap-1 transition-all shadow-xs cursor-pointer"
+                          >
+                            <span>Dossier</span>
+                            <ChevronRight size={12} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Desktop Table (>= md) */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-[#121216] text-zinc-400 font-semibold border-b border-[#24242E]">
                     <tr>
@@ -932,9 +1026,122 @@ export const AdminCRM = ({ onSelectOrder }) => {
             </div>
           </div>
 
-          {/* Abandoned Carts Table */}
+          {/* Abandoned Carts Table / Cards */}
           <div className="bg-[#16161A] border border-[#24242E] rounded-2xl shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Mobile Abandoned Cart Cards (< md) */}
+            <div className="md:hidden">
+              {abandonedLoading ? (
+                <div className="py-16 text-center text-zinc-500">
+                  <RefreshCw size={20} className="animate-spin mx-auto text-zinc-500 mb-2" />
+                  <span>Loading abandoned carts...</span>
+                </div>
+              ) : filteredAbandonedCarts.length === 0 ? (
+                <div className="py-16 text-center text-zinc-500">
+                  <p className="font-semibold text-zinc-300 text-sm">No Abandoned Carts Found</p>
+                  <p className="text-xs text-zinc-500 mt-1">No shopping sessions match the selected status filter.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#202028]">
+                  {filteredAbandonedCarts.map((cart) => {
+                    const timeAgoStr = formatTimeAgo(cart.last_activity_at || cart.created_at);
+                    const items = Array.isArray(cart.items) ? cart.items : [];
+
+                    return (
+                      <div key={cart.id || cart.session_id} className="p-4 space-y-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-[#EDEDF0] text-xs">{cart.customer_name || 'Anonymous Shopper'}</div>
+                            <div className="text-[11px] text-zinc-400 font-mono mt-0.5">{cart.customer_phone || cart.customer_email || 'No contact info'}</div>
+                          </div>
+
+                          {cart.recovery_status === 'recovered' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                              <span>Recovered</span>
+                            </span>
+                          ) : cart.recovery_status === 'contacted' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-800/60 shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                              <span>Contacted</span>
+                            </span>
+                          ) : cart.recovery_status === 'expired' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-zinc-900 text-zinc-400 border border-zinc-800 shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />
+                              <span>Expired</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-950/60 text-rose-300 border border-rose-800/60 shrink-0">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                              <span>Abandoned</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Cart Items Matrix */}
+                        <div className="bg-[#121216] border border-[#202028] p-2.5 rounded-xl space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] pb-1 border-b border-[#1C1C24]">
+                            <span className="text-zinc-500">Cart Value</span>
+                            <span className="font-bold text-[#EDEDF0] font-mono text-xs">₹{Number(cart.cart_value || 0).toLocaleString('en-IN')}</span>
+                          </div>
+                          <div className="space-y-1 pt-0.5">
+                            {items.map((item, idx) => (
+                              <div key={idx} className="flex items-center justify-between text-[11px]">
+                                <span className="font-medium text-zinc-200 truncate max-w-[200px]">{item.name || 'Atelier Piece'}</span>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  {item.size && (
+                                    <span className="px-1.5 py-0.2 rounded bg-[#20202C] text-zinc-300 border border-[#2E2E3E] font-mono text-[9px]">
+                                      {item.size}
+                                    </span>
+                                  )}
+                                  <span className="text-zinc-500 font-mono text-[10px]">x{item.quantity || 1}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-zinc-500">
+                          <div className="flex items-center gap-1 text-zinc-400">
+                            <Clock size={11} className="text-zinc-500" />
+                            <span>{timeAgoStr}</span>
+                          </div>
+                          {cart.last_activity_at && (
+                            <span className="font-mono text-[10px]">
+                              {new Date(cart.last_activity_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2 pt-1 border-t border-[#202028]">
+                          <button
+                            onClick={() => handleWhatsAppRecovery(cart)}
+                            className="flex-1 py-2 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/60 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer min-h-[38px]"
+                          >
+                            <MessageSquare size={13} />
+                            <span>WhatsApp Recovery</span>
+                          </button>
+
+                          <select
+                            value={cart.recovery_status || 'abandoned'}
+                            onChange={(e) => handleStatusChange(cart.id, e.target.value)}
+                            className="bg-[#1A1A24] border border-[#2C2C3C] text-zinc-300 text-xs rounded-xl px-2.5 py-2 outline-none cursor-pointer min-h-[38px]"
+                          >
+                            <option value="abandoned">Abandoned</option>
+                            <option value="contacted">Contacted</option>
+                            <option value="recovered">Recovered</option>
+                            <option value="expired">Expired</option>
+                          </select>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Abandoned Carts Table (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#121216] text-zinc-400 font-semibold border-b border-[#24242E]">
                   <tr>

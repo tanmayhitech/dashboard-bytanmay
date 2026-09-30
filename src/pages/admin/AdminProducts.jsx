@@ -562,9 +562,102 @@ export const AdminProducts = () => {
             </div>
           </div>
 
-          {/* Reviews List */}
+          {/* Reviews List / Cards */}
           <div className="bg-[#16161A] border border-[#24242E] rounded-2xl shadow-xs overflow-hidden">
-            <div className="overflow-x-auto">
+            {/* Mobile Review Cards (< md) */}
+            <div className="md:hidden">
+              {reviewsLoading ? (
+                <div className="py-16 text-center text-zinc-500">
+                  <RefreshCw size={20} className="animate-spin mx-auto text-zinc-500 mb-2" />
+                  <span>Loading product reviews...</span>
+                </div>
+              ) : filteredReviews.length === 0 ? (
+                <div className="py-16 text-center text-zinc-500">
+                  <Star size={24} className="mx-auto text-zinc-600 mb-2" />
+                  <p className="font-semibold text-zinc-300 text-sm">No Reviews Found</p>
+                  <p className="text-xs text-zinc-500 mt-1">No reviews match the selected filter criteria.</p>
+                </div>
+              ) : (
+                <div className="divide-y divide-[#202028]">
+                  {filteredReviews.map((r) => (
+                    <div key={r.id} className="p-4 space-y-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="font-semibold text-[#EDEDF0] flex items-center gap-1.5 text-xs">
+                            <span>{r.customer_name || 'Anonymous Patron'}</span>
+                            {r.is_verified_buyer && (
+                              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded bg-emerald-950/60 text-emerald-300 border border-emerald-800/50 text-[9px] font-mono">
+                                <ShieldCheck size={10} /> Verified
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-zinc-400 mt-0.5">{r.product_name || 'LOOZARS Silhouette'}</div>
+                        </div>
+
+                        {r.status === 'approved' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-950/60 text-emerald-300 border border-emerald-800/60 shrink-0">
+                            <CheckCircle2 size={10} /> Approved
+                          </span>
+                        ) : r.status === 'hidden' ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-950/60 text-rose-300 border border-rose-800/60 shrink-0">
+                            <XCircle size={10} /> Hidden
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-800/60 shrink-0">
+                            <AlertCircle size={10} /> Pending
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="bg-[#121216] border border-[#202028] p-3 rounded-xl space-y-1.5">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={12}
+                              className={star <= (r.rating || 5) ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}
+                            />
+                          ))}
+                          <span className="font-mono text-zinc-400 font-bold ml-1 text-[11px]">{r.rating}.0</span>
+                        </div>
+                        {r.review_title && (
+                          <div className="font-semibold text-zinc-200 text-xs pt-0.5">{r.review_title}</div>
+                        )}
+                        <p className="text-zinc-400 text-xs leading-relaxed">{r.review_text}</p>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-[#202028]">
+                        <span className="text-[10px] text-zinc-500 font-mono">
+                          {r.created_at ? new Date(r.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                        </span>
+
+                        <div className="flex items-center gap-2">
+                          {r.status !== 'approved' && (
+                            <button
+                              onClick={() => handleModerate(r.id, 'approved')}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-800/60 text-xs font-semibold transition-colors cursor-pointer min-h-[34px]"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          {r.status !== 'hidden' && (
+                            <button
+                              onClick={() => handleModerate(r.id, 'hidden')}
+                              className="px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-rose-950/60 text-zinc-400 hover:text-rose-300 border border-zinc-800 hover:border-rose-800/60 text-xs font-medium transition-colors cursor-pointer min-h-[34px]"
+                            >
+                              Hide
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Desktop Reviews Table (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#121216] text-zinc-400 font-semibold border-b border-[#24242E]">
                   <tr>
@@ -616,9 +709,9 @@ export const AdminProducts = () => {
                             {[1, 2, 3, 4, 5].map((star) => (
                               <Star
                                 key={star}
-                                size={11}
-                                className={star <= (r.rating || 5) ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}
-                              />
+                              size={11}
+                              className={star <= (r.rating || 5) ? 'text-amber-400 fill-amber-400' : 'text-zinc-600'}
+                            />
                             ))}
                             <span className="font-mono text-zinc-400 font-bold ml-1 text-[10px]">{r.rating}.0</span>
                           </div>

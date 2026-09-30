@@ -446,7 +446,7 @@ export const AdminPortalContent = () => {
         </header>
 
         {/* Content Body View Area */}
-        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-3.5 sm:p-6 lg:p-8 pb-24 md:pb-8 max-w-7xl w-full mx-auto">
           {visitedTabs.has('overview') && (
             <div className={activeTab === 'overview' ? 'block' : 'hidden'}>
               <AdminOverview
@@ -735,6 +735,51 @@ export const AdminPortalContent = () => {
 
         {/* Global Action Feedback Toast Stack */}
         <AdminActionToastContainer />
+
+        {/* Mobile Sticky Bottom Navigation Bar */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-[#121215]/95 backdrop-blur-md border-t border-[#1F1F24] px-1 py-1.5 flex items-center justify-around shadow-2xl">
+          {[
+            { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+            { id: 'orders', label: 'Orders', icon: ShoppingBag },
+            { id: 'products', label: 'Products', icon: Layers },
+            { id: 'inventory', label: 'Stock', icon: Package },
+            { id: 'crm', label: 'Customers', icon: Users }
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabSwitch(tab.id)}
+                className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all min-w-[56px] ${
+                  isActive
+                    ? 'text-white font-semibold'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                <div className={`p-1 rounded-lg transition-colors ${isActive ? 'bg-[#22222C] text-white' : ''}`}>
+                  <Icon size={18} />
+                </div>
+                <span className="text-[10px] tracking-tight mt-0.5">{tab.label}</span>
+              </button>
+            );
+          })}
+          
+          {/* More / Menu Drawer Toggle */}
+          <button
+            onClick={() => setIsMobileNavOpen(true)}
+            className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition-all min-w-[56px] ${
+              ['coupons', 'influencers', 'logs', 'settings'].includes(activeTab)
+                ? 'text-white font-semibold'
+                : 'text-zinc-500 hover:text-zinc-300'
+            }`}
+          >
+            <div className={`p-1 rounded-lg transition-colors ${['coupons', 'influencers', 'logs', 'settings'].includes(activeTab) ? 'bg-[#22222C] text-white' : ''}`}>
+              <Menu size={18} />
+            </div>
+            <span className="text-[10px] tracking-tight mt-0.5">Menu</span>
+          </button>
+        </nav>
       </div>
 
     </div>

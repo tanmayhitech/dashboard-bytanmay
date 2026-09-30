@@ -93,9 +93,9 @@ export const StockAdjustModal = ({ item, onClose, onStockAdjusted }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="bg-[#141418] border border-[#242430] w-full max-w-md rounded-3xl shadow-2xl overflow-hidden font-sans text-zinc-100"
+        className="bg-[#141418] border border-[#242430] w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden font-sans text-zinc-100"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

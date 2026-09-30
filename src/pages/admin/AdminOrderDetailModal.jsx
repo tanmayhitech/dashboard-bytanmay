@@ -417,54 +417,55 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
   const eventsList = Array.isArray(emailEvents) ? emailEvents : [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 md:p-6 bg-black/85 backdrop-blur-xs animate-fadeIn font-sans">
       <div 
-        className="bg-[#141418] border border-[#242430] w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl shadow-2xl flex flex-col font-sans text-[#EDEDF0]"
+        className="bg-[#141418] border border-[#242430] w-full max-w-3xl max-h-[96vh] sm:max-h-[90vh] overflow-y-auto rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col font-sans text-[#EDEDF0]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="sticky top-0 bg-[#121216]/95 backdrop-blur-md border-b border-[#22222C] p-5 px-6 flex items-center justify-between z-10">
+        <div className="sticky top-0 bg-[#121216]/95 backdrop-blur-md border-b border-[#22222C] p-4 sm:p-5 px-4 sm:px-6 flex items-center justify-between z-10">
           <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-base sm:text-lg font-bold text-white font-mono tracking-tight">
                 {formatOrderNumber(order.order_number)}
               </span>
               {isPaid ? (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-zinc-300">
+                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono text-zinc-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
                   <span>{isCOD ? 'COD Paid' : 'Paid'}</span>
                 </span>
               ) : isCOD ? (
-                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-sky-300">
+                <span className="inline-flex items-center gap-1.5 text-[10px] sm:text-[11px] font-mono text-sky-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-sky-400" />
                   <span>COD Pending</span>
                 </span>
               ) : (
-                <span className="text-[11px] font-mono text-zinc-500">Unpaid</span>
+                <span className="text-[10px] sm:text-[11px] font-mono text-zinc-500">Unpaid</span>
               )}
-              <span className="text-[11px] bg-[#1C1C24] text-zinc-300 px-2.5 py-0.5 rounded-full font-medium capitalize border border-[#2B2B38]">
+              <span className="text-[10px] sm:text-[11px] bg-[#1C1C24] text-zinc-300 px-2 py-0.5 rounded-full font-medium capitalize border border-[#2B2B38]">
                 {currentStatus}
               </span>
             </div>
-            <p className="text-xs text-zinc-400 mt-1 flex items-center gap-1.5 font-sans">
-              <Clock size={12} className="text-zinc-500" />
-              <span>Placed: {formatDate(order.created_at)}</span>
+            <p className="text-[11px] sm:text-xs text-zinc-400 mt-1 flex items-center gap-1.5 font-sans">
+              <Clock size={12} className="text-zinc-500 shrink-0" />
+              <span className="truncate">Placed: {formatDate(order.created_at)}</span>
             </p>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setShowPackingSlip(true)}
-              className="px-3.5 py-2 bg-[#1C1C24] hover:bg-[#252530] text-zinc-200 border border-[#2E2E3C] rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+              className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 bg-[#1C1C24] hover:bg-[#252530] text-zinc-200 border border-[#2E2E3C] rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
             >
               <Printer size={13} />
-              <span>Print Invoice</span>
+              <span className="hidden sm:inline">Print Invoice</span>
+              <span className="sm:hidden">Print</span>
             </button>
 
             <button
               onClick={onClose}
-              className="p-2 text-zinc-400 hover:text-white hover:bg-[#20202A] rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-zinc-400 hover:text-white hover:bg-[#20202A] rounded-xl transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -472,7 +473,7 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6 text-xs text-zinc-300">
+        <div className="p-4 sm:p-6 space-y-6 text-xs text-zinc-300">
 
           {/* Feedback Alerts */}
           {errorMessage && (
