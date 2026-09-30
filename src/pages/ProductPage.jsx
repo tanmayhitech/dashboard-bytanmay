@@ -9,8 +9,20 @@ import {
   Minus, 
   Truck, 
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Star,
+  ShieldCheck,
+  AlertCircle,
+  MessageSquare,
+  X,
+  Sparkles
 } from 'lucide-react';
+import { 
+  fetchProductReviews, 
+  createProductReview, 
+  verifyPurchaseEligibility, 
+  triggerTelegramNotification 
+} from '../services/adminExtensionService';
 
 // Campaign Assets for Dark Breakout Section
 import campaignShoot01 from '../assets/photoshoot/05-campaign-editorial/campaign-shoot-01.png';
@@ -43,6 +55,20 @@ export const ProductPage = () => {
   const [addedFeedback, setAddedFeedback] = useState(false);
   const [showStickyBar, setShowStickyBar] = useState(false);
   const buyButtonRef = useRef(null);
+
+  // Reviews State
+  const [reviews, setReviews] = useState([]);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewHoverRating, setReviewHoverRating] = useState(0);
+  const [reviewOrderNumber, setReviewOrderNumber] = useState('');
+  const [reviewName, setReviewName] = useState('');
+  const [reviewEmail, setReviewEmail] = useState('');
+  const [reviewTitle, setReviewTitle] = useState('');
+  const [reviewText, setReviewText] = useState('');
+  const [reviewVerificationError, setReviewVerificationError] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewSuccess, setReviewSuccess] = useState(false);
 
   // Sync size on product change
   useEffect(() => {
@@ -90,6 +116,88 @@ export const ProductPage = () => {
     addToCart(product, selectedSize, quantity, selectedVariant);
     setAddedFeedback(true);
     setTimeout(() => setAddedFeedback(false), 2200);
+  };
+
+  // Load reviews on product change
+  useEffect(() => {
+    const loadReviews = async () => {
+      const prodId = product?.id || product?.db_id || 'prod_1';
+      const res = await fetchProductReviews({ productId: prodId, status: 'approved' });
+      if (res.success && Array.isArray(res.reviews)) {
+        setReviews(res.reviews);
+      }
+    };
+    loadReviews();
+  }, [product?.id, product?.db_id]);
+
+  const avgRating = reviews.length > 0 
+    ? (reviews.reduce((s, r) => s + (Number(r.rating) || 5), 0) / reviews.length)
+    : 5.0;
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    setReviewVerificationError('');
+    if (!reviewText.trim() || !reviewName.trim()) return;
+
+    setIsSubmittingReview(true);
+    const prodId = product?.id || product?.db_id || 'prod_1';
+
+    try {
+      // 1. Authoritative Verified Buyer check against orders ledger
+      const check = await verifyPurchaseEligibility({
+        productId: prodId,
+        productName: product.name,
+        email: reviewEmail.trim(),
+        orderNumber: reviewOrderNumber.trim()
+      });
+
+      if (!check.eligible) {
+        setReviewVerificationError(check.error || 'Only verified purchasers with confirmed orders can submit reviews.');
+        setIsSubmittingReview(false);
+        return;
+      }
+
+      // 2. Submit the verified review linked to real order
+      const res = await createProductReview({
+        productId: prodId,
+        orderId: check.orderId,
+        customerName: reviewName.trim() || check.customerName,
+        customerEmail: reviewEmail.trim() || check.customerEmail,
+        rating: reviewRating,
+        reviewTitle: reviewTitle.trim() || 'Verified Drop Review',
+        reviewText: reviewText.trim(),
+        isVerifiedPurchase: true
+      });
+
+      if (res.success) {
+        setReviewSuccess(true);
+        triggerTelegramNotification({
+          type: 'review_submitted',
+          customerName: reviewName.trim() || check.customerName,
+          productName: product.name,
+          rating: reviewRating,
+          reviewTitle: reviewTitle.trim() || 'Drop Review',
+          reviewText: reviewText.trim(),
+          reviewId: res.review?.id
+        });
+
+        setTimeout(() => {
+          setIsReviewModalOpen(false);
+          setReviewSuccess(false);
+          setReviewOrderNumber('');
+          setReviewName('');
+          setReviewEmail('');
+          setReviewTitle('');
+          setReviewText('');
+          setReviewRating(5);
+        }, 2200);
+      }
+    } catch (err) {
+      console.warn('[ProductPage] Review submission error:', err);
+      setReviewVerificationError(err.message || 'Error submitting review.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   const toggleAccordion = (key) => {
@@ -299,6 +407,31 @@ export const ProductPage = () => {
                 </span>
                 <span className="font-mono text-[10px] text-[#0A0A0A]/50 tracking-widest uppercase">
                   (INCL. ALL TAXES)
+                </span>
+              </div>
+
+              {/* Rating & Reviews Jump Link */}
+              <div 
+                onClick={() => {
+                  const el = document.getElementById('collector-reviews');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="flex items-center gap-2 pt-0.5 font-mono text-[11px] cursor-pointer group select-none"
+              >
+                <div className="flex items-center text-amber-500">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star 
+                      key={star} 
+                      size={12} 
+                      className={star <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-[#0A0A0A]/20'} 
+                    />
+                  ))}
+                </div>
+                <span className="font-bold text-[#0A0A0A] group-hover:text-[#8E1717] transition-colors">
+                  {avgRating > 0 ? avgRating.toFixed(1) : '5.0'}
+                </span>
+                <span className="text-[#0A0A0A]/50 group-hover:underline">
+                  ({reviews.length} {reviews.length === 1 ? 'Collector Review' : 'Collector Reviews'})
                 </span>
               </div>
             </div>
@@ -590,7 +723,156 @@ export const ProductPage = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 05. RELATED PRODUCTS ("YOU MAY ALSO LIKE")                                */}
+      {/* 05. COLLECTOR REVIEWS & RATINGS                                           */}
+      {/* ========================================================================= */}
+      <section id="collector-reviews" className="relative w-full bg-[#EDE7DC] py-16 sm:py-20 px-5 sm:px-10 lg:px-14 border-b border-[#0A0A0A]/15">
+        <div className="max-w-[1760px] mx-auto space-y-12">
+          
+          {/* Section Header */}
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-[#0A0A0A]/15 pb-6">
+            <div>
+              <span className="font-mono text-[10px] text-[#8E1717] font-bold tracking-[0.25em] uppercase block mb-1">
+                COMMUNITY DOSSIER [ 02 ]
+              </span>
+              <h3 className="font-editorial text-3xl sm:text-5xl text-[#0A0A0A] font-bold uppercase tracking-tight">
+                COLLECTOR REVIEWS
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setIsReviewModalOpen(true)}
+                className="px-6 py-3 bg-[#0A0A0A] hover:bg-[#8E1717] text-[#EDE7DC] font-mono text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-sm cursor-pointer"
+              >
+                + WRITE A REVIEW
+              </button>
+            </div>
+          </div>
+
+          {/* Rating Summary + Reviews Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 sm:gap-14">
+            
+            {/* Left: Score Overview Box */}
+            <div className="lg:col-span-4 space-y-6">
+              <div className="p-8 bg-[#F1EEE6] border border-[#0A0A0A]/15 space-y-4">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-editorial text-6xl text-[#0A0A0A] font-bold">
+                    {avgRating > 0 ? avgRating.toFixed(1) : '5.0'}
+                  </span>
+                  <span className="font-mono text-xs text-[#0A0A0A]/60 font-bold tracking-wider">
+                    / 5.0 RATING
+                  </span>
+                </div>
+
+                <div className="flex items-center text-amber-500 gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star 
+                      key={star} 
+                      size={18} 
+                      className={star <= Math.round(avgRating) ? 'fill-amber-500 text-amber-500' : 'text-[#0A0A0A]/20'} 
+                    />
+                  ))}
+                </div>
+
+                <p className="font-mono text-xs text-[#0A0A0A]/70 leading-relaxed">
+                  Based on <span className="font-bold text-[#0A0A0A]">{reviews.length} verified collector evaluations</span>. All reviews are independently submitted by genuine collectors.
+                </p>
+
+                <div className="pt-2 border-t border-[#0A0A0A]/10 flex items-center gap-2 font-mono text-[11px] text-[#0A0A0A]/80 font-medium">
+                  <ShieldCheck size={14} className="text-emerald-700" />
+                  <span>100% Verified Collector Guarantee</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Reviews List */}
+            <div className="lg:col-span-8 space-y-6">
+              {reviews.length === 0 ? (
+                <div className="p-12 border border-dashed border-[#0A0A0A]/20 text-center space-y-4 font-mono">
+                  <p className="text-sm font-bold uppercase tracking-wider text-[#0A0A0A]">
+                    BE THE FIRST TO REVIEW THIS SILHOUETTE
+                  </p>
+                  <p className="text-xs text-[#0A0A0A]/60 max-w-md mx-auto leading-relaxed">
+                    Share your experience with fit, tailoring weight, and drape with the LOOZARS® community.
+                  </p>
+                  <button
+                    onClick={() => setIsReviewModalOpen(true)}
+                    className="px-5 py-2.5 bg-[#0A0A0A] text-[#EDE7DC] text-xs font-bold uppercase tracking-wider hover:bg-[#8E1717] transition-colors cursor-pointer"
+                  >
+                    LEAVE A REVIEW →
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((rev) => {
+                    const dateStr = rev.created_at ? new Date(rev.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Verified Drop';
+                    return (
+                      <div 
+                        key={rev.id} 
+                        className="p-6 bg-[#F1EEE6] border border-[#0A0A0A]/15 space-y-3 font-mono transition-colors hover:border-[#0A0A0A]/30"
+                      >
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#0A0A0A]/10 pb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center text-amber-500">
+                              {[1, 2, 3, 4, 5].map((s) => (
+                                <Star 
+                                  key={s} 
+                                  size={13} 
+                                  className={s <= (rev.rating || 5) ? 'fill-amber-500 text-amber-500' : 'text-[#0A0A0A]/20'} 
+                                />
+                              ))}
+                            </div>
+                            <span className="font-bold text-xs text-[#0A0A0A]">
+                              {rev.customer_name || 'Collector'}
+                            </span>
+                            {rev.is_verified_purchase !== false && (
+                              <span className="flex items-center gap-1 text-[10px] text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full font-semibold">
+                                <ShieldCheck size={11} />
+                                <span>Verified Buyer</span>
+                              </span>
+                            )}
+                          </div>
+
+                          <span className="text-[10px] text-[#0A0A0A]/50 tracking-wider">
+                            {dateStr}
+                          </span>
+                        </div>
+
+                        {rev.review_title && (
+                          <h4 className="font-bold text-sm text-[#0A0A0A] tracking-tight">
+                            {rev.review_title}
+                          </h4>
+                        )}
+
+                        <p className="text-xs text-[#0A0A0A]/80 leading-relaxed whitespace-pre-line">
+                          {rev.review_text}
+                        </p>
+
+                        {/* Official Atelier Response if present */}
+                        {rev.admin_reply && (
+                          <div className="mt-3 p-3.5 bg-[#E8E4DA] border-l-2 border-[#8E1717] space-y-1 text-xs">
+                            <span className="font-bold text-[10px] uppercase text-[#8E1717] tracking-wider block">
+                              LOOZARS® Atelier Response
+                            </span>
+                            <p className="text-[11px] text-[#0A0A0A]/85 italic">
+                              "{rev.admin_reply}"
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* ========================================================================= */}
+      {/* 06. RELATED PRODUCTS ("YOU MAY ALSO LIKE")                                */}
       {/* ========================================================================= */}
       <section className="relative w-full bg-[#F1EEE6] py-16 sm:py-20 px-5 sm:px-10 lg:px-14 border-b border-[#0A0A0A]/15 select-none">
         <div className="max-w-[1760px] mx-auto space-y-10 sm:space-y-12">
@@ -605,7 +887,7 @@ export const ProductPage = () => {
 
             <button
               onClick={() => navigateTo('shop')}
-              className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.2em] uppercase text-[#0A0A0A] hover:text-[#8E1717] transition-colors shrink-0"
+              className="text-[10px] sm:text-xs font-mono font-bold tracking-[0.2em] uppercase text-[#0A0A0A] hover:text-[#8E1717] transition-colors shrink-0 cursor-pointer"
             >
               [ MORE PRODUCTS → ]
             </button>
@@ -658,7 +940,7 @@ export const ProductPage = () => {
       </section>
 
       {/* ========================================================================= */}
-      {/* 06. MOBILE STICKY PURCHASE BAR                                            */}
+      {/* 07. MOBILE STICKY PURCHASE BAR                                            */}
       {/* ========================================================================= */}
       {showStickyBar && (
         <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0A0A0A]/95 backdrop-blur-md border-t border-white/10 p-3.5 flex items-center justify-between font-mono text-xs text-[#EDE7DC] pb-[max(0.875rem,env(safe-area-inset-bottom))]">
@@ -689,6 +971,192 @@ export const ProductPage = () => {
               <span>ADD TO BAG →</span>
             )}
           </button>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 08. WRITE A REVIEW MODAL                                                  */}
+      {/* ========================================================================= */}
+      {isReviewModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 font-mono animate-fadeIn">
+          <div className="bg-[#121215] border border-[#2A2A38] rounded-2xl max-w-lg w-full p-6 text-zinc-100 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-[#22222A] pb-4">
+              <div>
+                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block font-mono">
+                  {product.name}
+                </span>
+                <h3 className="text-base font-semibold text-zinc-100 tracking-tight font-sans">
+                  Write a Collector Review
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsReviewModalOpen(false)}
+                className="p-1.5 text-zinc-400 hover:text-white rounded-xl hover:bg-[#1C1C24] transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {reviewSuccess ? (
+              <div className="py-8 text-center space-y-3 animate-fadeIn">
+                <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center justify-center mx-auto">
+                  <Check size={22} />
+                </div>
+                <h4 className="text-sm font-semibold text-zinc-100 font-sans">
+                  Review Submitted to Atelier
+                </h4>
+                <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
+                  Thank you for your feedback. Your review is being moderated and will appear on the storefront shortly.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitReview} className="space-y-4 text-xs">
+                
+                {/* Verified Buyer Gating Notice */}
+                <div className="p-3 bg-[#181820] border border-amber-500/20 rounded-xl flex items-start gap-2.5">
+                  <ShieldCheck size={16} className="text-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-[11px] text-zinc-300 leading-relaxed font-sans">
+                    <strong className="text-amber-400 font-medium">Verified Buyers Only:</strong> To preserve atelier authentic feedback, reviews require a confirmed Order # or purchaser Email for this piece.
+                  </p>
+                </div>
+
+                {/* Verification Error Alert */}
+                {reviewVerificationError && (
+                  <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-start gap-2.5 text-rose-400 text-[11px] font-mono leading-relaxed">
+                    <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                    <span>{reviewVerificationError}</span>
+                  </div>
+                )}
+
+                {/* Rating Selector */}
+                <div className="space-y-1.5">
+                  <label className="text-zinc-400 font-medium">Overall Rating</label>
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 cursor-pointer">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onMouseEnter={() => setReviewHoverRating(star)}
+                          onMouseLeave={() => setReviewHoverRating(0)}
+                          onClick={() => setReviewRating(star)}
+                          className="p-1 text-amber-400 hover:scale-110 transition-transform"
+                        >
+                          <Star
+                            size={22}
+                            className={(reviewHoverRating || reviewRating) >= star ? 'fill-amber-400 text-amber-400' : 'text-zinc-600'}
+                          />
+                        </button>
+                      ))}
+                    </div>
+                    <span className="text-zinc-400 text-[11px] ml-2 font-mono">
+                      {reviewRating === 5 && '5/5 — Exceptional Atelier Grade'}
+                      {reviewRating === 4 && '4/5 — Very Good Fit & Quality'}
+                      {reviewRating === 3 && '3/5 — Good'}
+                      {reviewRating === 2 && '2/5 — Fair'}
+                      {reviewRating === 1 && '1/5 — Needs Improvement'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Verification Credentials: Order Number & Email Row */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 font-medium">Order Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={reviewOrderNumber}
+                      onChange={(e) => setReviewOrderNumber(e.target.value)}
+                      placeholder="e.g. LOOZ-4892 or #1001"
+                      className="w-full px-3.5 py-2.5 bg-[#181820] border border-[#2A2A38] rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-300 transition-colors uppercase font-mono text-[11px]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 font-medium">Purchaser Email *</label>
+                    <input
+                      type="email"
+                      required
+                      value={reviewEmail}
+                      onChange={(e) => setReviewEmail(e.target.value)}
+                      placeholder="e.g. patron@loozars.com"
+                      className="w-full px-3.5 py-2.5 bg-[#181820] border border-[#2A2A38] rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-300 transition-colors text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Name & Headline */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 font-medium">Display Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={reviewName}
+                      onChange={(e) => setReviewName(e.target.value)}
+                      placeholder="e.g. Tanmay Y."
+                      className="w-full px-3.5 py-2.5 bg-[#181820] border border-[#2A2A38] rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-300 transition-colors text-[11px]"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-zinc-400 font-medium">Headline / Title</label>
+                    <input
+                      type="text"
+                      value={reviewTitle}
+                      onChange={(e) => setReviewTitle(e.target.value)}
+                      placeholder="e.g. Impeccable 380 GSM drape"
+                      className="w-full px-3.5 py-2.5 bg-[#181820] border border-[#2A2A38] rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-300 transition-colors text-[11px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Review Text */}
+                <div className="space-y-1">
+                  <label className="text-zinc-400 font-medium">Review & Fit Experience *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={reviewText}
+                    onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Describe the fabric weight, drape, silhouette, stitching, and wearing experience..."
+                    className="w-full px-3.5 py-2.5 bg-[#181820] border border-[#2A2A38] rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-300 transition-colors resize-none leading-relaxed text-[11px]"
+                  />
+                </div>
+
+                {/* Submit Action */}
+                <div className="pt-2 flex items-center justify-end gap-3 border-t border-[#22222A]">
+                  <button
+                    type="button"
+                    onClick={() => setIsReviewModalOpen(false)}
+                    className="px-4 py-2.5 text-zinc-400 hover:text-white rounded-xl hover:bg-[#1C1C24] transition-colors"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReview || !reviewOrderNumber.trim() || !reviewEmail.trim() || !reviewName.trim() || !reviewText.trim()}
+                    className="px-5 py-2.5 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-2 font-mono text-xs"
+                  >
+                    {isSubmittingReview ? (
+                      <span>Verifying & Submitting...</span>
+                    ) : (
+                      <>
+                        <ShieldCheck size={14} />
+                        <span>Verify & Submit Review</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+              </form>
+            )}
+
+          </div>
         </div>
       )}
 

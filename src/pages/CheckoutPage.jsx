@@ -272,14 +272,16 @@ export const CheckoutPage = () => {
       const { razorpayOrderId, amount, currency, keyId } = paymentInit.data;
       const effectiveKeyId = keyId || (typeof import.meta !== 'undefined' && import.meta.env?.VITE_RAZORPAY_KEY_ID) || 'rzp_test_Th5g1Ry8LxJurD';
 
-      const finalizeOnlineOrder = async (payId, rzpOrderId) => {
+      const finalizeOnlineOrder = async (payId, rzpOrderId, rzpSignature) => {
         try {
-          await verifyPayment({
-            orderId: orderDbId,
-            razorpayPaymentId: payId || `pay_live_${Date.now()}`,
-            razorpayOrderId: rzpOrderId || razorpayOrderId,
-            razorpaySignature: 'simulated_signature_dev'
-          });
+          if (rzpSignature) {
+            await verifyPayment({
+              orderId: orderDbId,
+              razorpayPaymentId: payId,
+              razorpayOrderId: rzpOrderId || razorpayOrderId,
+              razorpaySignature: rzpSignature
+            });
+          }
         } catch (e) {
           console.warn('[CheckoutPage] verifyPayment note:', e);
         }
@@ -303,7 +305,7 @@ export const CheckoutPage = () => {
       // In local simulated fallback mode
       if (paymentInit.simulated && (!window.Razorpay || !effectiveKeyId || effectiveKeyId === 'simulated_key')) {
         console.info('[CheckoutPage] Simulated payment verification running in development mode.');
-        await finalizeOnlineOrder(`pay_sim_${Date.now()}`, razorpayOrderId);
+        await finalizeOnlineOrder(`pay_sim_${Date.now()}`, razorpayOrderId, null);
         return;
       }
 
@@ -322,14 +324,18 @@ export const CheckoutPage = () => {
         },
         onSuccess: async (response) => {
           setStatusMessage('Verifying payment with server...');
-          await finalizeOnlineOrder(response.razorpay_payment_id, response.razorpay_order_id);
+          await finalizeOnlineOrder(
+            response.razorpay_payment_id,
+            response.razorpay_order_id,
+            response.razorpay_signature
+          );
         },
         onFailure: (err) => {
           console.warn('[CheckoutPage] Razorpay payment failure/notice:', err);
           const msg = err?.message || err?.description || '';
           if (msg === 'No key passed' || msg.toLowerCase().includes('key') || msg.toLowerCase().includes('failed to load')) {
             console.info('[CheckoutPage] Completing order in test sandbox mode.');
-            finalizeOnlineOrder(`pay_test_${Date.now()}`, razorpayOrderId);
+            finalizeOnlineOrder(`pay_test_${Date.now()}`, razorpayOrderId, null);
             return;
           }
           setSubmissionError(msg || 'Payment was declined or cancelled. Your bag remains saved.');

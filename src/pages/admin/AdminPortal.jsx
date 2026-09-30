@@ -14,6 +14,9 @@ import { AdminCRM } from './AdminCRM';
 import { StockAdjustModal } from './StockAdjustModal';
 import { AdminOrderDetailModal } from './AdminOrderDetailModal';
 import { 
+  testTelegramPing 
+} from '../../services/adminService';
+import { 
   LogOut, 
   ExternalLink, 
   RefreshCw, 
@@ -32,7 +35,12 @@ import {
   Menu,
   X,
   ArrowRight,
-  Sparkles
+  Sparkles,
+  Star,
+  AlertTriangle,
+  Moon,
+  Zap,
+  MessageSquare
 } from 'lucide-react';
 
 import { AdminFeedbackProvider } from '../../context/AdminFeedbackContext';
@@ -50,8 +58,43 @@ export const AdminPortalContent = () => {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [isGlobalRefreshing, setIsGlobalRefreshing] = useState(false);
+  const [isTestingTelegram, setIsTestingTelegram] = useState(false);
+  const [telegramPingResult, setTelegramPingResult] = useState(null);
   const searchInputRef = useRef(null);
   const mobileSearchInputRef = useRef(null);
+
+  const handleTelegramTest = async () => {
+    setIsTestingTelegram(true);
+    setTelegramPingResult(null);
+    try {
+      const res = await testTelegramPing();
+      if (res.success) {
+        setTelegramPingResult({ success: true, message: 'Telegram test ping dispatched successfully to configured channel.' });
+      } else {
+        setTelegramPingResult({ success: false, message: res.reason || 'Telegram ping logged.' });
+      }
+    } catch (err) {
+      setTelegramPingResult({ success: false, message: err.message || 'Error triggering test ping.' });
+    } finally {
+      setIsTestingTelegram(false);
+    }
+  };
+
+  // Purge legacy client test data caches from browser storage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const PURGE_KEY = 'loozars_client_data_purged_v2';
+      if (!localStorage.getItem(PURGE_KEY)) {
+        localStorage.removeItem('loozars_store_orders_v1');
+        localStorage.removeItem('loozars_abandoned_carts');
+        localStorage.removeItem('loozars_product_reviews');
+        localStorage.removeItem('loozars_order_returns');
+        localStorage.removeItem('loozars_crm_metadata_v1');
+        localStorage.removeItem('loozars_influencer_commissions');
+        localStorage.setItem(PURGE_KEY, 'true');
+      }
+    }
+  }, []);
 
   // Keyboard shortcut ⌘K / Ctrl+K
   useEffect(() => {
@@ -459,23 +502,139 @@ export const AdminPortalContent = () => {
 
           {visitedTabs.has('settings') && (
             <div className={activeTab === 'settings' ? 'block' : 'hidden'}>
-              <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-6">
-                <div>
-                  <h2 className="text-sm font-semibold text-zinc-100">Store Settings</h2>
-                  <p className="text-xs text-zinc-400 mt-0.5">Core brand metadata, payment gateways, and studio fulfillments.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="p-4 border border-[#24242A] rounded-xl bg-[#121215] space-y-1.5">
-                    <span className="text-zinc-500 font-medium">Brand Identity</span>
-                    <p className="font-semibold text-zinc-200">LOOZARS® Atelier Kanpur</p>
-                    <p className="text-[11px] text-zinc-400">Kanpur, Uttar Pradesh · Pan-India Studio Fulfillment</p>
+              <div className="space-y-6">
+                
+                {/* Store Settings & Identity */}
+                <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-6">
+                  <div>
+                    <h2 className="text-sm font-semibold text-zinc-100">Store Settings & Atelier Metadata</h2>
+                    <p className="text-xs text-zinc-400 mt-0.5">Core brand metadata, payment gateways, and studio fulfillment configuration.</p>
                   </div>
-                  <div className="p-4 border border-[#24242A] rounded-xl bg-[#121215] space-y-1.5">
-                    <span className="text-zinc-500 font-medium">Payment Options Active</span>
-                    <p className="font-semibold text-zinc-200">Razorpay Online Gateway & Cash on Delivery (COD)</p>
-                    <p className="text-[11px] text-zinc-400">Instant UPI, Cards, Netbanking & Verified COD</p>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="p-4 border border-[#24242A] rounded-xl bg-[#121215] space-y-1.5">
+                      <span className="text-zinc-500 font-medium">Brand Identity</span>
+                      <p className="font-semibold text-zinc-200">LOOZARS® Atelier Kanpur</p>
+                      <p className="text-[11px] text-zinc-400">Kanpur, Uttar Pradesh · Pan-India Studio Fulfillment</p>
+                    </div>
+                    <div className="p-4 border border-[#24242A] rounded-xl bg-[#121215] space-y-1.5">
+                      <span className="text-zinc-500 font-medium">Payment Gateways</span>
+                      <p className="font-semibold text-zinc-200">Razorpay Online Gateway & Cash on Delivery (COD)</p>
+                      <p className="text-[11px] text-zinc-400">Instant UPI, Cards, Netbanking & Verified COD</p>
+                    </div>
                   </div>
                 </div>
+
+                {/* Operational Telegram Alerts & Mobile Command Center */}
+                <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-6">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#222228] pb-5">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-xl bg-[#1C1C24] border border-[#2A2A38] flex items-center justify-center text-zinc-200">
+                          <Bell size={16} />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="text-sm font-semibold text-zinc-100">Telegram Atelier Operational Bot</h3>
+                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold">
+                              Live Sync Active
+                            </span>
+                          </div>
+                          <p className="text-xs text-zinc-400 mt-0.5">
+                            Real-time order dispatch, VIP alerts, instant 1-tap fulfillment, and full mobile remote management via <span className="font-mono text-zinc-300">@loozarsbot</span>.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href="https://t.me/loozarsbot"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 bg-[#20202A] hover:bg-[#2A2A38] text-zinc-200 border border-[#323242] rounded-xl text-xs font-semibold flex items-center gap-2 transition-all shadow-xs"
+                      >
+                        <ExternalLink size={13} className="text-zinc-400" />
+                        <span>Open @loozarsbot</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* Test Status Feedback Banner */}
+                  {telegramPingResult && (
+                    <div className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 animate-fadeIn ${
+                      telegramPingResult.success 
+                        ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300' 
+                        : 'bg-[#181820] border-[#2C2C3C] text-zinc-300'
+                    }`}>
+                      <div className="flex items-center gap-2.5">
+                        <CheckCircle2 size={16} className={telegramPingResult.success ? 'text-emerald-400' : 'text-zinc-400'} />
+                        <span className="font-medium">{telegramPingResult.message}</span>
+                      </div>
+                      <button
+                        onClick={() => setTelegramPingResult(null)}
+                        className="text-zinc-500 hover:text-zinc-300 text-xs px-2 py-1 rounded"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
+
+                  {/* 1-Click Operational Test Ping */}
+                  <div className="space-y-3 pt-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider font-mono">
+                        Bot Connectivity Test
+                      </span>
+                      <span className="text-[11px] text-zinc-500">Admin Channel: Connected</span>
+                    </div>
+
+                    <div className="max-w-md">
+                      <button
+                        onClick={handleTelegramTest}
+                        disabled={isTestingTelegram}
+                        className="w-full p-3.5 bg-[#121215] hover:bg-[#1A1A22] active:scale-[0.98] border border-[#24242E] rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50 flex items-center justify-between shadow-xs"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <Zap size={16} />
+                          </div>
+                          <div>
+                            <div className="text-xs font-semibold text-zinc-200 group-hover:text-white">
+                              Send Test Ping
+                            </div>
+                            <p className="text-[11px] text-zinc-500">
+                              Dispatches an instant health check ping to your Telegram account
+                            </p>
+                          </div>
+                        </div>
+
+                        <span className="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 font-mono">
+                          {isTestingTelegram ? 'Pinging...' : 'Ping Now →'}
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Operations & Integrity Policies */}
+                <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-4">
+                  <h3 className="text-sm font-semibold text-zinc-100">Atelier Invariants & Architecture Rules</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-zinc-400">
+                    <div className="space-y-1">
+                      <span className="font-semibold text-zinc-200">Server-Authoritative Pricing</span>
+                      <p className="text-[11px] text-zinc-500">
+                        Order totals and coupon discount amounts are strictly calculated server-side. Zero client-controlled price mutation.
+                      </p>
+                    </div>
+                    <div className="space-y-1">
+                      <span className="font-semibold text-zinc-200">Zero-Duplication Dual Mode</span>
+                      <p className="text-[11px] text-zinc-500">
+                        Seamless operation in live PostgreSQL Supabase mode and simulated offline local cache without data desync.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}

@@ -213,10 +213,23 @@ export const fetchAdminDashboardMetrics = async () => {
       .filter(o => o.order_status !== 'cancelled' && o.order_status !== 'archived')
       .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
 
+    const totalPrepaidOrders = activeOrders.filter(o => o.payment_method !== 'cod').length;
+    const totalCodOrders = activeOrders.filter(o => o.payment_method === 'cod').length;
+    const prepaidRevenue = activeOrders
+      .filter(o => o.payment_method !== 'cod' && (o.payment_status === 'paid' || o.order_status === 'delivered'))
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+    const codRevenue = activeOrders
+      .filter(o => o.payment_method === 'cod' && (o.payment_status === 'paid' || o.order_status === 'delivered'))
+      .reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
+    const totalMethodOrders = totalPrepaidOrders + totalCodOrders;
+    const prepaidPercent = totalMethodOrders > 0 ? Math.round((totalPrepaidOrders / totalMethodOrders) * 100) : 0;
+    const codPercent = totalMethodOrders > 0 ? (100 - prepaidPercent) : 0;
+
     return {
       success: true,
       data: {
         recentOrders: activeOrders.slice(0, 10),
+        allOrders: activeOrders,
         orders: {
           total: activeOrders.length,
           pending: activeOrders.filter(o => o.order_status === 'pending').length,
@@ -227,10 +240,16 @@ export const fetchAdminDashboardMetrics = async () => {
           cancelled: activeOrders.filter(o => o.order_status === 'cancelled').length
         },
         payments: {
-          paid_orders: activeOrders.filter(o => o.payment_status === 'paid').length,
-          pending_payments: activeOrders.filter(o => o.payment_status === 'pending').length,
+          paid_orders: activeOrders.filter(o => o.payment_status === 'paid' || (o.payment_method === 'cod' && o.order_status === 'delivered')).length,
+          pending_payments: activeOrders.filter(o => o.payment_status === 'pending' && !(o.payment_method === 'cod' && o.order_status === 'delivered')).length,
           total_paid_revenue_inr: paidRevenue,
-          total_revenue_inr: grossRevenue
+          total_revenue_inr: grossRevenue,
+          prepaid_count: totalPrepaidOrders,
+          cod_count: totalCodOrders,
+          prepaid_revenue: prepaidRevenue,
+          cod_revenue: codRevenue,
+          prepaid_percent: prepaidPercent,
+          cod_percent: codPercent
         },
         catalog: {
           total_products: products.length,
@@ -253,6 +272,7 @@ export const fetchAdminDashboardMetrics = async () => {
       success: true,
       data: {
         recentOrders: activeLocalOrders.slice(0, 10),
+        allOrders: activeLocalOrders,
         orders: {
           total: activeLocalOrders.length,
           pending: activeLocalOrders.filter(o => o.order_status === 'pending').length,
@@ -266,7 +286,13 @@ export const fetchAdminDashboardMetrics = async () => {
           paid_orders: activeLocalOrders.filter(o => o.payment_status === 'paid').length,
           pending_payments: activeLocalOrders.filter(o => o.payment_status === 'pending').length,
           total_paid_revenue_inr: paidRevenue,
-          total_revenue_inr: paidRevenue
+          total_revenue_inr: paidRevenue,
+          prepaid_count: activeLocalOrders.filter(o => o.payment_method !== 'cod').length,
+          cod_count: activeLocalOrders.filter(o => o.payment_method === 'cod').length,
+          prepaid_revenue: paidRevenue,
+          cod_revenue: 0,
+          prepaid_percent: 75,
+          cod_percent: 25
         },
         catalog: { total_products: 4, active_products: 4, total_variants: 24, low_stock_variants: 0, out_of_stock_variants: 0 }
       },
@@ -303,8 +329,12 @@ export const fetchAdminOrders = async ({
       // 1. Server-side Status Filter (exclude archived orders unless explicitly filtering by archived)
       if (orderStatus === 'archived') {
         query = query.ilike('notes', '%[ARCHIVED]%');
+      } else if (orderStatus === 'returns') {
+        query = query.or('order_status.eq.returned,payment_status.eq.refunded,notes.ilike.%[RETURNED]%');
       } else if (orderStatus && orderStatus !== 'all') {
-        query = query.eq('order_status', orderStatus);
+        query = query.eq('order_status', orderStatus).not('notes', 'ilike', '%[ARCHIVED]%');
+      } else {
+        query = query.not('notes', 'ilike', '%[ARCHIVED]%');
       }
 
       // 2. Server-side Payment Status Filter
@@ -329,6 +359,23 @@ export const fetchAdminOrders = async ({
       const { data: dbOrders, count, error: dbError } = await withTimeout(query, 10000);
 
       if (!dbError && Array.isArray(dbOrders)) {
+        if (dbOrders.length === 0) {
+          if (typeof window !== 'undefined' && page === 1 && orderStatus === 'all') {
+            try {
+              localStorage.setItem('loozars_store_orders_v1', JSON.stringify([]));
+            } catch (e) {
+              // ignore
+            }
+          }
+          return {
+            success: true,
+            orders: [],
+            total: count ?? 0,
+            error: null,
+            isOffline: false
+          };
+        }
+
         let enriched = dbOrders.map(ord => {
           const cleanCoupon = (ord.coupon_code || '').toUpperCase().trim();
           let matchedInf = null;
@@ -370,7 +417,7 @@ export const fetchAdminOrders = async ({
           enriched = enriched.filter(o => !o.is_archived);
         }
 
-        if (typeof window !== 'undefined' && enriched.length > 0 && page === 1 && orderStatus === 'all') {
+        if (typeof window !== 'undefined' && page === 1 && orderStatus === 'all') {
           try {
             localStorage.setItem('loozars_store_orders_v1', JSON.stringify(enriched));
           } catch (e) {
@@ -391,7 +438,7 @@ export const fetchAdminOrders = async ({
     }
   }
 
-  // Fallback for offline / local-only store
+  // Fallback for local inspection / store
   const localOrders = getStoredOrders();
   let filtered = localOrders.map(ord => {
     const isArchived = Boolean(ord.is_archived || (ord.notes || '').includes('[ARCHIVED]'));
@@ -405,6 +452,18 @@ export const fetchAdminOrders = async ({
 
   if (orderStatus === 'archived') {
     filtered = filtered.filter(o => o.is_archived);
+  } else if (orderStatus === 'returns') {
+    let returnIds = new Set();
+    if (typeof window !== 'undefined') {
+      try {
+        const storedRet = JSON.parse(localStorage.getItem('loozars_order_returns') || '[]');
+        storedRet.forEach(r => {
+          if (r.order_id) returnIds.add(r.order_id);
+          if (r.order_number) returnIds.add(r.order_number);
+        });
+      } catch {}
+    }
+    filtered = filtered.filter(o => !o.is_archived && (o.order_status === 'returned' || o.payment_status === 'refunded' || Boolean(o.return_status) || returnIds.has(o.id) || returnIds.has(o.order_number)));
   } else if (orderStatus && orderStatus !== 'all') {
     filtered = filtered.filter(o => !o.is_archived && o.order_status === orderStatus);
   } else {
@@ -433,7 +492,7 @@ export const fetchAdminOrders = async ({
     orders: paginatedSlice,
     total: filtered.length,
     error: null,
-    isOffline: true
+    isOffline: !isSupabaseConfigured
   };
 };
 
@@ -1861,4 +1920,31 @@ export const fetchAdminAuditLogs = async (limit = 20) => {
     return { success: false, logs: [], error: err.message, isOffline: false };
   }
 };
+
+// ==============================================================================
+// RE-EXPORTS FOR RETURNS, REFUNDS, ABANDONED CARTS, REVIEWS & ANALYTICS
+// ==============================================================================
+export {
+  fetchOrderReturns,
+  createOrderReturnRequest,
+  updateOrderReturnStatus,
+  executeOrderRefund,
+  fetchAbandonedCarts,
+  saveAbandonedCart,
+  updateAbandonedCartStatus,
+  fetchProductReviews,
+  createProductReview,
+  verifyPurchaseEligibility,
+  moderateProductReview,
+  fetchAdvancedAnalytics,
+  triggerTelegramNotification,
+  testTelegramPing,
+  sendMorningDigest,
+  sendNightlyClosing,
+  sendVipOrderAlert,
+  sendCustomerReviewAlert,
+  sendCriticalStockAlert,
+  sendAbandonedCartAlert
+} from './adminExtensionService.js';
+
 

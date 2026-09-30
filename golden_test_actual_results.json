@@ -1,0 +1,330 @@
+{
+  "metadata": {
+    "generatedAt": "2026-09-30T07:45:48.321Z",
+    "dataset": "LOOZARS_GOLDEN_DATASET_PHASE_2",
+    "executionDurationMs": 33897
+  },
+  "systemSummary": {
+    "customersProcessed": 100,
+    "ordersAttempted": 220,
+    "ordersCreatedInDB": 220,
+    "mutationsPerformed": 267,
+    "rejectedOperationsCount": 2,
+    "errorsCount": 0
+  },
+  "databaseCounts": {
+    "orders": 220,
+    "product_variants": 21,
+    "coupons": 9,
+    "influencer_commissions": 17
+  },
+  "adminLiveMetrics": {
+    "totalOrders": 220,
+    "paidOrdersCount": 177,
+    "paidRevenue": 180371,
+    "paidRevenueFormatted": "₹1,80,371",
+    "grossRevenue": 207747,
+    "grossRevenueFormatted": "₹2,07,747",
+    "aov": 1019,
+    "aovFormatted": "₹1,019",
+    "prepaidCount": 177,
+    "prepaidPercent": 80,
+    "codCount": 43,
+    "codPercent": 20
+  },
+  "orderStatusBreakdown": {
+    "delivered": 168,
+    "shipped": 26,
+    "processing": 4,
+    "pending": 8,
+    "confirmed": 0,
+    "cancelled": 14,
+    "returned": 7
+  },
+  "paymentStatusBreakdown": {
+    "paid": 177,
+    "pending": 31,
+    "failed": 6,
+    "refunded": 6
+  },
+  "finalInventoryBySku": [
+    {
+      "variant_id": "cabc5e4a-5347-47ca-845c-a44103124761",
+      "sku": "LZR-D01-01-M",
+      "starting_stock": 13,
+      "final_stock": 2,
+      "net_deducted": 11
+    },
+    {
+      "variant_id": "36000f8c-1725-4f19-ab6e-c61a503c66ee",
+      "sku": "LZR-D01-01-L",
+      "starting_stock": 34,
+      "final_stock": 8,
+      "net_deducted": 26
+    },
+    {
+      "variant_id": "cf4e60c7-1a2f-4ed9-a0e4-5046c8fcbb50",
+      "sku": "LZR-D01-02-L",
+      "starting_stock": 11,
+      "final_stock": 3,
+      "net_deducted": 8
+    },
+    {
+      "variant_id": "7e24a80a-9a8a-4012-95cf-6abba11f44e2",
+      "sku": "LZR-D01-03-M",
+      "starting_stock": 15,
+      "final_stock": 11,
+      "net_deducted": 4
+    },
+    {
+      "variant_id": "55c2c9ef-672f-497d-a100-cce94603e11a",
+      "sku": "LZR-D01-01-S",
+      "starting_stock": 15,
+      "final_stock": 13,
+      "net_deducted": 2
+    },
+    {
+      "variant_id": "4d50134b-9d55-41d8-a584-da9c66a31381",
+      "sku": "LZR-D01-04-M",
+      "starting_stock": 15,
+      "final_stock": 11,
+      "net_deducted": 4
+    },
+    {
+      "variant_id": "1980cb5d-3a54-4bf3-a2aa-49e43a4bed85",
+      "sku": "LZR-D01-04-L",
+      "starting_stock": 16,
+      "final_stock": 14,
+      "net_deducted": 2
+    },
+    {
+      "variant_id": "4a49e1d0-1956-4e96-a5f1-436885eec2e8",
+      "sku": "LZR-D01-01-XL",
+      "starting_stock": 15,
+      "final_stock": 11,
+      "net_deducted": 4
+    },
+    {
+      "variant_id": "563fffd4-9339-4df8-9641-909192b78511",
+      "sku": "LZR-D01-03-L",
+      "starting_stock": 12,
+      "final_stock": 7,
+      "net_deducted": 5
+    },
+    {
+      "variant_id": "2f40a7dd-d140-4282-9eae-28aadd11c260",
+      "sku": "LZR-D01-02-XL",
+      "starting_stock": 9,
+      "final_stock": 7,
+      "net_deducted": 2
+    },
+    {
+      "variant_id": "dfdca540-23d5-45c4-8fd2-da65791c1b1e",
+      "sku": "LZR-D01-01-XS",
+      "starting_stock": 76,
+      "final_stock": 50,
+      "net_deducted": 26
+    },
+    {
+      "variant_id": "e5eed36f-b6cb-4bc6-9e2c-54d51d907e05",
+      "sku": "LZR-D01-03-S",
+      "starting_stock": 15,
+      "final_stock": 12,
+      "net_deducted": 3
+    },
+    {
+      "variant_id": "ba75ba73-c5de-4db6-b3c2-7ca10ff1fb53",
+      "sku": "LZR-D01-04-S",
+      "starting_stock": 15,
+      "final_stock": 1,
+      "net_deducted": 14
+    },
+    {
+      "variant_id": "2d476b0b-c2d4-4600-8e76-728b000d04a4",
+      "sku": "LZR-D01-01-XXL",
+      "starting_stock": 101,
+      "final_stock": 57,
+      "net_deducted": 44
+    },
+    {
+      "variant_id": "3ff7cf30-d0c3-4d4c-8378-0cf6ad658ee0",
+      "sku": "LZR-D01-02-S",
+      "starting_stock": 15,
+      "final_stock": 0,
+      "net_deducted": 15
+    },
+    {
+      "variant_id": "f7086ea0-f4aa-4904-94a7-5e7111b570ef",
+      "sku": "LZR-D01-04-XL",
+      "starting_stock": 15,
+      "final_stock": 13,
+      "net_deducted": 2
+    },
+    {
+      "variant_id": "c8878246-e6c8-4e11-b82d-e5f98664cce0",
+      "sku": "LZR-D01-02-M",
+      "starting_stock": 15,
+      "final_stock": 11,
+      "net_deducted": 4
+    },
+    {
+      "variant_id": "7b428608-9655-44e6-9e16-a084c7e10176",
+      "sku": "LZR-D01-03-XL",
+      "starting_stock": 15,
+      "final_stock": 0,
+      "net_deducted": 15
+    },
+    {
+      "variant_id": "c77c4d48-f6c4-47a4-9fcd-59cb7c34d022",
+      "sku": "LZR-D01-02-XXL",
+      "starting_stock": 15,
+      "final_stock": 2,
+      "net_deducted": 13
+    },
+    {
+      "variant_id": "e27166eb-a104-4a98-97ad-ac42ba0ebbc2",
+      "sku": "LZR-D01-03-XS",
+      "starting_stock": 15,
+      "final_stock": 2,
+      "net_deducted": 13
+    },
+    {
+      "variant_id": "ef5a6bcb-323b-4b1e-9c4e-c0b20cff0fb8",
+      "sku": "LZR-D01-04-XXL",
+      "starting_stock": 15,
+      "final_stock": 2,
+      "net_deducted": 13
+    }
+  ],
+  "couponUsageActuals": [
+    {
+      "code": "WELCOME10",
+      "discount_type": "percentage",
+      "discount_value": 10,
+      "min_order_amount": 800,
+      "times_used_in_db": 23
+    },
+    {
+      "code": "FLASH20",
+      "discount_type": "fixed",
+      "discount_value": 200,
+      "min_order_amount": 1798,
+      "times_used_in_db": 1
+    },
+    {
+      "code": "RARE15",
+      "discount_type": "percentage",
+      "discount_value": 15,
+      "min_order_amount": 1500,
+      "times_used_in_db": 3
+    },
+    {
+      "code": "VIP20",
+      "discount_type": "percentage",
+      "discount_value": 20,
+      "min_order_amount": 2500,
+      "times_used_in_db": 1
+    },
+    {
+      "code": "AARYAN10",
+      "discount_type": "percentage",
+      "discount_value": 10,
+      "min_order_amount": 800,
+      "times_used_in_db": 1
+    },
+    {
+      "code": "KHAN10",
+      "discount_type": "percentage",
+      "discount_value": 10,
+      "min_order_amount": 800,
+      "times_used_in_db": 1
+    },
+    {
+      "code": "ZARA15",
+      "discount_type": "percentage",
+      "discount_value": 15,
+      "min_order_amount": 800,
+      "times_used_in_db": 2
+    },
+    {
+      "code": "ROHAN10",
+      "discount_type": "percentage",
+      "discount_value": 10,
+      "min_order_amount": 800,
+      "times_used_in_db": 2
+    },
+    {
+      "code": "RHEA10",
+      "discount_type": "percentage",
+      "discount_value": 10,
+      "min_order_amount": 800,
+      "times_used_in_db": 11
+    }
+  ],
+  "influencerCommissionsActuals": {
+    "totalEntries": 17,
+    "totalCommissionAccrued": 1308,
+    "eligibleCount": 15,
+    "pendingCount": 2,
+    "reversedCount": 0
+  },
+  "rejectedOperationsLog": [
+    {
+      "operation": "COUPON_APPLY",
+      "code": "EXPIRED50",
+      "customer": "CUSTOMER-024",
+      "reason": "Coupon does not exist or has expired"
+    },
+    {
+      "operation": "COUPON_APPLY",
+      "code": "RARE15",
+      "customer": "CUSTOMER-025",
+      "subtotal": 899,
+      "reason": "Subtotal ₹899 does not meet minimum order requirement of ₹1500"
+    }
+  ],
+  "abandonedCartsLog": [
+    {
+      "customer": "Ananya Seth",
+      "email": "ananya.s032@loozars-test.internal",
+      "cart_value": 1798,
+      "items": [
+        "LZR-D01-01-M",
+        "LZR-D01-02-M"
+      ],
+      "status": "abandoned",
+      "recovered": false
+    },
+    {
+      "customer": "Raghav Bahl",
+      "email": "raghav.b033@loozars-test.internal",
+      "cart_value": 1798,
+      "items": [
+        "LZR-D01-01-M",
+        "LZR-D01-02-M"
+      ],
+      "status": "abandoned",
+      "recovered": false
+    },
+    {
+      "customer": "Bhavna Somani",
+      "email": "bhavna.s034@loozars-test.internal",
+      "cart_value": 899,
+      "items": [
+        "LZR-D01-01-L"
+      ],
+      "status": "recovered",
+      "recovered": true
+    },
+    {
+      "customer": "Chirag Patel",
+      "email": "chirag.p035@loozars-test.internal",
+      "cart_value": 899,
+      "items": [
+        "LZR-D01-01-L"
+      ],
+      "status": "recovered",
+      "recovered": true
+    }
+  ]
+}

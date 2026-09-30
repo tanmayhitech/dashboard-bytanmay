@@ -93,8 +93,10 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
       loadOrders();
     };
     window.addEventListener('loozars_orders_updated', handleOrderUpdate);
+    window.addEventListener('loozars_returns_updated', handleOrderUpdate);
     return () => {
       window.removeEventListener('loozars_orders_updated', handleOrderUpdate);
+      window.removeEventListener('loozars_returns_updated', handleOrderUpdate);
     };
   }, [loadOrders]);
 
@@ -199,6 +201,13 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
           <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-400">
             <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
             <span>Cancelled</span>
+          </span>
+        );
+      case 'returned':
+        return (
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-amber-400">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span>Returned</span>
           </span>
         );
       case 'archived':
@@ -338,6 +347,7 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
           { id: 'processing', label: 'Processing' },
           { id: 'shipped', label: 'Shipped' },
           { id: 'delivered', label: 'Delivered' },
+          { id: 'returns', label: 'Returns & Refunds' },
           { id: 'cancelled', label: 'Cancelled' },
           { id: 'archived', label: 'Archived' }
         ].map((tab) => (
@@ -456,6 +466,11 @@ export const AdminOrders = ({ searchQueryProp = '' }) => {
                         {order.tracking_number && (
                           <span className="text-[10px] text-zinc-400 flex items-center gap-1 mt-0.5 font-mono">
                             <Truck size={10} className="text-zinc-500" /> {order.tracking_number}
+                          </span>
+                        )}
+                        {order.return_status && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold bg-amber-950/60 text-amber-300 border border-amber-800/50 mt-1 font-mono">
+                            <RotateCcw size={8} /> Return: {order.return_status.replace(/_/g, ' ')}
                           </span>
                         )}
                       </td>

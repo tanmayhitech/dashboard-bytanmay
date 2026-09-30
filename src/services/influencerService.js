@@ -27,13 +27,13 @@ const INITIAL_MOCK_INFLUENCERS = [
     barter_details: null,
     created_at: new Date(Date.now() - 7 * 86400000).toISOString(),
     metrics: {
-      total_orders: 14,
-      paid_orders: 12,
-      revenue_generated: 16188,
-      total_commissions_earned: 1295,
+      total_orders: 0,
+      paid_orders: 0,
+      revenue_generated: 0,
+      total_commissions_earned: 0,
       pending_commissions: 0,
-      eligible_commissions: 432,
-      paid_commissions: 863,
+      eligible_commissions: 0,
+      paid_commissions: 0,
       reversed_commissions: 0
     }
   },
@@ -60,13 +60,13 @@ const INITIAL_MOCK_INFLUENCERS = [
     },
     created_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     metrics: {
-      total_orders: 8,
-      paid_orders: 8,
-      revenue_generated: 7192,
-      total_commissions_earned: 360,
+      total_orders: 0,
+      paid_orders: 0,
+      revenue_generated: 0,
+      total_commissions_earned: 0,
       pending_commissions: 0,
-      eligible_commissions: 180,
-      paid_commissions: 180,
+      eligible_commissions: 0,
+      paid_commissions: 0,
       reversed_commissions: 0
     }
   },
@@ -93,68 +93,19 @@ const INITIAL_MOCK_INFLUENCERS = [
     },
     created_at: new Date(Date.now() - 1 * 86400000).toISOString(),
     metrics: {
-      total_orders: 3,
-      paid_orders: 3,
-      revenue_generated: 3497,
-      total_commissions_earned: 280,
+      total_orders: 0,
+      paid_orders: 0,
+      revenue_generated: 0,
+      total_commissions_earned: 0,
       pending_commissions: 0,
-      eligible_commissions: 280,
+      eligible_commissions: 0,
       paid_commissions: 0,
       reversed_commissions: 0
     }
   }
 ];
 
-const INITIAL_MOCK_COMMISSIONS = [
-  {
-    id: 'comm-101',
-    influencer_id: 'inf-001',
-    order_id: 'ord-01',
-    order_number: '#LZR-20260927-0001',
-    customer_display_name: 'Rahul K.',
-    order_date: new Date(Date.now() - 2 * 86400000).toISOString(),
-    commission_type_snapshot: 'percentage',
-    commission_value_snapshot: 8,
-    commission_base_amount: 5400,
-    commission_amount: 432,
-    status: 'eligible',
-    payout_reference: null,
-    paid_at: null,
-    notes: null
-  },
-  {
-    id: 'comm-102',
-    influencer_id: 'inf-001',
-    order_id: 'ord-02',
-    order_number: '#LZR-20260925-0012',
-    customer_display_name: 'Dev P.',
-    order_date: new Date(Date.now() - 4 * 86400000).toISOString(),
-    commission_type_snapshot: 'percentage',
-    commission_value_snapshot: 8,
-    commission_base_amount: 10788,
-    commission_amount: 863,
-    status: 'paid',
-    payout_reference: 'UPI/20260926/89327491',
-    paid_at: new Date(Date.now() - 1 * 86400000).toISOString(),
-    notes: 'Settled via UPI'
-  },
-  {
-    id: 'comm-103',
-    influencer_id: 'inf-002',
-    order_id: 'ord-03',
-    order_number: '#LZR-20260926-0005',
-    customer_display_name: 'Simran V.',
-    order_date: new Date(Date.now() - 1 * 86400000).toISOString(),
-    commission_type_snapshot: 'percentage',
-    commission_value_snapshot: 5,
-    commission_base_amount: 3600,
-    commission_amount: 180,
-    status: 'eligible',
-    payout_reference: null,
-    paid_at: null,
-    notes: null
-  }
-];
+const INITIAL_MOCK_COMMISSIONS = [];
 
 export const getCreatorPasswordsMap = () => {
   const defaultMap = {

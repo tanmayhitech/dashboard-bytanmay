@@ -1,5 +1,6 @@
 import { supabase, isSupabaseConfigured } from '../supabase/client.js';
 import { PRODUCTS as STATIC_PRODUCTS } from '../data/products.js';
+import { SEED_HISTORICAL_ORDERS } from '../data/seedOrders.js';
 import { buildFallbackVariants } from './productService.js';
 import { getStoredInfluencers, recordInfluencerOrder } from './influencerService.js';
 
@@ -60,12 +61,22 @@ export const DEFAULT_INITIAL_ORDERS = [];
  * Retrieves all orders saved in persistent local storage with clean LZR-0001 numbering
  */
 export const getStoredOrders = () => {
-  if (typeof window === 'undefined') return [];
+  if (typeof window === 'undefined') return DEFAULT_INITIAL_ORDERS;
   try {
     const raw = localStorage.getItem('loozars_store_orders_v1');
-    if (!raw) return [];
+    if (!raw) {
+      if (DEFAULT_INITIAL_ORDERS.length > 0) {
+        try { localStorage.setItem('loozars_store_orders_v1', JSON.stringify(DEFAULT_INITIAL_ORDERS)); } catch {}
+      }
+      return DEFAULT_INITIAL_ORDERS;
+    }
     const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      if (DEFAULT_INITIAL_ORDERS.length > 0) {
+        try { localStorage.setItem('loozars_store_orders_v1', JSON.stringify(DEFAULT_INITIAL_ORDERS)); } catch {}
+      }
+      return DEFAULT_INITIAL_ORDERS;
+    }
 
     // Filter out any legacy synthetic seed orders
     const validOrders = parsed.filter(o => {
@@ -74,6 +85,10 @@ export const getStoredOrders = () => {
       if (id.startsWith('ord_lzr_000') || id.startsWith('ord_lzr_00')) return false;
       return true;
     });
+
+    if (validOrders.length === 0 && DEFAULT_INITIAL_ORDERS.length > 0) {
+      return DEFAULT_INITIAL_ORDERS;
+    }
 
     return validOrders.map(o => {
       const cleanNum = formatOrderNumber(o.order_number || o.orderNumber || o.orderId);
@@ -126,6 +141,9 @@ export const saveStoredOrder = (order) => {
       notes: order.notes || null,
       created_at: order.created_at || order.createdAt || new Date().toISOString()
     };
+
+    const isNewOrder = existingIdx === -1;
+    const isNowPaid = existingIdx !== -1 && orders[existingIdx]?.payment_status !== 'paid' && normalizedOrder.payment_status === 'paid';
 
     if (existingIdx !== -1) {
       orders[existingIdx] = { ...orders[existingIdx], ...normalizedOrder };

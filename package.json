@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "bot": "node scripts/telegram-bot-runner.js",
     "build": "vite build",
     "preview": "vite preview"
   },

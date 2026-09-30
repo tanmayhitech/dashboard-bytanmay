@@ -5,7 +5,11 @@ import {
   archiveAdminOrder, 
   restoreAdminOrder,
   updateOrderPaymentStatus,
-  deleteAdminOrder 
+  deleteAdminOrder,
+  fetchOrderReturns,
+  createOrderReturnRequest,
+  updateOrderReturnStatus,
+  executeOrderRefund
 } from '../../services/adminService';
 import { formatOrderNumber } from '../../services/orderService';
 import { useAdminFeedback } from '../../context/AdminFeedbackContext';
@@ -34,7 +38,13 @@ import {
   ExternalLink,
   ShieldCheck,
   Compass,
-  FileText
+  FileText,
+  RotateCw,
+  Undo2,
+  DollarSign,
+  ArrowDownLeft,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderArchived }) => {
@@ -56,11 +66,125 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Return & Refund States
+  const [orderReturn, setOrderReturn] = useState(null);
+  const [isLoadingReturn, setIsLoadingReturn] = useState(false);
+  const [showInitiateReturnForm, setShowInitiateReturnForm] = useState(false);
+  const [returnReason, setReturnReason] = useState('Fit / Sizing Issue');
+  const [returnAdminRemarks, setReturnAdminRemarks] = useState('');
+  const [isProcessingReturnAction, setIsProcessingReturnAction] = useState(false);
+
+
   useEffect(() => {
     if (order?.id) {
       loadEmailEvents(order.id);
+      loadReturnData(order.id);
     }
   }, [order?.id]);
+
+  const loadReturnData = async (orderId) => {
+    if (!orderId) return;
+    setIsLoadingReturn(true);
+    try {
+      const res = await fetchOrderReturns({ orderId });
+      if (res.success && Array.isArray(res.returns) && res.returns.length > 0) {
+        setOrderReturn(res.returns[0]);
+      } else {
+        setOrderReturn(null);
+      }
+    } catch (err) {
+      console.warn('[AdminOrderDetailModal] Failed to load return data:', err);
+      setOrderReturn(null);
+    } finally {
+      setIsLoadingReturn(false);
+    }
+  };
+
+  const handleInitiateReturn = async (e) => {
+    e?.preventDefault();
+    setIsProcessingReturnAction(true);
+    try {
+      const itemsList = parseItems(order.items);
+      const res = await createOrderReturnRequest({
+        orderId: order.id,
+        orderNumber: order.order_number,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        customerPhone: order.customer_phone,
+        items: itemsList,
+        returnReason,
+        refundAmount: order.total_amount || 0,
+        restockInventory: true,
+        adminNotes: returnAdminRemarks
+      });
+
+      if (res.success) {
+        showToast('Return Initiated', `Return request logged for #${order.order_number}`, 'success');
+        setOrderReturn(res.returnRequest);
+        setShowInitiateReturnForm(false);
+      } else {
+        showToast('Failed', res.error || 'Could not initiate return.', 'error');
+      }
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    } finally {
+      setIsProcessingReturnAction(false);
+    }
+  };
+
+  const handleUpdateReturnStatusAction = async (newStatus, restock = true) => {
+    if (!orderReturn?.id) return;
+    setIsProcessingReturnAction(true);
+    try {
+      const res = await updateOrderReturnStatus({
+        returnId: orderReturn.id,
+        newStatus,
+        adminNotes: returnAdminRemarks || orderReturn.admin_notes,
+        restock
+      });
+
+      if (res.success) {
+        showToast('Return Status Updated', `Return marked as ${newStatus.toUpperCase()}`, 'success');
+        setOrderReturn(prev => ({ ...prev, status: newStatus }));
+      } else {
+        showToast('Error', res.error, 'error');
+      }
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    } finally {
+      setIsProcessingReturnAction(false);
+    }
+  };
+
+  const handleExecuteRefundAction = async () => {
+    if (!orderReturn?.id) return;
+    setIsProcessingReturnAction(true);
+    try {
+      const res = await executeOrderRefund({
+        returnId: orderReturn.id,
+        orderId: order.id,
+        refundAmount: orderReturn.refund_amount || order.total_amount,
+        reason: orderReturn.return_reason,
+        restock: true,
+        adminNotes: returnAdminRemarks
+      });
+
+      if (res.success) {
+        showToast('Refund Processed', `₹${(orderReturn.refund_amount || order.total_amount).toLocaleString('en-IN')} refunded successfully.`, 'success');
+        setOrderReturn(prev => ({ ...prev, status: 'refunded', refund_status: 'processed', refund_transaction_id: res.data?.refundTransactionId || res.refundTransactionId }));
+        setPaymentStatus('refunded');
+        if (onOrderUpdated) {
+          onOrderUpdated({ ...order, payment_status: 'refunded' });
+        }
+      } else {
+        showToast('Refund Failed', res.error || 'Could not execute refund.', 'error');
+      }
+    } catch (err) {
+      showToast('Error', err.message, 'error');
+    } finally {
+      setIsProcessingReturnAction(false);
+    }
+  };
 
   const loadEmailEvents = async (orderId) => {
     if (!orderId) return;
@@ -585,6 +709,174 @@ export const AdminOrderDetailModal = ({ order, onClose, onOrderUpdated, onOrderA
                   {isUpdatingPayment ? <RefreshCw size={12} className="animate-spin text-zinc-900" /> : <Check size={12} />}
                   <span>Mark COD as Collected</span>
                 </button>
+              </div>
+            )}
+          </div>
+
+          {/* Returns & Refunds Lifecycle Management */}
+          <div className="bg-[#111115] border border-[#22222C] p-5 rounded-2xl space-y-4 shadow-xs">
+            <div className="flex items-center justify-between border-b border-[#1E1E26] pb-2.5">
+              <div className="flex items-center gap-2 text-zinc-200 font-semibold">
+                <div className="w-6 h-6 rounded-lg bg-[#181820] border border-[#282834] flex items-center justify-center text-zinc-400">
+                  <Undo2 size={13} />
+                </div>
+                <span>Returns & Refund Lifecycle</span>
+              </div>
+              {orderReturn && (
+                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono border ${
+                  orderReturn.status === 'refunded' ? 'bg-emerald-950/50 text-emerald-300 border-emerald-800/60' :
+                  orderReturn.status === 'approved' ? 'bg-sky-950/50 text-sky-300 border-sky-800/60' :
+                  orderReturn.status === 'rejected' ? 'bg-rose-950/50 text-rose-300 border-rose-800/60' :
+                  orderReturn.status === 'item_received' ? 'bg-purple-950/50 text-purple-300 border-purple-800/60' :
+                  'bg-amber-950/50 text-amber-300 border-amber-800/60'
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${
+                    orderReturn.status === 'refunded' ? 'bg-emerald-400' :
+                    orderReturn.status === 'approved' ? 'bg-sky-400' :
+                    orderReturn.status === 'rejected' ? 'bg-rose-400' :
+                    orderReturn.status === 'item_received' ? 'bg-purple-400' :
+                    'bg-amber-400'
+                  }`} />
+                  <span className="capitalize">{orderReturn.status.replace(/_/g, ' ')}</span>
+                </span>
+              )}
+            </div>
+
+            {orderReturn ? (
+              <div className="space-y-3.5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                  <div className="bg-[#16161D] p-3 rounded-xl border border-[#22222C]">
+                    <span className="text-zinc-500 block text-[11px] mb-0.5">Return Reason</span>
+                    <span className="font-semibold text-zinc-200">{orderReturn.return_reason}</span>
+                  </div>
+                  <div className="bg-[#16161D] p-3 rounded-xl border border-[#22222C]">
+                    <span className="text-zinc-500 block text-[11px] mb-0.5">Refund Value</span>
+                    <span className="font-mono font-bold text-white">₹{orderReturn.refund_amount?.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="bg-[#16161D] p-3 rounded-xl border border-[#22222C]">
+                    <span className="text-zinc-500 block text-[11px] mb-0.5">Inventory Restock</span>
+                    <span className={orderReturn.inventory_restocked_at ? 'text-emerald-400 font-semibold' : 'text-zinc-400'}>
+                      {orderReturn.inventory_restocked_at ? 'Restocked to Studio' : 'Pending Receipt'}
+                    </span>
+                  </div>
+                </div>
+
+                {orderReturn.refund_transaction_id && (
+                  <div className="bg-[#16161D] p-3 rounded-xl border border-[#22222C] text-xs font-mono flex items-center justify-between">
+                    <span className="text-zinc-400">Refund Ref: <span className="text-zinc-200">{orderReturn.refund_transaction_id}</span></span>
+                    <span className="text-emerald-400 font-sans font-semibold text-[11px]">Completed</span>
+                  </div>
+                )}
+
+                {/* Return Action Controls */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  {orderReturn.status === 'requested' && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateReturnStatusAction('approved')}
+                        disabled={isProcessingReturnAction}
+                        className="px-3.5 py-2 bg-sky-950/60 hover:bg-sky-900/80 text-sky-300 border border-sky-800/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <Check size={12} />
+                        <span>Approve Return</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateReturnStatusAction('rejected')}
+                        disabled={isProcessingReturnAction}
+                        className="px-3.5 py-2 bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                      >
+                        <X size={12} />
+                        <span>Reject Return</span>
+                      </button>
+                    </>
+                  )}
+
+                  {orderReturn.status === 'approved' && !orderReturn.inventory_restocked_at && (
+                    <button
+                      type="button"
+                      onClick={() => handleUpdateReturnStatusAction('item_received', true)}
+                      disabled={isProcessingReturnAction}
+                      className="px-3.5 py-2 bg-purple-950/60 hover:bg-purple-900/80 text-purple-300 border border-purple-800/60 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Package size={12} />
+                      <span>Mark Item Received & Restock</span>
+                    </button>
+                  )}
+
+                  {orderReturn.status !== 'refunded' && (
+                    <button
+                      type="button"
+                      onClick={handleExecuteRefundAction}
+                      disabled={isProcessingReturnAction}
+                      className="px-4 py-2 bg-white hover:bg-zinc-200 text-black font-semibold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <DollarSign size={13} />
+                      <span>Execute Refund (₹{orderReturn.refund_amount?.toLocaleString('en-IN')})</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div>
+                {!showInitiateReturnForm ? (
+                  <div className="flex items-center justify-between py-1">
+                    <p className="text-zinc-500 text-xs">No active return or refund request for this order.</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowInitiateReturnForm(true)}
+                      className="px-3.5 py-2 bg-[#16161D] hover:bg-[#1E1E26] text-zinc-200 border border-[#2A2A38] rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+                    >
+                      <Undo2 size={12} />
+                      <span>Initiate Return Request</span>
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleInitiateReturn} className="space-y-3 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-zinc-400 block text-xs mb-1 font-medium">Return Reason</label>
+                        <select
+                          value={returnReason}
+                          onChange={(e) => setReturnReason(e.target.value)}
+                          className="w-full bg-[#16161D] border border-[#262634] text-zinc-100 px-3.5 py-2 rounded-xl outline-none text-xs"
+                        >
+                          <option value="Fit / Sizing Issue">Fit / Sizing Issue</option>
+                          <option value="Damaged / Manufacturing Defect">Damaged / Manufacturing Defect</option>
+                          <option value="Style / Color Mismatch">Style / Color Mismatch</option>
+                          <option value="Customer Cancellation">Customer Cancellation Post-Dispatch</option>
+                          <option value="Other">Other Studio Reason</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-zinc-400 block text-xs mb-1 font-medium">Refund Amount (₹)</label>
+                        <input
+                          type="number"
+                          readOnly
+                          value={order.total_amount || 0}
+                          className="w-full bg-[#16161D] border border-[#262634] text-zinc-300 font-mono font-bold px-3.5 py-2 rounded-xl text-xs outline-none cursor-not-allowed"
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowInitiateReturnForm(false)}
+                        className="px-3 py-1.5 bg-[#16161D] hover:bg-[#202028] text-zinc-400 rounded-xl text-xs cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isProcessingReturnAction}
+                        className="px-4 py-1.5 bg-white hover:bg-zinc-200 text-black font-semibold text-xs rounded-xl shadow-xs cursor-pointer"
+                      >
+                        {isProcessingReturnAction ? 'Logging...' : 'Submit Return Request'}
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
             )}
           </div>

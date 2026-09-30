@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { sendTelegramNotification } from './telegram-notify.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://dfxmudxuqwsxdtimtqqa.supabase.co';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
@@ -316,7 +317,7 @@ export default async function handler(req, res) {
       influencer_commission_amount: influencerCommissionAmount,
       payment_method: paymentMethod,
       payment_status: 'pending',
-      order_status: 'pending',
+      order_status: paymentMethod === 'cod' ? 'confirmed' : 'pending',
       idempotency_key: idempotencyKey || `idemp_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       notes: notes || null,
       created_at: new Date().toISOString()
@@ -399,6 +400,37 @@ export default async function handler(req, res) {
             console.warn('[api/create-order] Inventory log insert note:', logErr?.message);
           }
         }
+      }
+    }
+
+    // 11. Trigger Non-Blocking Operational Notifications ONLY FOR CONFIRMED COD ORDERS
+    // Online orders awaiting Razorpay payment DO NOT trigger Telegram or email until payment is verified.
+    if (paymentMethod === 'cod') {
+      try {
+        sendTelegramNotification({
+          type: 'new_order',
+          orderNumber: insertedOrder.order_number,
+          customerName: insertedOrder.customer_name,
+          customerPhone: insertedOrder.customer_phone,
+          customerEmail: insertedOrder.customer_email,
+          amount: insertedOrder.total_amount,
+          items: insertedOrder.items,
+          paymentMethod: 'COD'
+        }).catch(tgErr => console.warn('[api/create-order] Telegram alert notice:', tgErr?.message));
+      } catch (err) {
+        // non-blocking
+      }
+
+      // Trigger Confirmation Email for COD
+      try {
+        const baseUrl = process.env.VITE_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
+        fetch(`${baseUrl}/api/send-order-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: insertedOrder.id })
+        }).catch(emailErr => console.warn('[api/create-order] Email dispatch note:', emailErr?.message));
+      } catch (err) {
+        // ignore
       }
     }
 

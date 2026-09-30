@@ -1,0 +1,226 @@
+{
+  "metadata": {
+    "generatedAt": "2026-09-30T07:50:00.655Z",
+    "dataset": "LOOZARS_GOLDEN_DATASET_PHASE_3_ORACLE",
+    "specFingerprintSha256": "bd09bf4605252c2e4b8ef535558e1ecab4f59c961eb91d5a97944bd14ccb3e3f",
+    "actualEvidenceFingerprintSha256": "cc076b28da42b2aee609572ea336d99f2abdd6cb5638a68dc7a8e25d3a814df2"
+  },
+  "oracleExpectedTotals": {
+    "customersCount": 100,
+    "totalOrders": 220,
+    "paidOrdersCount": 177,
+    "paidRevenue": 180371,
+    "paidRevenueFormatted": "₹1,80,371",
+    "grossRevenue": 207747,
+    "grossRevenueFormatted": "₹2,07,747",
+    "aov": 1019,
+    "aovFormatted": "₹1,019",
+    "prepaidCount": 177,
+    "prepaidPercent": 80,
+    "codCount": 43,
+    "codPercent": 20,
+    "rejectedCouponAttempts": 2
+  },
+  "oracleStatusCounts": {
+    "delivered": 168,
+    "shipped": 26,
+    "processing": 4,
+    "pending": 8,
+    "confirmed": 0,
+    "cancelled": 14,
+    "returned": 5
+  },
+  "oraclePaymentStatusCounts": {
+    "paid": 177,
+    "pending": 31,
+    "failed": 6,
+    "refunded": 6
+  },
+  "oracleInventory": {
+    "totalStarting": 467,
+    "totalNetDeducted": 230,
+    "totalFinal": 237,
+    "skus": [
+      {
+        "sku": "LZR-D01-01-XS",
+        "starting_stock": 76,
+        "net_deductions": 26,
+        "expected_final_stock": 50
+      },
+      {
+        "sku": "LZR-D01-01-S",
+        "starting_stock": 15,
+        "net_deductions": 2,
+        "expected_final_stock": 13
+      },
+      {
+        "sku": "LZR-D01-01-M",
+        "starting_stock": 13,
+        "net_deductions": 11,
+        "expected_final_stock": 2
+      },
+      {
+        "sku": "LZR-D01-01-L",
+        "starting_stock": 34,
+        "net_deductions": 26,
+        "expected_final_stock": 8
+      },
+      {
+        "sku": "LZR-D01-01-XL",
+        "starting_stock": 15,
+        "net_deductions": 4,
+        "expected_final_stock": 11
+      },
+      {
+        "sku": "LZR-D01-01-XXL",
+        "starting_stock": 101,
+        "net_deductions": 44,
+        "expected_final_stock": 57
+      },
+      {
+        "sku": "LZR-D01-02-S",
+        "starting_stock": 15,
+        "net_deductions": 15,
+        "expected_final_stock": 0
+      },
+      {
+        "sku": "LZR-D01-02-M",
+        "starting_stock": 15,
+        "net_deductions": 4,
+        "expected_final_stock": 11
+      },
+      {
+        "sku": "LZR-D01-02-L",
+        "starting_stock": 11,
+        "net_deductions": 8,
+        "expected_final_stock": 3
+      },
+      {
+        "sku": "LZR-D01-02-XL",
+        "starting_stock": 9,
+        "net_deductions": 2,
+        "expected_final_stock": 7
+      },
+      {
+        "sku": "LZR-D01-02-XXL",
+        "starting_stock": 15,
+        "net_deductions": 13,
+        "expected_final_stock": 2
+      },
+      {
+        "sku": "LZR-D01-03-XS",
+        "starting_stock": 15,
+        "net_deductions": 13,
+        "expected_final_stock": 2
+      },
+      {
+        "sku": "LZR-D01-03-S",
+        "starting_stock": 15,
+        "net_deductions": 3,
+        "expected_final_stock": 12
+      },
+      {
+        "sku": "LZR-D01-03-M",
+        "starting_stock": 15,
+        "net_deductions": 4,
+        "expected_final_stock": 11
+      },
+      {
+        "sku": "LZR-D01-03-L",
+        "starting_stock": 12,
+        "net_deductions": 5,
+        "expected_final_stock": 7
+      },
+      {
+        "sku": "LZR-D01-03-XL",
+        "starting_stock": 15,
+        "net_deductions": 15,
+        "expected_final_stock": 0
+      },
+      {
+        "sku": "LZR-D01-04-S",
+        "starting_stock": 15,
+        "net_deductions": 14,
+        "expected_final_stock": 1
+      },
+      {
+        "sku": "LZR-D01-04-M",
+        "starting_stock": 15,
+        "net_deductions": 4,
+        "expected_final_stock": 11
+      },
+      {
+        "sku": "LZR-D01-04-L",
+        "starting_stock": 16,
+        "net_deductions": 2,
+        "expected_final_stock": 14
+      },
+      {
+        "sku": "LZR-D01-04-XL",
+        "starting_stock": 15,
+        "net_deductions": 2,
+        "expected_final_stock": 13
+      },
+      {
+        "sku": "LZR-D01-04-XXL",
+        "starting_stock": 15,
+        "net_deductions": 13,
+        "expected_final_stock": 2
+      }
+    ]
+  },
+  "oracleCoupons": [
+    {
+      "code": "WELCOME10",
+      "times_used_expected": 23,
+      "total_discount_expected": 2250
+    },
+    {
+      "code": "FLASH20",
+      "times_used_expected": 1,
+      "total_discount_expected": 200
+    },
+    {
+      "code": "RARE15",
+      "times_used_expected": 3,
+      "total_discount_expected": 1080
+    },
+    {
+      "code": "VIP20",
+      "times_used_expected": 1,
+      "total_discount_expected": 539
+    },
+    {
+      "code": "AARYAN10",
+      "times_used_expected": 1,
+      "total_discount_expected": 90
+    },
+    {
+      "code": "KHAN10",
+      "times_used_expected": 1,
+      "total_discount_expected": 90
+    },
+    {
+      "code": "ZARA15",
+      "times_used_expected": 2,
+      "total_discount_expected": 270
+    },
+    {
+      "code": "ROHAN10",
+      "times_used_expected": 2,
+      "total_discount_expected": 180
+    },
+    {
+      "code": "RHEA10",
+      "times_used_expected": 11,
+      "total_discount_expected": 1080
+    }
+  ],
+  "oracleInfluencerCommissions": {
+    "totalEntries": 17,
+    "totalCommissionValue": 1308,
+    "eligibleCount": 15,
+    "pendingCount": 2,
+    "reversedCount": 0
+  }
+}

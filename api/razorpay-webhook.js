@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { sendTelegramNotification } from './telegram-notify.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://dfxmudxuqwsxdtimtqqa.supabase.co';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
@@ -25,20 +26,42 @@ export default async function handler(req, res) {
   }
 
   try {
-    const signature = req.headers['x-razorpay-signature'];
-    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
+    const signature = String(req.headers['x-razorpay-signature'] || '').trim();
 
-    // 1. Signature Verification
-    if (RAZORPAY_WEBHOOK_SECRET && signature) {
-      const expectedSignature = crypto
-        .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
-        .update(rawBody)
-        .digest('hex');
+    // 1. Mandatory Signature Header Check
+    if (!signature) {
+      console.warn('[api/razorpay-webhook] Rejected webhook event: Missing x-razorpay-signature header.');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing Razorpay webhook signature header (x-razorpay-signature).' 
+      });
+    }
 
-      if (expectedSignature !== signature) {
-        console.warn('[api/razorpay-webhook] Invalid signature received.');
-        return res.status(400).json({ success: false, error: 'Invalid webhook signature.' });
-      }
+    // 2. Secret Availability Check
+    if (!RAZORPAY_WEBHOOK_SECRET) {
+      console.error('[CRITICAL] RAZORPAY_WEBHOOK_SECRET is missing from server environment.');
+      return res.status(500).json({ 
+        success: false, 
+        error: 'Server webhook gateway configuration error.' 
+      });
+    }
+
+    // 3. Cryptographic Constant-Time HMAC-SHA256 Signature Verification
+    const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {});
+    const expectedSignature = crypto
+      .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
+      .update(rawBody)
+      .digest('hex');
+
+    const expectedBuf = Buffer.from(expectedSignature, 'utf-8');
+    const providedBuf = Buffer.from(signature, 'utf-8');
+
+    if (expectedBuf.length !== providedBuf.length || !crypto.timingSafeEqual(expectedBuf, providedBuf)) {
+      console.warn('[api/razorpay-webhook] Webhook signature verification failed.');
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Invalid webhook signature. Request forged or secret mismatch.' 
+      });
     }
 
     const payload = typeof req.body === 'object' ? req.body : JSON.parse(rawBody || '{}');
@@ -87,14 +110,19 @@ export default async function handler(req, res) {
         return res.status(200).json({ status: 'ignored', reason: 'Order not found' });
       }
 
-      // 2. Idempotency Check — If already paid, do not repeat side effects
+      // 4. Idempotency Check — If already marked paid, return success without re-executing side effects
       if (order.payment_status === 'paid') {
-        return res.status(200).json({ status: 'ok', already_processed: true, order_id: order.id });
+        return res.status(200).json({ 
+          status: 'ok', 
+          already_processed: true, 
+          order_id: order.id,
+          order_number: order.order_number 
+        });
       }
 
       const nowIso = new Date().toISOString();
 
-      // 3. Update Order to 'paid' & 'confirmed'
+      // 5. Update Order to 'paid' & 'confirmed'
       const { data: updatedOrder, error: updateErr } = await supabaseAdmin
         .from('orders')
         .update({
@@ -114,7 +142,7 @@ export default async function handler(req, res) {
         return res.status(500).json({ success: false, error: updateErr.message });
       }
 
-      // 4. Update Influencer Commission status to 'eligible'
+      // 6. Update Influencer Commission status to 'eligible'
       try {
         await supabaseAdmin
           .from('influencer_commissions')
@@ -124,7 +152,7 @@ export default async function handler(req, res) {
         console.warn('[api/razorpay-webhook] Commission update note:', commErr?.message);
       }
 
-      // 5. Trigger Confirmation Email
+      // 7. Trigger Confirmation Email
       try {
         const baseUrl = process.env.VITE_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:5173');
         fetch(`${baseUrl}/api/send-order-email`, {
@@ -136,7 +164,27 @@ export default async function handler(req, res) {
         // ignore
       }
 
-      return res.status(200).json({ status: 'ok', order_id: updatedOrder.id, order_number: updatedOrder.order_number });
+      // 8. Trigger Non-Blocking Operational Telegram Alert
+      try {
+        sendTelegramNotification({
+          type: 'new_order',
+          orderNumber: updatedOrder.order_number,
+          customerName: updatedOrder.customer_name,
+          customerPhone: updatedOrder.customer_phone,
+          customerEmail: updatedOrder.customer_email,
+          amount: updatedOrder.total_amount,
+          items: updatedOrder.items,
+          paymentMethod: updatedOrder.payment_method || 'ONLINE'
+        }).catch(tgErr => console.warn('[api/razorpay-webhook] Telegram alert notice:', tgErr?.message));
+      } catch (err) {
+        // ignore
+      }
+
+      return res.status(200).json({ 
+        status: 'ok', 
+        order_id: updatedOrder.id, 
+        order_number: updatedOrder.order_number 
+      });
     }
 
     // Default 200 acknowledgement for unhandled Razorpay events

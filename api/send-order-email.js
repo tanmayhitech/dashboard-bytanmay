@@ -48,6 +48,17 @@ export default async function handler(req, res) {
       return res.status(404).json({ success: false, error: 'Order not found for email dispatch' });
     }
 
+    // Idempotency: Avoid duplicate email sends if confirmation was already delivered
+    if (order.confirmation_email_sent_at && !req.body?.force) {
+      return res.status(200).json({
+        success: true,
+        status: 'already_sent',
+        idempotent: true,
+        sent_at: order.confirmation_email_sent_at,
+        message: 'Order confirmation email was already dispatched.'
+      });
+    }
+
     const recipient = order.customer_email;
     if (!recipient || !recipient.includes('@')) {
       return res.status(400).json({ success: false, error: 'Invalid customer email' });

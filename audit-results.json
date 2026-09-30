@@ -1,0 +1,250 @@
+[
+  {
+    "phase": "Phase 1",
+    "feature": "Baseline",
+    "testName": "Build Compilation",
+    "passed": true,
+    "details": "npm run build compiled 0 errors, clean bundle",
+    "warning": null
+  },
+  {
+    "phase": "Phase 1",
+    "feature": "Baseline",
+    "testName": "Admin Environment Configuration",
+    "passed": true,
+    "details": "Supabase URL and Telegram Bot Credentials configured",
+    "warning": null
+  },
+  {
+    "phase": "Phase 2",
+    "feature": "Database",
+    "testName": "Migration File & Schema Definitions",
+    "passed": true,
+    "details": "All 3 tables (order_returns, abandoned_carts, product_reviews) defined with PKs, FKs, and check constraints",
+    "warning": null
+  },
+  {
+    "phase": "Phase 2",
+    "feature": "Database",
+    "testName": "RPC Functions Definition & Idempotency",
+    "passed": true,
+    "details": "3 security definer RPCs (process_order_return_status, record_order_refund, moderate_product_review) defined",
+    "warning": null
+  },
+  {
+    "phase": "Phase 2",
+    "feature": "Database",
+    "testName": "Row Level Security (RLS) Policy Specifications",
+    "passed": true,
+    "details": "Strict RLS enabled with admin-only mutations and scoped customer access",
+    "warning": null
+  },
+  {
+    "phase": "Phase 3",
+    "feature": "Returns",
+    "testName": "TEST A — Return Request Creation",
+    "passed": true,
+    "details": "Return #ret_test_1790714849864 created for Order LZR-2026-9001 with reason: \"Fit & Sizing Exchange\"",
+    "warning": null
+  },
+  {
+    "phase": "Phase 3",
+    "feature": "Returns",
+    "testName": "TEST B — Approve Return",
+    "passed": true,
+    "details": "Status transitioned to 'approved'",
+    "warning": null
+  },
+  {
+    "phase": "Phase 3",
+    "feature": "Returns",
+    "testName": "TEST C — Reject Return",
+    "passed": true,
+    "details": "Status transitioned to rejected; zero inventory added, zero refund issued",
+    "warning": null
+  },
+  {
+    "phase": "Phase 3",
+    "feature": "Returns",
+    "testName": "TEST D — Mark Received & Single Restock Invariant",
+    "passed": true,
+    "details": "Stock: 12 -> +1 Restock: 13 -> Repeated Call: 13 (Guarded by inventory_restocked_at timestamp)",
+    "warning": null
+  },
+  {
+    "phase": "Phase 3",
+    "feature": "Refunds",
+    "testName": "TEST E — Authoritative Refund Record Execution",
+    "passed": true,
+    "details": "Return status: refunded, refund_transaction_id: rfnd_sim_1790714849866",
+    "warning": null
+  },
+  {
+    "phase": "Phase 3",
+    "feature": "Refunds",
+    "testName": "TEST F — Negative Amount & Enum Check Constraints",
+    "passed": true,
+    "details": "CHECK constraints enforce non-negative refund amount and strict lifecycle status enum",
+    "warning": null
+  },
+  {
+    "phase": "Phase 4",
+    "feature": "Abandoned Cart",
+    "testName": "Detection & Capture",
+    "passed": true,
+    "details": "Captured bag for Aarav Sharma (Value: ₹4499)",
+    "warning": null
+  },
+  {
+    "phase": "Phase 4",
+    "feature": "Abandoned Cart",
+    "testName": "Lifecycle: Contacted Transition",
+    "passed": true,
+    "details": "Status transitioned to contacted",
+    "warning": null
+  },
+  {
+    "phase": "Phase 4",
+    "feature": "Abandoned Cart",
+    "testName": "Lifecycle: Recovered Transition",
+    "passed": true,
+    "details": "Status transitioned to recovered; zero phantom orders created",
+    "warning": null
+  },
+  {
+    "phase": "Phase 4",
+    "feature": "Abandoned Cart",
+    "testName": "WhatsApp Concierge Link Generation",
+    "passed": true,
+    "details": "Sanitized WhatsApp link generated with custom personalized message",
+    "warning": null
+  },
+  {
+    "phase": "Phase 5",
+    "feature": "Analytics",
+    "testName": "Revenue Authoritative Calculation",
+    "passed": true,
+    "details": "Calculated GMV: ₹8,398 (Unpaid ₹1,999 and Cancelled ₹2,999 strictly excluded)",
+    "warning": null
+  },
+  {
+    "phase": "Phase 5",
+    "feature": "Analytics",
+    "testName": "AOV Authoritative Calculation",
+    "passed": true,
+    "details": "Calculated AOV: ₹4,199 across 2 paid orders",
+    "warning": null
+  },
+  {
+    "phase": "Phase 5",
+    "feature": "Analytics",
+    "testName": "Unpaid/Cancelled Exclusion Guard",
+    "passed": true,
+    "details": "Unpaid and cancelled orders strictly filtered out from revenue buckets",
+    "warning": null
+  },
+  {
+    "phase": "Phase 6",
+    "feature": "Reviews",
+    "testName": "TEST A — Verified Buyer Review Submission",
+    "passed": true,
+    "details": "Review submitted with rating 5/5, verified status: true, moderation state: pending",
+    "warning": null
+  },
+  {
+    "phase": "Phase 6",
+    "feature": "Reviews",
+    "testName": "TEST D — Moderation: Approve & Publish",
+    "passed": true,
+    "details": "Review approved with official atelier reply",
+    "warning": null
+  },
+  {
+    "phase": "Phase 6",
+    "feature": "Reviews",
+    "testName": "TEST D — Moderation: Hide & Withhold",
+    "passed": true,
+    "details": "Review hidden from public storefront queries",
+    "warning": null
+  },
+  {
+    "phase": "Phase 6",
+    "feature": "Reviews",
+    "testName": "TEST E — Rating Boundary Check Constraint (1–5)",
+    "passed": true,
+    "details": "CHECK constraint enforces 1 <= rating <= 5",
+    "warning": null
+  },
+  {
+    "phase": "Phase 7",
+    "feature": "Telegram",
+    "testName": "TEST 1 — Operational Ping Delivery",
+    "passed": true,
+    "details": "Delivered message ID 54 to admin chat ID 1612319687",
+    "warning": null
+  },
+  {
+    "phase": "Phase 7",
+    "feature": "Telegram",
+    "testName": "TEST 2 — VIP Whale Drop Order Alert",
+    "passed": true,
+    "details": "Delivered high-LTV alert with interactive [📦 Mark Shipped] & [💬 WhatsApp] buttons",
+    "warning": null
+  },
+  {
+    "phase": "Phase 7",
+    "feature": "Telegram",
+    "testName": "TEST 3 — Return Request Alert",
+    "passed": true,
+    "details": "Delivered return alert with [✅ Approve] and [❌ Reject] action buttons",
+    "warning": null
+  },
+  {
+    "phase": "Phase 7",
+    "feature": "Telegram",
+    "testName": "TEST 4 — In-Memory Idempotency Guard",
+    "passed": true,
+    "details": "Duplicate event suppressed within 5-min TTL: Duplicate event suppressed by idempotency guard.",
+    "warning": "In-memory deduplication cache is node-instance scoped. For multi-node distributed concurrency, distributed key-value storage is recommended."
+  },
+  {
+    "phase": "Phase 7",
+    "feature": "Telegram",
+    "testName": "TEST 5 — Failure Isolation & Non-blocking Guarantee",
+    "passed": true,
+    "details": "Safe error object returned ({ success: false, error: 'Not Found' }) without blocking calling process",
+    "warning": null
+  },
+  {
+    "phase": "Phase 7",
+    "feature": "Telegram",
+    "testName": "TEST 6 — Command Center Dispatcher (/help)",
+    "passed": true,
+    "details": "Processed /help command and returned formatted command menu",
+    "warning": null
+  },
+  {
+    "phase": "Phase 8",
+    "feature": "Regression",
+    "testName": "Orders System Ledger Accessibility",
+    "passed": true,
+    "details": "Orders ledger accessible via Supabase PostgreSQL client",
+    "warning": null
+  },
+  {
+    "phase": "Phase 8",
+    "feature": "Regression",
+    "testName": "Inventory Non-Negative Stock Invariant",
+    "passed": true,
+    "details": "All 21 product variants satisfy stock_quantity >= 0",
+    "warning": null
+  },
+  {
+    "phase": "Phase 10",
+    "feature": "Security",
+    "testName": "Frontend Codebase Secret Leakage Scan",
+    "passed": true,
+    "details": "Scanned 82 files — zero server secrets in client bundle",
+    "warning": null
+  }
+]

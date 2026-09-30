@@ -38,27 +38,33 @@ export default async function handler(req, res) {
       return res.status(400).json({ success: false, error: 'Order ID is required to initialize payment.' });
     }
 
-    // 1. Fetch Authoritative Order from Supabase
-    const { data: order, error: orderError } = await supabaseAdmin
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .maybeSingle();
+    // 1. Fetch Authoritative Order from Supabase (by UUID id or by order_number)
+    let authoritativeOrder = null;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(orderId).trim());
 
-    if (orderError || !order) {
-      console.warn('[api/create-payment] Order not found by UUID, trying by order_number:', orderId);
+    if (isUUID) {
+      const { data: orderById } = await supabaseAdmin
+        .from('orders')
+        .select('*')
+        .eq('id', String(orderId).trim())
+        .maybeSingle();
+
+      authoritativeOrder = orderById;
+    }
+
+    if (!authoritativeOrder) {
       const { data: orderByNum } = await supabaseAdmin
         .from('orders')
         .select('*')
-        .eq('order_number', orderId)
+        .eq('order_number', String(orderId).trim())
         .maybeSingle();
 
-      if (!orderByNum) {
-        return res.status(404).json({ success: false, error: 'Authoritative order record not found in database.' });
-      }
+      authoritativeOrder = orderByNum;
     }
 
-    const authoritativeOrder = order || orderByNum;
+    if (!authoritativeOrder) {
+      return res.status(404).json({ success: false, error: 'Authoritative order record not found in database.' });
+    }
 
     // Check if already paid
     if (authoritativeOrder.payment_status === 'paid') {
@@ -108,11 +114,19 @@ export default async function handler(req, res) {
             .update({ razorpay_order_id: razorpayOrderId })
             .eq('id', authoritativeOrder.id);
         } else {
-          const rzpErrText = await rzpResponse.text();
-          console.warn('[api/create-payment] Razorpay API warning:', rzpErrText);
+          const rzpErrJson = await rzpResponse.json().catch(() => ({}));
+          console.warn('[api/create-payment] Razorpay API error response:', rzpErrJson);
+          return res.status(502).json({ 
+            success: false, 
+            error: rzpErrJson?.error?.description || 'Failed to initialize payment with payment gateway.' 
+          });
         }
       } catch (rzpErr) {
-        console.warn('[api/create-payment] Razorpay invocation error:', rzpErr.message);
+        console.error('[api/create-payment] Razorpay invocation error:', rzpErr.message);
+        return res.status(500).json({ 
+          success: false, 
+          error: 'Payment gateway communication failure.' 
+        });
       }
     }
 
