@@ -1,12 +1,11 @@
 /**
  * LOOZARS® — Store Settings & Integrations Service
- * Centralized client-side management of dynamic store configurations (Telegram, Alerts, Brand Settings).
+ * Centralized client-side management of dynamic Telegram Operations & Store Alerts.
  */
 
 import { supabase, isSupabaseConfigured } from '../supabase/client';
-import { BRAND_CONFIG } from '../config/brandConfig';
 
-const LOCAL_STORAGE_KEY = 'loozars_store_settings_telegram';
+const CACHE_KEY = 'loozars_store_settings_telegram';
 
 export const DEFAULT_TELEGRAM_CONFIG = {
   bot_token: '8776016138:AAHtz2dvr5uKwPTAjgXhVFMEAzZkyNW4_-E',
@@ -26,7 +25,7 @@ export const DEFAULT_TELEGRAM_CONFIG = {
 export async function getTelegramSettings() {
   if (isSupabaseConfigured) {
     try {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('store_settings')
         .select('config')
         .eq('id', 'telegram')
@@ -35,7 +34,7 @@ export async function getTelegramSettings() {
       if (data && data.config) {
         const merged = { ...DEFAULT_TELEGRAM_CONFIG, ...data.config };
         if (typeof window !== 'undefined') {
-          localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+          localStorage.setItem(CACHE_KEY, JSON.stringify(merged));
         }
         return { success: true, settings: merged, source: 'database' };
       }
@@ -46,7 +45,7 @@ export async function getTelegramSettings() {
 
   // Fallback to localStorage or default
   if (typeof window !== 'undefined') {
-    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const cached = localStorage.getItem(CACHE_KEY);
     if (cached) {
       try {
         return { success: true, settings: { ...DEFAULT_TELEGRAM_CONFIG, ...JSON.parse(cached) }, source: 'local_cache' };
@@ -65,7 +64,8 @@ export async function updateTelegramSettings(newConfig) {
 
   // Save to local cache immediately
   if (typeof window !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(merged));
+    localStorage.setItem(CACHE_KEY, JSON.stringify(merged));
+    window.dispatchEvent(new CustomEvent('loozars_telegram_settings_updated', { detail: merged }));
   }
 
   if (isSupabaseConfigured) {
@@ -82,12 +82,10 @@ export async function updateTelegramSettings(newConfig) {
         );
 
       if (error) {
-        console.warn('[storeSettingsService] Supabase upsert error:', error.message);
         return { success: false, error: error.message };
       }
       return { success: true, settings: merged };
     } catch (err) {
-      console.error('[storeSettingsService] Save exception:', err);
       return { success: false, error: err.message };
     }
   }
@@ -108,9 +106,7 @@ export async function testTelegramConnection(customSettings = null) {
         customConfig: customSettings
       })
     });
-
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (err) {
     return { success: false, error: err.message };
   }
