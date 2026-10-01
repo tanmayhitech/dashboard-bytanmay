@@ -13,6 +13,7 @@ import { AdminInventoryLogs } from './AdminInventoryLogs';
 import { AdminCRM } from './AdminCRM';
 import { StockAdjustModal } from './StockAdjustModal';
 import { AdminOrderDetailModal } from './AdminOrderDetailModal';
+import { TelegramSettingsCard } from '../../components/admin/TelegramSettingsCard';
 import { 
   testTelegramPing 
 } from '../../services/adminService';
@@ -524,97 +525,8 @@ export const AdminPortalContent = () => {
                   </div>
                 </div>
 
-                {/* Operational Telegram Alerts & Mobile Command Center */}
-                <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-6">
-                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-[#222228] pb-5">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="w-8 h-8 rounded-xl bg-[#1C1C24] border border-[#2A2A38] flex items-center justify-center text-zinc-200">
-                          <Bell size={16} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="text-sm font-semibold text-zinc-100">Telegram Atelier Operational Bot</h3>
-                            <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-semibold">
-                              Live Sync Active
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-400 mt-0.5">
-                            Real-time order dispatch, VIP alerts, instant 1-tap fulfillment, and full mobile remote management via <span className="font-mono text-zinc-300">@loozarsbot</span>.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <a
-                        href="https://t.me/loozarsbot"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="px-3.5 py-2 bg-[#20202A] hover:bg-[#2A2A38] text-zinc-200 border border-[#323242] rounded-xl text-xs font-semibold flex items-center gap-2 transition-all shadow-xs"
-                      >
-                        <ExternalLink size={13} className="text-zinc-400" />
-                        <span>Open @loozarsbot</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Test Status Feedback Banner */}
-                  {telegramPingResult && (
-                    <div className={`p-3.5 rounded-xl border text-xs flex items-center justify-between gap-3 animate-fadeIn ${
-                      telegramPingResult.success 
-                        ? 'bg-emerald-950/40 border-emerald-800/60 text-emerald-300' 
-                        : 'bg-[#181820] border-[#2C2C3C] text-zinc-300'
-                    }`}>
-                      <div className="flex items-center gap-2.5">
-                        <CheckCircle2 size={16} className={telegramPingResult.success ? 'text-emerald-400' : 'text-zinc-400'} />
-                        <span className="font-medium">{telegramPingResult.message}</span>
-                      </div>
-                      <button
-                        onClick={() => setTelegramPingResult(null)}
-                        className="text-zinc-500 hover:text-zinc-300 text-xs px-2 py-1 rounded"
-                      >
-                        Dismiss
-                      </button>
-                    </div>
-                  )}
-
-                  {/* 1-Click Operational Test Ping */}
-                  <div className="space-y-3 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider font-mono">
-                        Bot Connectivity Test
-                      </span>
-                      <span className="text-[11px] text-zinc-500">Admin Channel: Connected</span>
-                    </div>
-
-                    <div className="max-w-md">
-                      <button
-                        onClick={handleTelegramTest}
-                        disabled={isTestingTelegram}
-                        className="w-full p-3.5 bg-[#121215] hover:bg-[#1A1A22] active:scale-[0.98] border border-[#24242E] rounded-xl text-left transition-all group cursor-pointer disabled:opacity-50 flex items-center justify-between shadow-xs"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                            <Zap size={16} />
-                          </div>
-                          <div>
-                            <div className="text-xs font-semibold text-zinc-200 group-hover:text-white">
-                              Send Test Ping
-                            </div>
-                            <p className="text-[11px] text-zinc-500">
-                              Dispatches an instant health check ping to your Telegram account
-                            </p>
-                          </div>
-                        </div>
-
-                        <span className="text-xs font-medium text-zinc-400 group-hover:text-zinc-200 font-mono">
-                          {isTestingTelegram ? 'Pinging...' : 'Ping Now →'}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                {/* Operational Telegram Alerts & Mobile Command Center Integration */}
+                <TelegramSettingsCard />
 
                 {/* Operations & Integrity Policies */}
                 <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-4">

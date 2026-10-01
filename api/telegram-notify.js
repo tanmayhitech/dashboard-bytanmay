@@ -2,11 +2,32 @@
  * LOOZARS® — Operational Telegram Notifications Handler
  * Dispatches high-signal operational alerts & interactive action buttons to admin Telegram.
  * 
+ * Supports dynamic configuration via:
+ * 1. Database settings (public.store_settings -> 'telegram')
+ * 2. Environment variables (TELEGRAM_BOT_TOKEN, TELEGRAM_ADMIN_CHAT_ID)
+ * 3. Multi-admin comma-separated chat IDs
+ * 4. Dynamic brand metadata
+ * 
  * Never blocks orders or mutations if Telegram is unavailable or unconfigured.
  */
 
 import fs from 'fs';
 import path from 'path';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || 'https://dfxmudxuqwsxdtimtqqa.supabase.co';
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+
+let supabaseAdmin = null;
+if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+  try {
+    supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false }
+    });
+  } catch (e) {
+    console.warn('[TelegramNotify] Supabase init notice:', e.message);
+  }
+}
 
 function getEnv(key) {
   if (process.env[key]) return process.env[key];
@@ -30,9 +51,86 @@ function getEnv(key) {
 
   const DEFAULTS = {
     TELEGRAM_BOT_TOKEN: '8776016138:AAHtz2dvr5uKwPTAjgXhVFMEAzZkyNW4_-E',
-    TELEGRAM_ADMIN_CHAT_ID: '1612319687'
+    TELEGRAM_ADMIN_CHAT_ID: '1612319687',
+    VITE_BRAND_NAME: 'LOOZARS',
+    VITE_SITE_URL: 'https://theloozars.com'
   };
   return DEFAULTS[key] || '';
+}
+
+// In-memory config cache with 60s TTL to prevent excess DB reads on high traffic
+let cachedDbConfig = null;
+let lastConfigFetch = 0;
+
+async function resolveTelegramConfig(customConfig = null) {
+  if (customConfig && customConfig.bot_token && customConfig.admin_chat_ids) {
+    return {
+      botToken: String(customConfig.bot_token).trim(),
+      adminChatIds: String(customConfig.admin_chat_ids).trim(),
+      isActive: customConfig.is_active !== false,
+      notifyOrders: customConfig.notify_orders !== false,
+      notifyReturns: customConfig.notify_returns !== false,
+      notifyLowStock: customConfig.notify_low_stock !== false,
+      notifyReviews: customConfig.notify_reviews !== false,
+      notifyMorningDigest: customConfig.notify_morning_digest !== false,
+      notifyNightClosing: customConfig.notify_night_closing !== false,
+      source: 'custom_override'
+    };
+  }
+
+  const now = Date.now();
+  if (cachedDbConfig && now - lastConfigFetch < 60000) {
+    return cachedDbConfig;
+  }
+
+  // 1. Try resolving from Supabase DB store_settings table
+  if (supabaseAdmin) {
+    try {
+      const { data } = await supabaseAdmin
+        .from('store_settings')
+        .select('config')
+        .eq('id', 'telegram')
+        .maybeSingle();
+
+      if (data && data.config && data.config.bot_token && data.config.admin_chat_ids) {
+        cachedDbConfig = {
+          botToken: String(data.config.bot_token).trim(),
+          adminChatIds: String(data.config.admin_chat_ids).trim(),
+          isActive: data.config.is_active !== false,
+          notifyOrders: data.config.notify_orders !== false,
+          notifyReturns: data.config.notify_returns !== false,
+          notifyLowStock: data.config.notify_low_stock !== false,
+          notifyReviews: data.config.notify_reviews !== false,
+          notifyMorningDigest: data.config.notify_morning_digest !== false,
+          notifyNightClosing: data.config.notify_night_closing !== false,
+          source: 'database'
+        };
+        lastConfigFetch = now;
+        return cachedDbConfig;
+      }
+    } catch (dbErr) {
+      console.warn('[TelegramNotify] DB settings lookup notice:', dbErr.message);
+    }
+  }
+
+  // 2. Fallback to process.env / .env
+  const envToken = getEnv('TELEGRAM_BOT_TOKEN');
+  const envChatId = getEnv('TELEGRAM_ADMIN_CHAT_ID');
+
+  cachedDbConfig = {
+    botToken: envToken,
+    adminChatIds: envChatId,
+    isActive: true,
+    notifyOrders: true,
+    notifyReturns: true,
+    notifyLowStock: true,
+    notifyReviews: true,
+    notifyMorningDigest: true,
+    notifyNightClosing: true,
+    source: 'environment'
+  };
+  lastConfigFetch = now;
+  return cachedDbConfig;
 }
 
 // In-memory idempotency deduplication cache (5-minute TTL)
@@ -56,9 +154,27 @@ function isDuplicate(key) {
   return false;
 }
 
-export async function sendTelegramNotification(event) {
-  const botToken = getEnv('TELEGRAM_BOT_TOKEN');
-  const adminChatId = getEnv('TELEGRAM_ADMIN_CHAT_ID');
+export async function sendTelegramNotification(event = {}) {
+  const { customConfig } = event || {};
+  const config = await resolveTelegramConfig(customConfig);
+
+  const { botToken, adminChatIds, isActive } = config;
+
+  if (!isActive) {
+    return {
+      success: true,
+      skipped: true,
+      reason: 'Telegram notifications are currently disabled in store settings.'
+    };
+  }
+
+  if (!botToken || !adminChatIds) {
+    return {
+      success: false,
+      skipped: true,
+      reason: 'TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_CHAT_ID not configured.'
+    };
+  }
 
   const {
     type, // 'new_order' | 'vip_order' | 'return_requested' | 'refund_completed' | 'review_submitted' | 'stock_critical' | 'abandoned_cart' | 'morning_digest' | 'night_closing' | 'surge_traffic' | 'test_ping'
@@ -82,12 +198,19 @@ export async function sendTelegramNotification(event) {
     productName
   } = event || {};
 
-  if (!botToken || !adminChatId) {
-    return {
-      success: false,
-      skipped: true,
-      reason: 'TELEGRAM_BOT_TOKEN or TELEGRAM_ADMIN_CHAT_ID not configured.'
-    };
+  // Check event toggles
+  if (type === 'new_order' || type === 'vip_order') {
+    if (config.notifyOrders === false) return { success: true, skipped: true, reason: 'Order alerts disabled in settings.' };
+  } else if (type === 'return_requested' || type === 'refund_completed') {
+    if (config.notifyReturns === false) return { success: true, skipped: true, reason: 'Return alerts disabled in settings.' };
+  } else if (type === 'stock_critical') {
+    if (config.notifyLowStock === false) return { success: true, skipped: true, reason: 'Low stock alerts disabled in settings.' };
+  } else if (type === 'review_submitted') {
+    if (config.notifyReviews === false) return { success: true, skipped: true, reason: 'Review alerts disabled in settings.' };
+  } else if (type === 'morning_digest') {
+    if (config.notifyMorningDigest === false) return { success: true, skipped: true, reason: 'Morning digest disabled in settings.' };
+  } else if (type === 'night_closing') {
+    if (config.notifyNightClosing === false) return { success: true, skipped: true, reason: 'Night closing report disabled in settings.' };
   }
 
   // Idempotency check for orders/refunds
@@ -95,6 +218,9 @@ export async function sendTelegramNotification(event) {
   if (type !== 'test_ping' && type !== 'morning_digest' && type !== 'night_closing' && isDuplicate(idempotencyKey)) {
     return { success: true, skipped: true, reason: 'Duplicate event suppressed by idempotency guard.' };
   }
+
+  const brandName = getEnv('VITE_BRAND_NAME') || 'LOOZARS';
+  const siteUrl = getEnv('VITE_SITE_URL') || 'https://theloozars.com';
 
   let messageText = '';
   let inlineKeyboard = [];
@@ -104,39 +230,39 @@ export async function sendTelegramNotification(event) {
   const firstName = (customerName || 'Patron').split(' ')[0];
 
   const parsedItems = Array.isArray(items) ? items : [];
-  const itemsSummary = parsedItems.map(i => `• ${i.name || i.product_name || 'LOOZARS Silhouette'} (${i.size || 'M'}) x${i.quantity || 1}`).join('\n');
+  const itemsSummary = parsedItems.map(i => `• ${i.name || i.product_name || `${brandName} Piece`} (${i.size || 'M'}) x${i.quantity || 1}`).join('\n');
 
   const isVipOrder = type === 'vip_order' || Number(amount || 0) >= 7000;
-  const orderRef = orderNumber || orderId || 'LZR-ORDER';
+  const orderRef = orderNumber || orderId || `${brandName}-ORDER`;
 
   switch (type) {
     case 'vip_order':
     case 'new_order': {
       if (isVipOrder) {
-        messageText = `👑 *LOOZARS® — VIP ORDER RECEIVED*\n` +
+        messageText = `👑 *${brandName.toUpperCase()}® — VIP ORDER RECEIVED*\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `• *Order:* \`${orderRef}\`\n` +
           `• *Collector:* ${customerName || 'VIP Customer'}\n` +
           `• *Total Amount:* ₹${Number(amount || 0).toLocaleString('en-IN')}\n` +
           `• *Payment:* ${(paymentMethod || 'PREPAID').toUpperCase()} (✅ Paid)\n\n` +
-          `*Order Items:*\n${itemsSummary || '• Exclusive Drop Pieces'}\n` +
+          `*Order Items:*\n${itemsSummary || '• Exclusive Pieces'}\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `_✨ High-LTV customer order — prioritized for immediate express dispatch._`;
       } else {
-        messageText = `🛍️ *LOOZARS® — NEW ORDER RECEIVED*\n` +
+        messageText = `🛍️ *${brandName.toUpperCase()}® — NEW ORDER RECEIVED*\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `• *Order:* \`${orderRef}\`\n` +
           `• *Customer:* ${customerName || 'Customer'}\n` +
           `• *Total Amount:* ₹${Number(amount || 0).toLocaleString('en-IN')}\n` +
           `• *Payment:* ${(paymentMethod || 'PREPAID').toUpperCase()} (✅ Confirmed)\n\n` +
-          `*Order Items:*\n${itemsSummary || '• LOOZARS Drop Pieces'}\n` +
+          `*Order Items:*\n${itemsSummary || '• Drop Pieces'}\n` +
           `━━━━━━━━━━━━━━━━━━━━\n` +
           `_Ready for packing & fulfillment dispatch._`;
       }
 
       const row = [];
       if (cleanPhone) {
-        const waMsg = encodeURIComponent(`Hello ${firstName}, thank you for your order with LOOZARS® (#${orderRef}). We are preparing your pieces for express dispatch.`);
+        const waMsg = encodeURIComponent(`Hello ${firstName}, thank you for your order with ${brandName}® (#${orderRef}). We are preparing your pieces for express dispatch.`);
         row.push({ text: '💬 WhatsApp Customer', url: `https://wa.me/${cleanPhone}?text=${waMsg}` });
       }
       row.push({ text: '📦 Mark Shipped', callback_data: `ship:${orderRef}` });
@@ -145,7 +271,7 @@ export async function sendTelegramNotification(event) {
     }
 
     case 'return_requested': {
-      messageText = `🔄 *LOOZARS® — RETURN REQUEST FILED*\n` +
+      messageText = `🔄 *${brandName.toUpperCase()}® — RETURN REQUEST FILED*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *Order:* \`${orderRef}\`\n` +
         `• *Customer:* ${customerName || 'Customer'}\n` +
@@ -161,7 +287,7 @@ export async function sendTelegramNotification(event) {
       inlineKeyboard.push(actionRow);
 
       if (cleanPhone) {
-        const waMsg = encodeURIComponent(`Hello ${firstName}, regarding your return request for LOOZARS® order #${orderRef}: our concierge is here to assist you.`);
+        const waMsg = encodeURIComponent(`Hello ${firstName}, regarding your return request for ${brandName}® order #${orderRef}: our concierge is here to assist you.`);
         inlineKeyboard.push([
           { text: '💬 WhatsApp Customer', url: `https://wa.me/${cleanPhone}?text=${waMsg}` }
         ]);
@@ -171,10 +297,10 @@ export async function sendTelegramNotification(event) {
 
     case 'review_submitted': {
       const stars = '⭐'.repeat(Math.max(1, Math.min(5, Number(rating) || 5)));
-      messageText = `⭐ *LOOZARS® — NEW CUSTOMER REVIEW (${stars})*\n` +
+      messageText = `⭐ *${brandName.toUpperCase()}® — NEW CUSTOMER REVIEW (${stars})*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *Customer:* ${customerName || 'Customer'}\n` +
-        `• *Product:* ${productName || 'LOOZARS Silhouette'}\n` +
+        `• *Product:* ${productName || `${brandName} Piece`}\n` +
         `• *Review:* "${reviewText || reviewTitle || 'Excellent quality and fit.'}"\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `_Moderate publication directly below:_`;
@@ -188,7 +314,7 @@ export async function sendTelegramNotification(event) {
     }
 
     case 'refund_completed': {
-      messageText = `💸 *LOOZARS® — REFUND PROCESSED*\n` +
+      messageText = `💸 *${brandName.toUpperCase()}® — REFUND PROCESSED*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *Order:* \`${orderRef}\`\n` +
         `• *Customer:* ${customerName || 'Customer'}\n` +
@@ -200,16 +326,16 @@ export async function sendTelegramNotification(event) {
     }
 
     case 'abandoned_cart': {
-      messageText = `🛒 *LOOZARS® — ABANDONED CHECKOUT*\n` +
+      messageText = `🛒 *${brandName.toUpperCase()}® — ABANDONED CHECKOUT*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *Customer:* ${customerName || 'Customer'}\n` +
         `• *Cart Value:* ₹${Number(amount || 0).toLocaleString('en-IN')}\n` +
-        `• *Items:* ${detail || 'Drop Items'}\n` +
+        `• *Items:* ${detail || 'Bag Items'}\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `_1-Click concierge recovery available below:_`;
 
       if (cleanPhone) {
-        const waMsg = encodeURIComponent(`Hello ${firstName}, this is LOOZARS®. We noticed you left pieces in your shopping bag. Would you like assistance reserving your sizing before stock clears?`);
+        const waMsg = encodeURIComponent(`Hello ${firstName}, this is ${brandName}®. We noticed you left pieces in your shopping bag. Would you like assistance reserving your sizing before stock clears?`);
         inlineKeyboard.push([
           { text: '📲 WhatsApp Recovery', url: `https://wa.me/${cleanPhone}?text=${waMsg}` }
         ]);
@@ -219,10 +345,10 @@ export async function sendTelegramNotification(event) {
 
     case 'stock_critical': {
       const variantSku = sku || 'SKU-UNKNOWN';
-      messageText = `🚨 *LOOZARS® — CRITICAL INVENTORY ALERT*\n` +
+      messageText = `🚨 *${brandName.toUpperCase()}® — CRITICAL INVENTORY ALERT*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *SKU:* \`${variantSku}\`\n` +
-        `• *Product:* ${detail || 'LOOZARS Product'}\n` +
+        `• *Product:* ${detail || `${brandName} Piece`}\n` +
         `• *Current Stock:* ${stockLeft ?? 0} units left\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `_Select quick restock action below:_`;
@@ -235,7 +361,7 @@ export async function sendTelegramNotification(event) {
     }
 
     case 'surge_traffic': {
-      messageText = `⚡ *LOOZARS® — HIGH TRAFFIC SURGE*\n` +
+      messageText = `⚡ *${brandName.toUpperCase()}® — HIGH TRAFFIC SURGE*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *Velocity:* ${detail || 'High checkout rate detected'}\n` +
         `• *Active Sessions:* ${amount || 30} customers browsing\n` +
@@ -248,7 +374,7 @@ export async function sendTelegramNotification(event) {
     }
 
     case 'morning_digest': {
-      messageText = `☕ *LOOZARS® — EXECUTIVE MORNING BRIEFING*\n` +
+      messageText = `☕ *${brandName.toUpperCase()}® — EXECUTIVE MORNING BRIEFING*\n` +
         `_${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })}_\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `📊 *Yesterday's Performance:*\n` +
@@ -257,19 +383,19 @@ export async function sendTelegramNotification(event) {
         `• *Average Order Value:* ₹${Number(stats?.aov || 0).toLocaleString('en-IN')}\n\n` +
         `📦 *Operations & Fulfillment:*\n` +
         `• *Awaiting Dispatch:* ${stats?.pendingOrders || 0} orders\n` +
-        `• *Top Silhouette:* ${stats?.topProduct || 'LZR APEX CLUB'}\n\n` +
+        `• *Top Product:* ${stats?.topProduct || `${brandName} Atelier`}\n\n` +
         `🚨 *Inventory Matrix:*\n` +
         `• *Low Stock Variants:* ${stats?.lowStockCount || 0} items (≤ 5 units)\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `_Store Status: 🟢 Fully Operational_`;
       inlineKeyboard.push([
-        { text: '📊 Open Dashboard', url: 'https://loozars.com' }
+        { text: '📊 Open Dashboard', url: siteUrl }
       ]);
       break;
     }
 
     case 'night_closing': {
-      messageText = `🌙 *LOOZARS® — DAILY CLOSING REPORT*\n` +
+      messageText = `🌙 *${brandName.toUpperCase()}® — DAILY CLOSING REPORT*\n` +
         `_${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' })} — Store Closing_\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `📈 *Day Closure Metrics:*\n` +
@@ -279,59 +405,83 @@ export async function sendTelegramNotification(event) {
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `✨ _Daily store registers reconciled._`;
       inlineKeyboard.push([
-        { text: '📊 Open Dashboard', url: 'https://loozars.com' }
+        { text: '📊 Open Dashboard', url: siteUrl }
       ]);
       break;
     }
 
     case 'test_ping':
     default: {
-      messageText = `⚡ *LOOZARS® OPERATIONS — BOT CONNECTED*\n` +
+      messageText = `⚡ *${brandName.toUpperCase()}® OPERATIONS — BOT CONNECTED*\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `• *Connection Status:* 🟢 Active & Live\n` +
-        `• *Admin Account:* Tanmay (@tanmayhitech)\n` +
+        `• *Configuration Source:* ${config.source === 'database' ? 'Database (store_settings)' : config.source === 'custom_override' ? 'Admin UI Live Test' : 'Environment (.env)'}\n` +
         `• *Sync Time:* ${new Date().toLocaleTimeString('en-IN')}\n` +
         `• *Channel:* Real-Time Store Dispatch & Alerts\n` +
         `━━━━━━━━━━━━━━━━━━━━\n` +
         `_Type /help to explore all available commands._`;
       inlineKeyboard.push([
-        { text: '🛍️ Open Storefront', url: 'https://loozars.com' }
+        { text: '🛍️ Open Storefront', url: siteUrl }
       ]);
       break;
     }
   }
 
-  const payload = {
-    chat_id: adminChatId,
-    text: messageText,
-    parse_mode: 'Markdown'
+  // Support multiple comma-separated chat IDs
+  const targetChatIds = String(adminChatIds)
+    .split(',')
+    .map(id => id.trim())
+    .filter(Boolean);
+
+  if (targetChatIds.length === 0) {
+    return { success: false, error: 'No valid admin chat IDs configured.' };
+  }
+
+  const dispatchResults = [];
+
+  for (const chatId of targetChatIds) {
+    const payload = {
+      chat_id: chatId,
+      text: messageText,
+      parse_mode: 'Markdown'
+    };
+
+    if (inlineKeyboard.length > 0) {
+      payload.reply_markup = { inline_keyboard: inlineKeyboard };
+    }
+
+    try {
+      const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const resJson = await response.json();
+      dispatchResults.push({
+        chatId,
+        ok: resJson.ok === true,
+        messageId: resJson.result?.message_id,
+        error: resJson.ok ? null : resJson.description
+      });
+    } catch (err) {
+      console.warn(`[TelegramNotify] Non-blocking dispatch error for ${chatId}:`, err.message);
+      dispatchResults.push({
+        chatId,
+        ok: false,
+        error: err.message
+      });
+    }
+  }
+
+  const anySuccess = dispatchResults.some(r => r.ok);
+  return {
+    success: anySuccess,
+    results: dispatchResults,
+    messageId: dispatchResults[0]?.messageId,
+    error: anySuccess ? null : dispatchResults[0]?.error
   };
-
-  if (inlineKeyboard.length > 0) {
-    payload.reply_markup = { inline_keyboard: inlineKeyboard };
-  }
-
-  try {
-    const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    });
-
-    const resJson = await response.json();
-    return {
-      success: resJson.ok === true,
-      messageId: resJson.result?.message_id,
-      error: resJson.ok ? null : resJson.description
-    };
-  } catch (err) {
-    console.warn('[TelegramNotify] Non-blocking dispatch error:', err.message);
-    return {
-      success: false,
-      error: err.message
-    };
-  }
 }
 
 export default async function handler(req, res) {
@@ -352,8 +502,8 @@ export default async function handler(req, res) {
     try {
       const result = await sendTelegramNotification({ type: 'test_ping' });
       return res.status(200).json({
-        ok: true,
-        message: 'LOOZARS Telegram Operational Dispatcher Online',
+        ok: result.success,
+        message: 'Telegram Operational Dispatcher Online',
         pingResult: result
       });
     } catch (err) {

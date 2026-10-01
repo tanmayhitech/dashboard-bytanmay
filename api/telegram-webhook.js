@@ -5,10 +5,33 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || proce
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || process.env.VITE_TELEGRAM_BOT_TOKEN || '8776016138:AAHtz2dvr5uKwPTAjgXhVFMEAzZkyNW4_-E';
 const TELEGRAM_ADMIN_CHAT_ID = String(process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.VITE_TELEGRAM_ADMIN_CHAT_ID || '1612319687').trim();
 const TELEGRAM_WEBHOOK_SECRET = process.env.TELEGRAM_WEBHOOK_SECRET || process.env.TELEGRAM_SECRET_TOKEN || '';
+const BRAND_NAME = process.env.VITE_BRAND_NAME || 'LOOZARS';
+const STORE_URL = process.env.VITE_SITE_URL || 'https://theloozars.com';
 
 const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || 'MISSING_KEY', {
   auth: { persistSession: false }
 });
+
+async function isChatIdAuthorized(chatId) {
+  if (!chatId) return false;
+  const strId = String(chatId).trim();
+
+  try {
+    const { data } = await supabaseAdmin
+      .from('store_settings')
+      .select('config')
+      .eq('id', 'telegram')
+      .maybeSingle();
+
+    if (data?.config?.admin_chat_ids) {
+      const list = String(data.config.admin_chat_ids).split(',').map(s => s.trim()).filter(Boolean);
+      if (list.includes(strId)) return true;
+    }
+  } catch (e) {}
+
+  const envList = TELEGRAM_ADMIN_CHAT_ID.split(',').map(s => s.trim()).filter(Boolean);
+  return envList.includes(strId);
+}
 
 // Helper to send Telegram Markdown messages with auto plain-text retry fallback
 export async function sendReply(chatId, text, inlineKeyboard = []) {
@@ -99,7 +122,7 @@ export async function processTelegramUpdate(body = {}) {
       const messageId = query.message?.message_id;
       const originalText = query.message?.text || '';
 
-      const isAuthorizedAdmin = chatId === TELEGRAM_ADMIN_CHAT_ID;
+      const isAuthorizedAdmin = await isChatIdAuthorized(chatId);
       if (!isAuthorizedAdmin) {
         await answerCallbackQuery(callbackId, '🔒 Unauthorized admin access.', true);
         return { ok: true, status: 'unauthorized' };
@@ -243,10 +266,10 @@ export async function processTelegramUpdate(body = {}) {
 
     const chatId = String(message.chat?.id || '');
     const text = message.text.trim();
-    const isAuthorizedAdmin = chatId === TELEGRAM_ADMIN_CHAT_ID;
+    const isAuthorizedAdmin = await isChatIdAuthorized(chatId);
 
     if (!isAuthorizedAdmin) {
-      await sendReply(chatId, `🔒 *Access Restricted*\nThis bot is authorized exclusively for LOOZARS® Store Operations.\n\nYour Chat ID: \`${chatId}\``);
+      await sendReply(chatId, `🔒 *Access Restricted*\nThis bot is authorized exclusively for ${BRAND_NAME}® Store Operations.\n\nYour Chat ID: \`${chatId}\``);
       return { ok: true, status: 'access_denied' };
     }
 
