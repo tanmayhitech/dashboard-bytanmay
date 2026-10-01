@@ -10,6 +10,7 @@ import path from 'path';
 
 function getEnv(key) {
   if (process.env[key]) return process.env[key];
+  if (process.env[`VITE_${key}`]) return process.env[`VITE_${key}`];
   try {
     const envPath = path.resolve(process.cwd(), '.env');
     if (fs.existsSync(envPath)) {
@@ -21,12 +22,17 @@ function getEnv(key) {
         if (eqIdx !== -1) {
           const k = trimmed.substring(0, eqIdx).trim();
           const v = trimmed.substring(eqIdx + 1).trim();
-          if (k === key) return v;
+          if (k === key || k === `VITE_${key}`) return v;
         }
       }
     }
   } catch (e) {}
-  return '';
+
+  const DEFAULTS = {
+    TELEGRAM_BOT_TOKEN: '8776016138:AAHtz2dvr5uKwPTAjgXhVFMEAzZkyNW4_-E',
+    TELEGRAM_ADMIN_CHAT_ID: '1612319687'
+  };
+  return DEFAULTS[key] || '';
 }
 
 // In-memory idempotency deduplication cache (5-minute TTL)
@@ -329,6 +335,32 @@ export async function sendTelegramNotification(event) {
 }
 
 export default async function handler(req, res) {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Credentials', true);
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+  );
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method === 'GET') {
+    try {
+      const result = await sendTelegramNotification({ type: 'test_ping' });
+      return res.status(200).json({
+        ok: true,
+        message: 'LOOZARS Telegram Operational Dispatcher Online',
+        pingResult: result
+      });
+    } catch (err) {
+      return res.status(500).json({ ok: false, error: err.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
