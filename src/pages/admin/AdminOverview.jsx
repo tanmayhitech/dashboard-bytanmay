@@ -609,8 +609,8 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
         <div className="space-y-6">
           <div className="bg-[#16161A] border border-[#262632] rounded-2xl shadow-xs overflow-hidden">
             <div className="p-4 sm:p-5 border-b border-[#24242E]">
-              <h3 className="text-sm font-semibold text-[#EDEDF0]">Product Silhouette Velocity</h3>
-              <p className="text-xs text-zinc-400 mt-0.5">Performance, size run distribution, and total gross revenue generated per silhouette.</p>
+              <h3 className="text-sm font-semibold text-[#EDEDF0]">Product Sales Performance</h3>
+              <p className="text-xs text-zinc-400 mt-0.5">Units sold, size distribution, and total revenue per product.</p>
             </div>
 
             {/* Mobile Product Velocity Cards (< md) */}
@@ -654,10 +654,10 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#121216] text-zinc-400 font-semibold border-b border-[#24242E]">
                   <tr>
-                    <th className="py-3 px-4">Silhouette</th>
+                    <th className="py-3 px-4">Product</th>
                     <th className="py-3 px-4 text-center">Units Sold</th>
                     <th className="py-3 px-4">Size Breakdown</th>
-                    <th className="py-3 px-4 text-right">Gross GMV</th>
+                    <th className="py-3 px-4 text-right">Revenue (INR)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#202028]">
@@ -700,32 +700,32 @@ export const AdminOverview = ({ onNavigateTab, onSelectOrder, onOpenStockModal, 
         <div className="space-y-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
             <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
-              <span className="text-xs font-medium text-zinc-400">Total Patrons</span>
+              <span className="text-xs font-medium text-zinc-400">Total Customers</span>
               <div className="text-xl sm:text-2xl font-bold font-mono text-[#EDEDF0]">{advancedData?.customers?.totalCustomers ?? 0}</div>
               <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Unique customer profiles</p>
             </div>
             <div className="bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
-              <span className="text-xs font-medium text-zinc-400">Repeat Collectors</span>
+              <span className="text-xs font-medium text-zinc-400">Repeat Buyers</span>
               <div className="text-xl sm:text-2xl font-bold font-mono text-violet-400">{advancedData?.customers?.repeatCustomers ?? 0}</div>
-              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Patrons with ≥ 2 orders</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Customers with ≥ 2 orders</p>
             </div>
             <div className="col-span-2 sm:col-span-1 bg-[#141418] border border-[#22222C] rounded-2xl p-4 sm:p-5 shadow-xs space-y-1.5">
-              <span className="text-xs font-medium text-zinc-400">Repeat Rate</span>
+              <span className="text-xs font-medium text-zinc-400">Repeat Buyer Rate</span>
               <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400">{advancedData?.customers?.repeatRate ?? 0}%</div>
-              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Atelier loyalty benchmark</p>
+              <p className="text-[10px] sm:text-[11px] text-zinc-500 truncate">Customer loyalty rate</p>
             </div>
           </div>
 
           <div className="bg-[#16161A] border border-[#262632] rounded-2xl p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3.5">
             <div>
-              <h4 className="text-sm font-semibold text-[#EDEDF0]">Customer Dossier Integration</h4>
-              <p className="text-xs text-zinc-400 mt-0.5">Explore comprehensive customer 360 dossiers, size preferences, and 1-click WhatsApp concierge in the CRM portal.</p>
+              <h4 className="text-sm font-semibold text-[#EDEDF0]">Customer Profiles & Order History</h4>
+              <p className="text-xs text-zinc-400 mt-0.5">Explore customer details, purchase history, size preferences, and 1-click WhatsApp concierge in the Customers tab.</p>
             </div>
             <button
               onClick={() => onNavigateTab('crm')}
               className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-[#20202C] hover:bg-[#2A2A3A] text-zinc-200 border border-[#323244] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer min-h-[38px] shrink-0"
             >
-              <span>Open CRM Ledger</span>
+              <span>Open Customers Tab</span>
               <ArrowRight size={13} />
             </button>
           </div>

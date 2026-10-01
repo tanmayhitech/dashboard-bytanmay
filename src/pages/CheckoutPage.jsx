@@ -193,7 +193,7 @@ export const CheckoutPage = () => {
 
     setIsSubmitting(true);
     setSubmissionError(null);
-    setStatusMessage('Creating authoritative order...');
+    setStatusMessage('Securing your order...');
 
     try {
       const isCod = formData.paymentMethod === 'cod';

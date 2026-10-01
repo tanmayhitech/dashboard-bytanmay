@@ -732,10 +732,10 @@ export const ProductPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 border-b border-[#0A0A0A]/15 pb-6">
             <div>
               <span className="font-mono text-[10px] text-[#8E1717] font-bold tracking-[0.25em] uppercase block mb-1">
-                COMMUNITY DOSSIER [ 02 ]
+                COMMUNITY REVIEWS [ 02 ]
               </span>
               <h3 className="font-editorial text-3xl sm:text-5xl text-[#0A0A0A] font-bold uppercase tracking-tight">
-                COLLECTOR REVIEWS
+                CUSTOMER REVIEWS
               </h3>
             </div>
 
@@ -775,12 +775,12 @@ export const ProductPage = () => {
                 </div>
 
                 <p className="font-mono text-xs text-[#0A0A0A]/70 leading-relaxed">
-                  Based on <span className="font-bold text-[#0A0A0A]">{reviews.length} verified collector evaluations</span>. All reviews are independently submitted by genuine collectors.
+                  Based on <span className="font-bold text-[#0A0A0A]">{reviews.length} verified customer reviews</span>. All reviews are submitted by verified buyers.
                 </p>
 
                 <div className="pt-2 border-t border-[#0A0A0A]/10 flex items-center gap-2 font-mono text-[11px] text-[#0A0A0A]/80 font-medium">
                   <ShieldCheck size={14} className="text-emerald-700" />
-                  <span>100% Verified Collector Guarantee</span>
+                  <span>100% Verified Buyer Reviews</span>
                 </div>
               </div>
             </div>
@@ -790,7 +790,7 @@ export const ProductPage = () => {
               {reviews.length === 0 ? (
                 <div className="p-12 border border-dashed border-[#0A0A0A]/20 text-center space-y-4 font-mono">
                   <p className="text-sm font-bold uppercase tracking-wider text-[#0A0A0A]">
-                    BE THE FIRST TO REVIEW THIS SILHOUETTE
+                    BE THE FIRST TO REVIEW THIS PIECE
                   </p>
                   <p className="text-xs text-[#0A0A0A]/60 max-w-md mx-auto leading-relaxed">
                     Share your experience with fit, tailoring weight, and drape with the LOOZARS® community.
@@ -1122,7 +1122,7 @@ export const ProductPage = () => {
                     rows={3}
                     value={reviewText}
                     onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Describe the fabric weight, drape, silhouette, stitching, and wearing experience..."
+                    placeholder="Describe the fit, fabric feel, quality, sizing, and wearing experience..."
                     className="w-full px-3.5 py-2.5 bg-[#181820] border border-[#2A2A38] rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-300 transition-colors resize-none leading-relaxed text-[11px]"
                   />
                 </div>

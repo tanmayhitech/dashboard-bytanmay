@@ -53,7 +53,7 @@ export const NotFoundPage = () => {
               Signal Interrupted.
             </h1>
             <p className="font-mono text-xs sm:text-sm text-[#8E8D8A] uppercase tracking-wider max-w-md mx-auto leading-relaxed">
-              The silhouette, collection, or destination you are searching for has been relocated, archived, or does not exist.
+              The page or piece you are searching for does not exist or has been moved.
             </p>
           </div>
 

@@ -97,7 +97,7 @@ export const CartPage = () => {
           Your Bag is Empty
         </h1>
         <p className="font-mono text-xs text-[#8E8D8A] tracking-wider uppercase max-w-sm mb-8 leading-relaxed">
-          Explore heavyweight tees, drop 01 silhouettes and signature releases.
+          Explore heavyweight tees, oversized fits, and signature drop releases.
         </p>
         <button
           onClick={() => navigateTo('shop')}

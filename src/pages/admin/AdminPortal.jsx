@@ -528,20 +528,20 @@ export const AdminPortalContent = () => {
                 {/* Operational Telegram Alerts & Mobile Command Center Integration */}
                 <TelegramSettingsCard />
 
-                {/* Operations & Integrity Policies */}
+                {/* Store Security & System Integrity */}
                 <div className="bg-[#16161A] border border-[#24242A] rounded-2xl p-5 sm:p-6 space-y-4">
-                  <h3 className="text-sm font-semibold text-zinc-100">Atelier Invariants & Architecture Rules</h3>
+                  <h3 className="text-sm font-semibold text-zinc-100">Store Security & Data Protection</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-zinc-400">
                     <div className="space-y-1">
-                      <span className="font-semibold text-zinc-200">Server-Authoritative Pricing</span>
+                      <span className="font-semibold text-zinc-200">Price & Coupon Security</span>
                       <p className="text-[11px] text-zinc-500">
-                        Order totals and coupon discount amounts are strictly calculated server-side. Zero client-controlled price mutation.
+                        All product prices, discounts, and order totals are strictly verified server-side before payment processing.
                       </p>
                     </div>
                     <div className="space-y-1">
-                      <span className="font-semibold text-zinc-200">Zero-Duplication Dual Mode</span>
+                      <span className="font-semibold text-zinc-200">Real-Time Database Sync</span>
                       <p className="text-[11px] text-zinc-500">
-                        Seamless operation in live PostgreSQL Supabase mode and simulated offline local cache without data desync.
+                        Automatic, real-time synchronization between live database inventory and customer checkout bags.
                       </p>
                     </div>
                   </div>

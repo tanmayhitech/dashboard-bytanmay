@@ -333,7 +333,7 @@ export const generateWhatsAppUrl = (customer, templateType = 'vip_drop_invite', 
 
     case 'exclusive_voucher':
       const code = customParams.couponCode || `VIP-${firstName.toUpperCase()}-15`;
-      message = `Greetings ${firstName},\n\nHere is your private, one-time 15% atelier voucher for your next order:\n\nCODE: *${code}*\nValid on all heavyweight silhouettes.\n\nShop the collection: https://loozars.com/shop\n— LOOZARS®`;
+      message = `Hello ${firstName},\n\nHere is a special 15% discount voucher for your next order:\n\nCODE: *${code}*\nValid on all tees & apparel.\n\nShop the collection: https://loozars.com/shop\n— LOOZARS®`;
       break;
 
     case 'concierge_sizing':
